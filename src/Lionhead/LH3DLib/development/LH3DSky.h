@@ -36,7 +36,7 @@ public:
 	// BW1W120 0086a330 BW1M119 01038150 (LHCombined Release)
 	static void Update();
 	// BW1W120 0086a3b0 BW1M119 010b12a0 (LHCombined Release)
-	static void Init(float param_1, float param_2);
+	static void Init(float time, float overcast);
 	// BW1W120 0086a770 BW1M119 010b11a0 (LHCombined Release)
 	static void Close();
 	// BW1W120 0086a7f0 BW1M119 010b1030 (LHCombined Release)
@@ -54,8 +54,8 @@ public:
 	// BW1W120 0086b7f0 BW1M119 010afeb0 (LHCombined Release)
 	static void CalculateTextures(float sky_type, int start_y, int num_lines);
 	// BW1W120 0086b9a0 BW1M119 010afa10 (LHCombined Release)
-	static void Interpolate555Texture(uint16_t* param_1, uint16_t* param_2, uint16_t* param_3, uint8_t param_4,
-	                                  int param_5, int param_6, int param_7, int param_8);
+	static void Interpolate555Texture(uint16_t* dest, uint16_t* source1, uint16_t* source2, uint8_t amount, int width,
+	                                  int start_y, int num_lines, int pitch);
 	// BW1W120 0086bb60 BW1M119 01014060 (LHCombined Release)
 	static void PostDrawSun();
 	// BW1W120 0086bd00 BW1M119 01033ee0 (LHCombined Release)
