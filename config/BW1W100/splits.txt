@@ -384,13 +384,13 @@ Black/CreatureAttitudeToCreature.cpp:
 	.data       start:0x00907E18 end:0x00907E44
 	.bss        start:0x00BA39A8 end:0x00BA39B0
 
-Black/CreatureDevelopment.cpp:
-	.rdata      start:0x0080E238 end:0x0080E248
-
 Black/CreatureDirectControl.cpp:
 	.text       start:0x004ACE50 end:0x004AE350
 	.CRT$XCU    start:0x008F6288 end:0x008F6290 align:4
 	.data       start:0x00907E60 end:0x00907E88
+
+Black/CreatureDevelopment.cpp:
+	.rdata      start:0x0080E238 end:0x0080E248
 
 Black/CreatureDump.cpp:
 	.text       start:0x004AE350 end:0x004AE6D0
@@ -3292,6 +3292,13 @@ Lionhead/LH3DLib/development/LH3DVRAMTex.cpp:
 Lionhead/LH3DLib/development/CAnim.cpp:
 	.text       start:0x007B4F30 end:0x007B70A0
 	.text$x     start:0x007EA020 end:0x007EA1CD align:4
+
+Lionhead/LH3DLib/development/LH3DSky.cpp:
+	.text       start:0x007BC750 end:0x007BF340
+	.rdata      start:0x008D9944 end:0x008D9978
+	.CRT$XCU    start:0x008F753C end:0x008F7548 align:4
+	.data       start:0x00B5B5E0 end:0x00B5B6B0
+	.bss        start:0x00EC1370 end:0x00EC15DC
 
 lib/libcmt/wcsdup.obj:
 	.text       start:0x007E894E end:0x007E897C align:1
