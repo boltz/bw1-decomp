@@ -72,13 +72,11 @@ class Object:
             # Executable to invoke, relative to the compiler directory. Defaults
             # to cl.exe; hand-supplied compilers may keep their own name/layout.
             "compiler_exe": None,
-            # MSVC precompiled header: {"header": name in the source's first
-            # #include, "source": .cpp that only includes it}. The unit is built
-            # with /Yu against a PCH compiled from that source with its own flags.
-            # Optional keys: "force_include" compiles the unit with /FI<header>
-            # (its source does not include the header); "shared" builds the PCH
-            # once, at the source's path under the build directory, for every
-            # unit naming it.
+            # MSVC precompiled header: {"header": header to precompile, "source":
+            # .cpp that only includes it}. The PCH is built once, at the source's
+            # path under the build directory, with the cflags of the units naming
+            # it (not their extra_cflags), and each unit is built with /FI<header>
+            # /Yu<header> against it, so its source does not include the header.
             "pch": None,
             "progress_category": None,
             "scratch_preset_id": None,
@@ -199,6 +197,11 @@ class ProjectConfig:
         self.linker_provided_units: Optional[List[str]] = None
         # Linker flags for the base image only; modules link without them (PE).
         self.base_ldflags: Optional[List[str]] = None
+        # Linker flags for one module DLL, by module name (PE). They follow dtk's
+        # response file, whose /OPT:NOREF and /OPT:NOICF they can override; with
+        # /OPT:REF the module links without its /includeglob:*, which would make
+        # every symbol a GC root (dtk applies dead_strip to the base image only).
+        self.module_ldflags: Dict[str, List[str]] = {}
         self.asflags: Optional[List[str]] = None  # Assembler flags
         self.ldflags: Optional[List[str]] = None  # Linker flags
         self.libs: Optional[List[Library]] = None  # List of libraries
@@ -421,6 +424,13 @@ def make_flags_str(flags: Optional[List[str]]) -> str:
     if flags is None:
         return ""
     return " ".join(flags)
+
+
+# Writes dtk's link response file `src` to `dst` without /includeglob:*, for a
+# module linked with /OPT:REF (see module_ldflags).
+def write_dead_strip_rsp(src: str, dst: str) -> None:
+    lines = Path(src).read_text(encoding="utf-8").splitlines()
+    Path(dst).write_text("".join(f"{l}\n" for l in lines if l != "/includeglob:*"), encoding="utf-8")
 
 
 def get_pch_out_name(config: ProjectConfig, pch: PrecompiledHeader) -> str:
@@ -904,6 +914,14 @@ def generate_build_ninja(
             rspfile_content="$in_newline",
         )
         n.newline()
+        n.comment("Link response file of a module linked with /OPT:REF (see module_ldflags)")
+        n.rule(
+            name="dead_strip_rsp",
+            command='$python -c "import sys;from tools.project import write_dead_strip_rsp;'
+            'write_dead_strip_rsp(*sys.argv[1:])" $in $out',
+            description="RSP $out",
+        )
+        n.newline()
 
         # CL (MSVC-compatible: MSVC cl.exe or clang-cl)
         compiler_path = compilers / "$compiler_version" if compilers is not None else None
@@ -1161,17 +1179,28 @@ def generate_build_ninja(
                 if config.generate_map:
                     map_path = build_path / f"{stem}.map"
                     pe_ldflags.append(f"/MAP:{serialize_path(map_path)}")
+                ldscript = self.ldscript
+                if self.module_id != 0:
+                    pe_ldflags.extend(config.module_ldflags.get(self.name, []))
+                    if "/OPT:REF" in (f.upper() for f in pe_ldflags) and ldscript is not None:
+                        ldscript = ldscript.with_name(f"{ldscript.stem}_ref{ldscript.suffix}")
+                        n.build(
+                            outputs=ldscript,
+                            rule="dead_strip_rsp",
+                            inputs=self.ldscript,
+                            implicit=python_lib,
+                        )
                 n.build(
                     outputs=exe_path,
                     rule="link",
                     inputs=self.inputs,
                     implicit=[
-                        self.ldscript,
+                        ldscript,
                         *lld_link_implicit,
                     ],
                     implicit_outputs=map_path,
                     variables={
-                        "ldscript": serialize_path(self.ldscript),
+                        "ldscript": serialize_path(ldscript),
                         "ldflags": make_flags_str(pe_ldflags),
                     },
                     order_only="post-compile",
@@ -1305,21 +1334,17 @@ def generate_build_ninja(
                 pch = obj.options["pch"]
                 if pch is not None:
                     header = pch["header"]
-                    pch_flags = [f"/FI{header}"] if pch.get("force_include") else []
-                    if pch.get("shared"):
-                        pch_out = config.out_path() / Path(pch["source"]).with_suffix(".pch")
-                    else:
-                        pch_out = obj.src_obj_path.with_suffix(".pch")
+                    pch_out = config.out_path() / Path(pch["source"]).with_suffix(".pch")
                     # A /Zi unit needs its own copy of the PDB that built the PCH (C2858, C2859).
                     # cl writes PDB file names in lower case.
-                    pch_pdb = pch_out.with_name(pch_out.stem.lower() + ".pdb") if "/Zi" in all_cflags else None
-                    pch_cflags_str = make_flags_str(all_cflags + ([f"/Fd{pch_pdb}"] if pch_pdb else []))
+                    pch_pdb = pch_out.with_name(pch_out.stem.lower() + ".pdb") if "/Zi" in cflags else None
+                    pch_cflags_str = make_flags_str(cflags + ([f"/Fd{pch_pdb}"] if pch_pdb else []))
                     if pch_out in shared_pchs:
                         if shared_pchs[pch_out] != pch_cflags_str:
                             sys.exit(f"{obj.name}: precompiled header {pch_out} is shared by units with other flags")
                     else:
                         shared_pchs[pch_out] = pch_cflags_str
-                        n.comment(f"{obj.name if not pch.get('shared') else pch['source']}: precompiled header {header}")
+                        n.comment(f"{pch['source']}: precompiled header {header}")
                         n.build(
                             outputs=pch_out,
                             rule="cl_pch",
@@ -1338,7 +1363,8 @@ def generate_build_ninja(
                         pdb = obj.src_obj_path.with_suffix("") / pch_pdb.name
                         n.build(outputs=pdb, rule="copy_pdb", inputs=pch_pdb)
                         unit_order_only.append(pdb)
-                    pch_flags += [f"/Yu{header}", f"/Fp{pch_out}"]
+                    # extra_cflags differing from the PCH's flags override them (cl warns C4652).
+                    pch_flags = [f"/FI{header}", f"/Yu{header}", f"/Fp{pch_out}"]
                     unit_implicit.append(pch_out)
                     cflags_str = make_flags_str(all_cflags + pch_flags)
                 n.comment(f"{obj.name}: {lib_name} (linked {obj.completed})")
