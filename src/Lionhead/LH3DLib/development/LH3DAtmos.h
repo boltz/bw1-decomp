@@ -4,7 +4,10 @@
 #include "LHPoint.h"
 #include "WeatherInfo.h"
 
+struct LH3DColor;
 struct LH3DMaterial;
+
+#define LH3D_ATMOS_VERTEX_BUFFERS 3
 
 // Original free callback; storage remains in the extracted LH3DAtmos TU.
 // BW1W120 00edd3a0
@@ -32,6 +35,20 @@ public:
 	static void Render3D();
 	// BW1W120 008366a0 BW1M119 01009ea0 (LHCombined Release)
 	static void Render2D();
+	// BW1W120 00edc304 BW1M119 013453ac (LHCombined Release)
+	static float* v_uv[LH3D_ATMOS_VERTEX_BUFFERS];
+	// BW1W120 00edc310 BW1M119 013453b8 (LHCombined Release)
+	static long* v_idx[LH3D_ATMOS_VERTEX_BUFFERS];
+	// BW1W120 00edc31c BW1M119 013453c4 (LHCombined Release)
+	static LHPoint* v_pnt[LH3D_ATMOS_VERTEX_BUFFERS];
+	// BW1W120 00edc328 BW1M119 013453d0 (LHCombined Release)
+	static LH3DColor* v_col[LH3D_ATMOS_VERTEX_BUFFERS];
+	// BW1W120 00edc35c BW1M119 013453f8 (LHCombined Release)
+	static unsigned long* scv;
+	// BW1W120 00edc360 BW1M119 01345430 (LHCombined Release)
+	static int alignment;
+	// BW1W120 00edc374 BW1M119 null (LHCombined Release)
+	static int fade;
 	// BW1W120 00edd378 BW1M119 013453e8 (LHCombined Release)
 	static LHPoint moonpos;
 	// BW1W120 inlined BW1M119 0101a070

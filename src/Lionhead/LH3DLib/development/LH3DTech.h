@@ -14,6 +14,7 @@
 struct LH3DColor;
 struct LH3DMaterial;
 class LH3DObject;
+struct LH3DTexture;
 struct LHMatrix;
 struct LHPoint;
 struct LHTimer;
@@ -49,6 +50,13 @@ static_assert(sizeof(InfoTransform) == 0x40, "Data type is of wrong size");
 class LH3DTech
 {
 public:
+	enum PROJECT_POINT_RESULT
+	{
+		PROJECT_POINT_BEHIND_NEAR_CLIP,
+		PROJECT_POINT_OUTSIDE_VIEWPORT,
+		PROJECT_POINT_INSIDE_VIEWPORT,
+	};
+
 	// One bit per frustum plane in the cached clip flags. ClipTriangle clips against the plane it is given and
 	// carries on with the next ones.
 	enum ClipCode
@@ -190,6 +198,11 @@ public:
 // Shared by several units, so extern: static gives each unit a zeroed copy; LH3DTech.cpp inits it before g_sun_light.
 // BW1W120 00ea1c88 BW1M119 012dbfbc (LHCombined Release)
 extern LHPoint DEFAULT_SUN;
+
+// BW1W120 00eb9958 BW1M119 011f24b0 (LHCombined Release)
+extern LH3DTexture* g_sun_texture;
+// BW1W120 00eb9954 BW1M119 011f24b4 (LHCombined Release)
+extern LH3DTexture* g_weather_texture;
 
 // BW1W120 0081bbd0 BW1M119 010bd5b0 (LHCombined Release)
 void __cdecl Report3D__FPCce(const char* fmt, ...);

@@ -22,6 +22,9 @@ class LH3DZSorter;
 #define LH3D_RENDER_TEXTURE_STAGE_COUNT 8
 #define LH3D_RENDER_FUNC_ENTRIES        2
 
+// BW1W120 00c386d8 BW1M119 011d0df0 (LHCombined Release)
+extern bool32_t g_b_zbuffer_16b;
+
 enum LH3D_2ND_TEX_MODE
 {
 	LH3D_2ND_TEX_MODE_OFF = 0,
@@ -61,6 +64,8 @@ struct LH3DRender
 	static bool32_t b_open;
 	// BW1W120 00eca638
 	static IDirect3DDevice7* Direct3DDevice7;
+	// BW1W120 00eca63c BW1M119 012cf83c (LHCombined Release)
+	static IDirectDrawSurface7* ZBufferSurface;
 	// BW1W120 00c386ec BW1M119 011d0e04 (LHCombined Release)
 	static void(__fastcall* g_draw_triangle_func)(Vertex3D* vertices, unsigned long vertex_count, uint16_t* indices,
 	                                              unsigned long index_count);

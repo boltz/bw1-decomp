@@ -3,9 +3,63 @@
 
 #include <stdint.h> /* For uint16_t, uint8_t */
 
-struct LH3DColor;
+#include <re_common.h> /* For bool32_t */
+
+#include "LH3DColor.h" /* For struct LH3DColor */
+
+class LH3DObject;
+struct LH3DMesh;
 struct LHMatrix;
 struct LHPoint;
+
+#define HOURS_PER_DAY                24.0f
+#define HOURS_PER_HALF_DAY           (HOURS_PER_DAY / 2.0f)
+#define SKY_TEXTURE_HEIGHT_LOW       0x80
+#define SKY_TEXTURE_HEIGHT           0x100
+#define SKY_TEXTURE_UPDATE_LINES     0x20
+#define SKY_TYPE_CHANGE_THRESHOLD    0.03f
+#define SKY_TYPE_COUNT               3
+#define SKY_DETAIL_COUNT             3
+#define SKY_DETAIL_COUNT_DAY         1
+#define LH3D_SKY_EVIL_SCALE          2.0f
+#define LH3D_SKY_MOON_QUAD_SIZE      500.0f
+#define LH3D_SKY_MOON_UV_MIN         0.25f
+#define LH3D_SKY_MOON_UV_MAX         0.49375f
+#define LH3D_SKY_MOON_RED_DIVISOR    6
+#define LH3D_SKY_MOON_GREEN_DIVISOR  5
+#define LH3D_SKY_MOON_BLUE_SHIFT     2
+#define LH3D_SKY_MOON_VERTEX_COUNT   4
+#define LH3D_SKY_MOON_TRIANGLE_COUNT 2
+#define LH3D_SKY_MOON_FOG_SCALE      0.5f
+#define LH3D_SKY_MOON_FOG_OFFSET     110.0f
+#define LH3D_SKY_MOON_FOG_MAX        200
+#define LH3D_SKY_FOG_SCALE           8.0f
+#define LH3D_SKY_TOP_SCALE           0.5f
+#define LH3D_SKY_TOP_OFFSET          0.5f
+#define LH3D_SKY_TOP_GREEN_SCALE     1.7f
+#define LH3D_SKY_TOP_BLUE_SCALE      1.5f
+#define LH3D_ATMOS_ALIGNMENT_FADE    150
+#define LH3D_SKY_DEFAULT_NIGHT       4.5f
+#define LH3D_SKY_DEFAULT_DUSK        7.0f
+#define LH3D_SKY_DEFAULT_DUSK_END    7.5f
+#define LH3D_SKY_DEFAULT_DAY         8.25f
+#define LH3D_SKY_MOON_SIZE           4.0f
+#define LH3D_SKY_MOON_SIZE_DEFAULT   3.0f
+#define LH3D_SKY_TEXTURE_SIZE        0x104
+#define LH3D_SKY_POSITION            2560.0f
+#define LH3D_SKY_SCALE               5.0f
+#define LH3D_SKY_SUN_SAMPLE_OFFSET   500.0f
+#define LH3D_SKY_SUN_SAMPLE_WEIGHT   0.2f
+#define LH3D_SKY_SUN_MIN_HEIGHT      10.0f
+#define LH3D_SKY_SUN_DEPTH_THRESHOLD 0xfde8
+#define LH3D_SKY_ALPHA_MAX           255.0f
+
+enum SKY_TYPE
+{
+	SKY_TYPE_DAY,
+	SKY_TYPE_DUSK,
+	SKY_TYPE_NIGHT,
+};
 
 class LH3DSky
 {
@@ -13,6 +67,63 @@ public:
 	// Original Mac import
 	// BW1W120 00fa2760 BW1M119 012d3540 (LHCombined Release)
 	static int g_b_we_are_inside_citadel;
+	// BW1W120 00c395a8 BW1M119 011d11b8 (LHCombined Release)
+	static float g_alpha_sun;
+	// BW1W120 00c395b0 BW1M119 011d11c0 (LHCombined Release)
+	static float ONIGHT_FULL_TIME;
+	// BW1W120 00c395b4 BW1M119 011d11c4 (LHCombined Release)
+	static float ODUSK_START_TIME;
+	// BW1W120 00c395b8 BW1M119 011d11c8 (LHCombined Release)
+	static float ODUSK_END_TIME;
+	// BW1W120 00c395bc BW1M119 011d11cc (LHCombined Release)
+	static float ODAY_FULL_TIME;
+	// BW1W120 00fa2694 BW1M119 012d3514 (LHCombined Release)
+	static float DAY_FULL_TIME;
+	// BW1W120 00fa2698 BW1M119 012d3518 (LHCombined Release)
+	static float DUSK_END_TIME;
+	// BW1W120 00fa269c BW1M119 012d351c (LHCombined Release)
+	static float DUSK_START_TIME;
+	// BW1W120 00fa26a0 BW1M119 012d3520 (LHCombined Release)
+	static float NIGHT_FULL_TIME;
+	// BW1W120 00fa26b8 BW1M119 012d3544 (LHCombined Release)
+	static int cury;
+	// BW1W120 00fa26bc BW1M119 012d3548 (LHCombined Release)
+	static float newst;
+	// BW1W120 00fa26c0 BW1M119 012d354c (LHCombined Release)
+	static float curst;
+	// BW1W120 00fa26c4 BW1M119 012d3550 (LHCombined Release)
+	static float curtime;
+
+	// BW1W120 00fa26a4 BW1M119 012d3528 (LHCombined Release)
+	static LH3DColor topcol;
+	// BW1W120 00fa26c8 BW1M119 012d355c (LHCombined Release)
+	static LH3DColor lightcols[8];
+	// BW1W120 00fa26e8 BW1M119 012d357c (LHCombined Release)
+	static void* bitmaps[3][3];
+	// BW1W120 00fa2710 BW1M119 012d35a0 (LHCombined Release)
+	static LHPoint g_sun_pos;
+	// BW1W120 00fa271c BW1M119 012d35ac (LHCombined Release)
+	static LH3DObject* sunobj;
+	// BW1W120 00fa2720 BW1M119 012d35b0 (LHCombined Release)
+	static LH3DMesh* sun;
+	// BW1W120 00fa2724 BW1M119 012d35b8 (LHCombined Release)
+	static float moonphase;
+	// BW1W120 00fa2728 BW1M119 012d35bc (LHCombined Release)
+	static LH3DObject* moonobj;
+	// BW1W120 00fa272c BW1M119 012d35c0 (LHCombined Release)
+	static LH3DMesh* moon;
+	// BW1W120 00fa2730 BW1M119 012d35c4 (LHCombined Release)
+	static LH3DObject* sky;
+	// BW1W120 00fa2734 BW1M119 012d35c8 (LHCombined Release)
+	static LH3DMesh* skymesh;
+	// BW1W120 00fa2750 BW1M119 012d35b4 (LHCombined Release)
+	static float moonsize;
+	// BW1W120 00fa2754 BW1M119 012d3558 (LHCombined Release)
+	static float overcast;
+	// BW1W120 00fa2758 BW1M119 012d3554 (LHCombined Release)
+	static float evil;
+	// BW1W120 00fa275c BW1M119 012d3524 (LHCombined Release)
+	static bool32_t LightningGlow;
 
 	// BW1W120 00869690 BW1M119 010b2170 (LHCombined Release)
 	static LH3DColor Interpolate444Colour(uint16_t from, uint16_t to, int amount);
