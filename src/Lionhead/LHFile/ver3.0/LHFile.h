@@ -11,6 +11,8 @@
 
 #include "LHSegment.h" /* For LHSegment */
 
+#define LH_FILE_CURRENT_POSITION -1
+
 enum LH_FILE_RESULT
 {
 	LH_FILE_RESULT_OK = 0,
