@@ -76,7 +76,7 @@ static const float UVTextureScale = 1.0f / 256.0f;
 #include "Windmill.h"
 #include "Workshop.h"
 #include "ShowNeedsVisuals.h"
-#include "LH3DZSorter.h"
+#include <Lionhead/LH3DLib/development/LH3DZSorter.h>
 #include <Lionhead/LH3DLib/development/LH3DRender.h>
 #include <Lionhead/LH3DLib/development/LH3DTech.h>
 #include "WorshipSite.h"
@@ -1150,9 +1150,9 @@ void Scaffold::DrawInHand(GInterfaceStatus* status)
 				                    : SCAFFOLD_APPEAR_ABODE_PITCH - abodeNumber * SCAFFOLD_APPEAR_PITCH_STEP;
 				options.Bank = GGlobal::Global.audio->GetBank(AUDIO_SFX_BANK_TYPE_IN_GAME);
 				options.SampleNumber = LH_SAMPLE_G_SCAFFOLDAPPEAR_01;
-				options.Looping = 0;
+				options.Follow = false;
 				options.AttachedObject = NULL;
-				options.Positional = 0;
+				options.Positional = false;
 				GGlobal::Global.audio->PlaySoundEffect(&options);
 				appearSoundPlayed = true;
 			}
@@ -2436,10 +2436,10 @@ void Workshop::DrawScaffold()
 			ScaffoldPreview->SetColorSpecular(color, specular);
 
 			static int minAlphaRef = 10;
-			LH3DRender::OverrideMaterial =
+			LH3DRender::g_b_active_g_alpha_ref =
 				max(alpha * SCAFFOLD_PREVIEW_MAX_ALPHA_REF / MAX_DRAW_ALPHA - minAlphaRef, 0);
 			ScaffoldPreview->AddDrawing();
-			LH3DRender::OverrideMaterial = 0;
+			LH3DRender::g_b_active_g_alpha_ref = false;
 		}
 	}
 }

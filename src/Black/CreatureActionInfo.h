@@ -40,7 +40,9 @@ public:
 	float                       InitialOpinion;
 	uint8_t                     field_0xe8[0x4];
 	bool32_t                    WorthFollowing;
-	uint8_t                     field_0xf0[0xc];
+	bool32_t                    EatCarriedObjectWhenPraised;
+	bool32_t                    ShowsCurrentSource;
+	uint8_t                     field_0xf8[0x4];
 	float                       HowNiceChange;
 	bool32_t                    Learnable;
 	bool32_t                    IsRecoveryAction;

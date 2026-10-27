@@ -309,7 +309,7 @@ public:
 	FILE*                 field_0x2502d4;
 	FILE*                 TownDesireLogFile;
 	FILE*                 field_0x2502dc;
-	FILE*                 field_0x2502e0;
+	FILE*                 AllocationLogFile;
 	FILE*                 field_0x2502e4;
 	uint32_t              field_0x2502e8;
 	uint32_t              field_0x2502ec;
@@ -475,8 +475,12 @@ public:
 	GPlayer* GetPlayer(PLAYER_NAME player_name);
 	// BW1W120 00550dd0 BW1M119 0157b2a0
 	void SetPacket(PACKET_TYPE type);
+	// BW1W120 00550c80 BW1M119 015683d0
+	void SetPacket(PACKET_TYPE type, unsigned long value);
 	// BW1W120 00550c50 BW1M119 010a7990
 	void SetPacket(PACKET_TYPE type, unsigned short param_2, unsigned short param_3);
+	// BW1W120 00551530 BW1M119 01108490
+	void SetPacket(PACKET_TYPE type, unsigned long object_index, unsigned long player_number, float value);
 	// BW1W120 00551690 BW1M119 010086d0
 	void SendPacketCompressed(PACKET_TYPE type, SETPACKET_FUNCTION_NUMBER function_number);
 	// BW1W120 00552620 BW1M119 0105fc60

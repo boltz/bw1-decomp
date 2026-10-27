@@ -33,6 +33,73 @@
 #define ROPE_LEASH_EXTRA_MAGIC_ACTION_SIGHTINGS 2
 #define MIN_NORMAL_ACTION_SIGHTINGS             1
 
+// clang-format off
+CreatureActionPrerequisite CreatureActionPrerequisite::Table[CREATURE_ACTION_LEARNING_TYPE_LAST][MAGIC_TYPE_LAST] = {
+    {
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, 0},
+    },
+    {
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_FIREBALL},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_FIREBALL},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_LIGHTNING_BOLT},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_LIGHTNING_BOLT},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_EXPLOSION_ONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_EXPLOSION_ONE_PU_ONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_HEAL},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_FOOD},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_STORM_WIND_RAIN},
+        {CREATURE_ACTION_LEARNING_TYPE_MAGIC, MAGIC_TYPE_STORM_WIND_RAIN_LIGHTNING},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_WATER},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+        {CREATURE_ACTION_LEARNING_TYPE_NONE, MAGIC_TYPE_NONE},
+    },
+};
+// clang-format on
+
 CreatureActionsKnownAbout::CreatureActionsKnownAbout(const CreatureInfo* info) {}
 
 CreatureActionsKnownAbout::~CreatureActionsKnownAbout()
@@ -80,7 +147,7 @@ bool32_t CreatureMental::ConsiderLearningAction(CREATURE_ACTION_LEARNING_TYPE ty
 	switch (type)
 	{
 	case CREATURE_ACTION_LEARNING_TYPE_NORMAL:
-		if (creature->DevelopmentPhase >=
+		if (creature.Get()->DevelopmentPhase >=
 		    CreatureActionKnownAboutEntry::GetNormalActionKnownAboutInfo()[action].DevelopmentPhase)
 		{
 			if (learning.GameTurnNormalActionFirstSeen[action] == 0)
@@ -96,71 +163,71 @@ bool32_t CreatureMental::ConsiderLearningAction(CREATURE_ACTION_LEARNING_TYPE ty
 				learnt = true;
 				if (!ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_NORMAL, action))
 				{
-					creature->CreateLightbulb(1.0f);
+					creature.Get()->CreateLightbulb(1.0f);
 				}
-				ActionsKnownAbout.AddActionLearnt(creature, type, action, true);
+				ActionsKnownAbout.AddActionLearnt(creature.Get(), type, action, true);
 			}
 			else if (!ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_NORMAL, action))
 			{
-				creature->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_NEARLY_LEARNT_NORMAL_ACTION, action,
-				                                  NULL, NULL, 0);
-				creature->CreateLightbulb(NEARLY_LEARNT_NORMAL_ACTION_LIGHTBULB);
+				creature.Get()->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_NEARLY_LEARNT_NORMAL_ACTION,
+				                                        action, NULL, NULL, 0);
+				creature.Get()->CreateLightbulb(NEARLY_LEARNT_NORMAL_ACTION_LIGHTBULB);
 			}
 		}
 		else
 		{
-			creature->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_CANT_LEARN_NORMAL_ACTION_YET, action, NULL,
-			                                  NULL, 0);
+			creature.Get()->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_CANT_LEARN_NORMAL_ACTION_YET, action,
+			                                        NULL, NULL, 0);
 		}
 		break;
 	case CREATURE_ACTION_LEARNING_TYPE_MAGIC:
-		if (creature->DevelopmentPhase >=
-		    CreatureMagicActionKnownAboutEntry::GetMagicActionKnownAboutInfo()[action].DevelopmentPhase)
+		if (creature.Get()->DevelopmentPhase >=
+		    CreatureMagicActionKnownAboutEntry::MagicActionKnownAboutInfo[action].DevelopmentPhase)
 		{
 			if (GGame::g_game->data.GameTurn - learning.GameTurnMagicActionLastSeen[action] >
 			        MAGIC_ACTION_SEEN_AGAIN_GAME_TURNS ||
 			    learning.GameTurnMagicActionLastSeen[action] == 0)
 			{
 				learning.NumTimesMagicActionSeen[action]++;
-				if (creature->GetInterfaceStatusLeashOn() != NULL &&
-				    creature->GetInterfaceStatusLeashOn()->LeashStatus != NULL &&
-				    creature->GetInterfaceStatusLeashOn()->LeashStatus->LeashType == LEASH_TYPE_ROPE)
+				if (creature.Get()->GetInterfaceStatusLeashOn() != NULL &&
+				    creature.Get()->GetInterfaceStatusLeashOn()->LeashStatus != NULL &&
+				    creature.Get()->GetInterfaceStatusLeashOn()->LeashStatus->LeashType == LEASH_TYPE_ROPE)
 				{
 					learning.NumTimesMagicActionSeen[action] += ROPE_LEASH_EXTRA_MAGIC_ACTION_SIGHTINGS;
 				}
 			}
 			learning.GameTurnMagicActionLastSeen[action] = GGame::g_game->data.GameTurn;
-			ActionsKnownAbout.AddActionLearnt(creature, type, action, false);
+			ActionsKnownAbout.AddActionLearnt(creature.Get(), type, action, false);
 
 			if (learning.NumTimesMagicActionSeen[action] >=
-			    creature->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action))
+			    creature.Get()->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action))
 			{
 				learnt = true;
-				creature->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_LEARN_MAGIC_ACTION, action, NULL, NULL,
-				                                  0);
+				creature.Get()->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_LEARN_MAGIC_ACTION, action, NULL,
+				                                        NULL, 0);
 				if (learning.NumTimesMagicActionSeen[action] -
-				        creature->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action) <
+				        creature.Get()->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action) <
 				    MAGIC_ACTION_RECENTLY_LEARNT_SIGHTINGS)
 				{
-					creature->CreateLightbulb(1.0f);
+					creature.Get()->CreateLightbulb(1.0f);
 				}
 			}
 			else
 			{
 				float progress = min(1.0f, learning.NumTimesMagicActionSeen[action] /
-				                               creature->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action));
+				                               creature.Get()->NumTimesMagicActionMustBeSeenBeforeItIsLearnt(action));
 				if (progress >= NEARLY_LEARNT_MAGIC_ACTION_FRACTION)
 				{
-					creature->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_NEARLY_LEARNT_MAGIC_ACTION, action,
-					                                  NULL, NULL, 0);
+					creature.Get()->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_NEARLY_LEARNT_MAGIC_ACTION,
+					                                        action, NULL, NULL, 0);
 				}
-				creature->CreateLightbulb(progress);
+				creature.Get()->CreateLightbulb(progress);
 			}
 		}
 		else
 		{
-			creature->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_CANT_LEARN_MAGIC_ACTION_YET, action, NULL,
-			                                  NULL, 0);
+			creature.Get()->SendCandidateHelpScript(CREATURE_HELP_TYPE_SHOW_LESSON_CANT_LEARN_MAGIC_ACTION_YET, action,
+			                                        NULL, NULL, 0);
 		}
 		break;
 	}
@@ -281,7 +348,7 @@ uint32_t CreatureMental::GetNumMagicActionsLeftToLearnWhichCanBeTaughtByComputer
 	uint32_t count = 0;
 	for (unsigned long action = 0; action < MAGIC_TYPE_LAST; action++)
 	{
-		if (CreatureMagicActionKnownAboutEntry::GetMagicActionKnownAboutInfo()[action].CanBeTaughtByComputerPlayer &&
+		if (CreatureMagicActionKnownAboutEntry::MagicActionKnownAboutInfo[action].CanBeTaughtByComputerPlayer &&
 		    !ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_MAGIC, action))
 		{
 			count++;
@@ -310,7 +377,7 @@ bool32_t CreatureMental::FillInFirstAggressiveMagicActionLeftToLearn(CREATURE_AC
 {
 	for (unsigned long i = 0; i < MAGIC_TYPE_LAST; i++)
 	{
-		if (CreatureMagicActionKnownAboutEntry::GetMagicActionKnownAboutInfo()[i].CanBeTaughtByComputerPlayer &&
+		if (CreatureMagicActionKnownAboutEntry::MagicActionKnownAboutInfo[i].CanBeTaughtByComputerPlayer &&
 		    !ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_MAGIC, i) &&
 		    GMagicEffectInfo::GetInfo()[i].PerceivedPlayerDesire == CREATURE_DESIRE_ANGER)
 		{
@@ -331,7 +398,7 @@ bool32_t CreatureMental::FillInFirstCompassionateMagicActionLeftToLearn(CREATURE
 {
 	for (unsigned long i = 0; i < MAGIC_TYPE_LAST; i++)
 	{
-		if (CreatureMagicActionKnownAboutEntry::GetMagicActionKnownAboutInfo()[i].CanBeTaughtByComputerPlayer &&
+		if (CreatureMagicActionKnownAboutEntry::MagicActionKnownAboutInfo[i].CanBeTaughtByComputerPlayer &&
 		    !ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_MAGIC, i) &&
 		    GMagicEffectInfo::GetInfo()[i].PerceivedPlayerDesire == CREATURE_DESIRE_COMPASSION)
 		{
@@ -352,7 +419,7 @@ bool32_t CreatureMental::FillInFirstImpressiveMagicActionLeftToLearn(CREATURE_AC
 {
 	for (unsigned long i = 0; i < MAGIC_TYPE_LAST; i++)
 	{
-		if (CreatureMagicActionKnownAboutEntry::GetMagicActionKnownAboutInfo()[i].CanBeTaughtByComputerPlayer &&
+		if (CreatureMagicActionKnownAboutEntry::MagicActionKnownAboutInfo[i].CanBeTaughtByComputerPlayer &&
 		    !ActionsKnownAbout.KnowsAction(CREATURE_ACTION_LEARNING_TYPE_MAGIC, i))
 		{
 			GMagicInfo* info = GMagicInfo::Infos[i];

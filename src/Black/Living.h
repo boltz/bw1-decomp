@@ -325,14 +325,14 @@ public:
 	// BW1W120 005f26d0 BW1M119 0138de80
 	virtual bool32_t LookAtFlyingObjectReaction();
 #ifdef VERSION_BW1WCI
-	// BW1W120 null BW1WCI 0047e0c0 BW1M119 null
-	virtual int CreatureIsleVirtual0x92c() { return 0; }
-	// BW1W120 null BW1WCI 0047e0d0 BW1M119 null
-	virtual void CreatureIsleVirtual0x930(uint32_t param_1) {}
-	// BW1W120 null BW1WCI 0047e0e0 BW1M119 null
-	virtual int CreatureIsleVirtual0x934() { return 0; }
-	// BW1W120 null BW1WCI 0047e0f0 BW1M119 null
-	virtual void CreatureIsleVirtual0x938(uint32_t param_1) {}
+	// BW1WCI 0047e0c0 BW1M119 null
+	virtual uint32_t GetScriptULData1() { return 0; }
+	// BW1WCI 0047e0d0 BW1M119 null
+	virtual void SetScriptULData1(unsigned long data) {}
+	// BW1WCI 0047e0e0 BW1M119 null
+	virtual uint32_t GetScriptULData2() { return 0; }
+	// BW1WCI 0047e0f0 BW1M119 null
+	virtual void SetScriptULData2(unsigned long data) {}
 #endif
 	// BW1W120 005f2980 BW1M119 01078700
 	virtual int SetCurrentAndDestinationState(uint8_t current, uint8_t destination);
@@ -610,7 +610,7 @@ public:
 	// BW1W120 005ec340 BW1M119 0138adf0
 	virtual void MoveByTeleport(const MapCoords& param_1);
 #ifdef VERSION_BW1WCI
-	// BW1W120 null BW1WCI 0047e180 BW1M119 null
+	// BW1WCI 0047e180 BW1M119 null
 	virtual bool32_t CreatureIsleVirtual0xb54(uint32_t param_1, uint32_t param_2) { return false; }
 #endif
 	// BW1W120 00417270 BW1M119 01139210
@@ -680,6 +680,10 @@ public:
 	void DrawScaleWithPlayerColor(float scale);
 	// BW1W120 005ec1d0 BW1M119 0138b420
 	bool32_t InvalidState();
+#ifdef VERSION_BW1WCI
+	// BW1WCI 006064d0 BW1M119 null
+	bool32_t ScriptPlayAnim();
+#endif
 	// BW1W120 005ec270 BW1M119 0104f900
 	int MoveToPos();
 	// BW1W120 005ec2c0 BW1M119 0138af80
@@ -764,9 +768,9 @@ public:
 	// BW1W120 005f2640 BW1M119 0138dfa0
 	bool32_t GotoPickupBallReaction();
 	// BW1W120 005f27f0 BW1M119 01058aa0
-	VILLAGER_STATES GetTopState() const;
+	uint8_t GetTopState() const;
 	// BW1W120 005f2800 BW1M119 01391b50
-	bool SetupMoveToObject(Object* param_1, unsigned char param_2);
+	bool SetupMoveToObject(Object* object, uint8_t end_state);
 	// BW1W120 005f2830 BW1M119 0102bdb0
 	bool32_t SetupMoveToPos(const MapCoords& coord, uint8_t end_state);
 	// BW1W120 005ee100 BW1M119 01386b70
@@ -775,6 +779,8 @@ public:
 	float GetWalkPathPercentage();
 	// BW1W120 005f2890 BW1M119 01013b30
 	bool32_t SetupMoveToWithHug(const MapCoords& coords, uint8_t state);
+	// BW1W120 005f2a30 BW1M119 01391940
+	bool32_t SetupMoveOnStructure(Object* structure, const MapCoords& coords, uint8_t end_state);
 	// BW1W120 006e44a0 BW1M119 0113e540
 	void SetReactionDoneWhen(REACTION reaction);
 	// BW1W120 00768640 BW1M119 0159e860

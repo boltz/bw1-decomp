@@ -194,7 +194,8 @@ CreatureBelief* CreatureBeliefList::GetBeliefAboutObject(GameThingWithPos* objec
 
 CreatureBelief* CreatureMental::AddBeliefAboutObject(Creature* creature, GameThingWithPos* object)
 {
-	if (object->IsMoving() && object != this->creature && LookState.Priority <= CREATURE_LOOK_PRIORITY_MOVING_OBJECT)
+	if (object->IsMoving() && object != this->creature.Get() &&
+	    LookState.Priority <= CREATURE_LOOK_PRIORITY_MOVING_OBJECT)
 	{
 		LookState.coords = object->Pos;
 		LookState.coords.altitude = object->GetHeight();
@@ -371,7 +372,7 @@ void CreatureBeliefAboutVillager::UpdateAttributes(Creature* creature, GameThing
 	}
 
 	Villager*       villager = dynamic_cast<Villager*>(thing);
-	VILLAGER_STATES state = (VILLAGER_STATES)(uint8_t)villager->GetTopState();
+	VILLAGER_STATES state = (VILLAGER_STATES)villager->GetTopState();
 	if (state == VILLAGER_STATE_WAIT_FOR_ANIMATION)
 	{
 		state = (VILLAGER_STATES)villager->action.states[LIVING_ACTION_INDEX_FINAL];
@@ -422,7 +423,7 @@ void CreatureMental::UpdateBeliefAboutContext()
 	for (unsigned long i = 0; i < ContextBelief->GetNumAttributes(); i++)
 	{
 		Attribute* attribute = ContextBelief->GetNthAttribute(i);
-		Creature*  owner = creature;
+		Creature*  owner = creature.Get();
 		attribute->UpdateValue(owner, owner->GetPlayer());
 	}
 }

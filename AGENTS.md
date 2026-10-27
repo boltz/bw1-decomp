@@ -353,6 +353,11 @@ remaining `LH*` directories and `zlib` are static libraries linked into the exec
 | `src/Lionhead/LHMultiplayer` | `LHMultiplayerR` (DLL) | Multiplayer networking — sockets, packets, lobby/sessions, players and transport. |
 | `src/zlib` | static lib | Third-party zlib compression library. |
 
+The Mac build linked the Lionhead libraries into a separate module, `LHCombined Release`, so a
+class whose BW1M119 symbols carry the `(LHCombined Release)` tag belongs to a library, not to the
+game: its header and source go under `src/Lionhead/` (usually `LH3DLib/development/`), never
+`src/Black/`. Game-side headers include it by its full path (`<Lionhead/LH3DLib/development/...>`).
+
 ## Key Data Files
 
 ### `config/BW1W120/symbols.txt`
@@ -500,6 +505,14 @@ further; leave the function nonmatching or ask the human about a fakematch.
 The Ninja `cl` rule has no header dependencies. After editing a header, delete the objects
 you rely on before rebuilding. For shared headers, delete every object, then compare full
 reports (`decomp-regress.py --refresh --baseline <saved report>`) before keeping the change.
+Nor does the precompiled header: after editing a header it reads, delete it as well
+(`build/<version>/src/Black/BlackPCH.pch`, `.../LH3DLib/development/LH3DLibPCH.pch`), and
+Ninja rebuilds it and every unit using it (see [`docs/msvc6_pch.md`](docs/msvc6_pch.md)).
+Game units are built with the game code's PCH unless their `configure.py` entry says
+otherwise (`pch=`); LH3DLib units use LH3DLib's with `pch=True`. Either header is forced in
+with `/FI`, never included by the source. With it, `cl` lays out a unit's uninitialised
+statics in reverse order of their first mention, not by name hash: order the definitions, or
+initialise to zero, rather than picking names or adding filler statics.
 
 ### Signatures, function boundaries and layouts
 
@@ -510,7 +523,7 @@ Each function and global declaration in a header carries an address comment:
 // BW1W120 0054cbd0 BW1M119 010cca10
 // BW1W120 00c386e0 BW1M119 011d0df8 (LHCombined Release)
 // BW1W120 0051f180 BW1M119 inlined
-// BW1W120 null BW1WCI 00401830 BW1M119 null
+// BW1WCI 00401830 BW1MCI119 null
 ```
 
 The Mac address comes from `config/BW1M119/symbols.txt`, or from a module's own

@@ -6,8 +6,9 @@
 
 #include "CreatureMental.h"
 
-CreatureMental*       CreatureMentalEditor::Mind;
-CreatureMentalEditor* CreatureMentalEditor::Instance;
+TOWN_DESIRE_INFO      CreatureMentalEditor::TownDesireBeingHelped = TOWN_DESIRE_INFO_NONE;
+CreatureMental*       CreatureMentalEditor::Mind = NULL;
+CreatureMentalEditor* CreatureMentalEditor::Instance = NULL;
 
 void CreatureMentalEditor::InitialiseIcons() {}
 

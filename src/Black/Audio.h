@@ -23,17 +23,20 @@ enum IMPACT_SOUND_LEVEL
 enum IMPACT_SOUND_HITTER
 {
 	IMPACT_SOUND_HITTER_ABODE = 19,
+	IMPACT_SOUND_HITTER_TREE_RUSTLE = 20,
 	IMPACT_SOUND_HITTER_STONE = 22,
 };
 
 enum IMPACT_SOUND_TARGET
 {
 	IMPACT_SOUND_TARGET_BUILDING = 9,
+	IMPACT_SOUND_TARGET_TREE = 10,
 	IMPACT_SOUND_TARGET_GROUND = 16,
 };
 
 enum IMPACT_SOUND_EVENT
 {
+	IMPACT_SOUND_EVENT_TREE_RUSTLE = 70,
 	IMPACT_SOUND_EVENT_ABODE_NIGHT = 71,
 	IMPACT_SOUND_EVENT_ABODE_AFTERNOON = 72,
 	IMPACT_SOUND_EVENT_ABODE_MORNING = 73,
@@ -222,6 +225,10 @@ public:
 	void StoreMusicStyleChunks();
 	// BW1W120 00428230 BW1M119 011832d0
 	void StartScriptMusic(MUSIC_TYPE type);
+#ifdef VERSION_BW1WCI
+	// BW1WCI 00429510 BW1M119 null
+	void StartScriptMusic(MUSIC_TYPE type, unsigned long start_chunk);
+#endif
 	// BW1W120 00428250 BW1M119 01183210
 	void RegistrySetup();
 	// BW1W120 004282b0 BW1M119 01183160
@@ -310,19 +317,19 @@ public:
 	// BW1W120 0042a370 BW1M119 011876f0
 	void ReleaseSFXBanks();
 	// BW1W120 00429d60 BW1M119 010001c0
-	void PlaySoundEffect(Base* object, uint32_t sample, uint32_t priority, uint32_t volume, int distance,
-	                     int positional, AUDIO_SFX_BANK_TYPE bank_type);
+	void PlaySoundEffect(Base* object, uint32_t sample, uint32_t play_type, uint32_t loop_count, bool32_t doppler,
+	                     bool32_t positional, AUDIO_SFX_BANK_TYPE bank_type);
 	// BW1W120 00429da0 BW1M119 01000240
-	void PlaySoundEffect(Base* object, unsigned long sample, unsigned long priority, unsigned long volume, int distance,
-	                     int positional, LH_AudioBank* bank);
+	void PlaySoundEffect(Base* object, unsigned long sample, unsigned long play_type, unsigned long loop_count,
+	                     bool32_t doppler, bool32_t positional, LH_AudioBank* bank);
 	// BW1W120 00429e30 BW1M119 010230f0
 	void PlaySoundEffect(LH_SamplePlayOptions* options);
 	// BW1W120 0042a040 BW1M119 010004c0
-	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t priority, uint32_t volume,
-	                     int distance, int positional, LH_AudioBank* bank);
+	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t play_type, uint32_t loop_count,
+	                     bool32_t doppler, bool32_t positional, LH_AudioBank* bank);
 	// BW1W120 0042a000 BW1M119 01187f00
-	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t priority, uint32_t volume,
-	                     int distance, int positional, AUDIO_SFX_BANK_TYPE bank_type);
+	void PlaySoundEffect(Base* object, const LHPoint& pos, uint32_t sample, uint32_t play_type, uint32_t loop_count,
+	                     bool32_t doppler, bool32_t positional, AUDIO_SFX_BANK_TYPE bank_type);
 	// BW1W120 0042a4b0 BW1M119 01062bd0
 	uint32_t SamplePlayAnimEffect(void* object, float distance, long* sound, int param_4, LH_AudioBank* bank,
 	                              int param_6, float param_7, float param_8);
@@ -337,6 +344,8 @@ public:
 };
 #ifdef VERSION_BW1WCI
 static_assert(sizeof(GAudio) == 0x3fc, "Data type is of wrong size");
+#elif defined(VERSION_BW1W130)
+static_assert(sizeof(GAudio) == 0x3d8, "Data type is of wrong size");
 #else
 static_assert(sizeof(GAudio) == 0x3d4, "Data type is of wrong size");
 #endif

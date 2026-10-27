@@ -49,6 +49,8 @@ public:
 	static int alignment;
 	// BW1W120 00edc374 BW1M119 null (LHCombined Release)
 	static int fade;
+	// BW1W120 00836200 BW1M119 0100a500 (LHCombined Release)
+	static void Render3DFinal();
 	// BW1W120 00edd378 BW1M119 013453e8 (LHCombined Release)
 	static LHPoint moonpos;
 	// BW1W120 inlined BW1M119 0101a070

@@ -390,7 +390,7 @@ void GPlayer::ClaimTown(Town* town)
 			options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
 			options.SampleNumber = LH_SAMPLE_G_TAKEOVERTOWN_01;
 			options.AttachedObject = NULL;
-			options.Positional = 0;
+			options.Positional = false;
 			GGlobal::Global.audio->PlaySoundEffect(&options);
 		}
 	}
@@ -1210,12 +1210,12 @@ LH3DColor GPlayer::GetPlayer3DColor()
 	return colour;
 }
 
-void GPlayer::MakeCreatureEmpathiseWithPlayer(CREATURE_DESIRES desire, const MapCoords& pos)
+void GPlayer::MakeCreatureEmpathiseWithPlayer(CREATURE_DESIRE_SOURCE source, const MapCoords& pos)
 {
 	Creature* creature = this->creature.Get();
 	if (creature != NULL && creature->CanSeePos(pos))
 	{
-		creature->mind->EmpathiseWithPlayer(desire);
+		creature->mind->EmpathiseWithPlayer(source);
 	}
 }
 

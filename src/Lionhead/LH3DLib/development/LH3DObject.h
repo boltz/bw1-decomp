@@ -19,9 +19,13 @@ struct LH3DMesh;
 struct LHBoundingBox;
 struct LHPoint;
 
+// The materials an object drawn with DrawTriangleFastBlending can blend into, one per primitive.
+#define LH3D_OBJECT_FAST_BLENDING_MATERIALS 256
+
 enum LH3D_OBJECT_FLAGS2
 {
 	LH3D_OBJECT_FLAGS2_OUT_OF_MAP = 0x40,
+	LH3D_OBJECT_FLAGS2_NEED_CLIPPING = 0x80,
 	LH3D_OBJECT_FLAGS2_NO_BUILD_OUTLINE = 0x200,
 };
 
@@ -53,14 +57,14 @@ public:
 	unsigned long specular;
 	LH3DColor     WindowColor;
 	int           SnowLevel;
-	int           field_0x5c;
-	uint32_t      field_0x60;
+	int           MaxSnowLevel;
+	int           SnowLevelScale;
 	bool32_t      DrawAsFence;
 	float         u;
 	float         v;
 	LH3DObject*   next;
 	uint32_t      field_0x74;
-	uint8_t       field_0x78;
+	uint8_t       Alpha;
 
 	// Static data
 
@@ -90,15 +94,18 @@ public:
 	static bool g_env_map_tex_color_env_alpha;
 	// BW1W120 00ea1b08 BW1M119 012b1ec0 (LHCombined Release)
 	static float g_env_map_z_rot;
+	// BW1W120 00ea1a88 BW1M119 012b1ef4 (LHCombined Release)
+	static int g_count_static_object;
+	// BW1W120 00e9fe84 BW1M119 012b1ac0 (LHCombined Release)
+	static LH3DMaterial* g_fb_list_mat[LH3D_OBJECT_FAST_BLENDING_MATERIALS];
 
 	// Virtual functions
 
-	virtual bool32_t IsPreSetup(); /* 0x0 */
-	// TODO: original name unrecovered; frees the object and takes no arguments.
+	virtual bool32_t        IsPreSetup();
 	virtual void            Release();
 	virtual float           GetU();
 	virtual float           GetV();
-	virtual void __fastcall SetPaper(int param_1); /* 0x10 */
+	virtual void __fastcall SetPaper(bool32_t paper);
 	virtual bool32_t        IsPaper();
 	virtual void            SetNoSnow(int param_1);
 	virtual bool32_t        IsNoSnow();
@@ -149,7 +156,7 @@ public:
 	virtual bool32_t            IsDrawWithGlobalAlpha();
 	virtual void __fastcall     SetLinked(int param_1);
 	virtual bool32_t            IsLinked();
-	virtual void __fastcall     SetDynamicLighting(int param_1);
+	virtual void __fastcall     SetDynamicLighting(bool32_t dynamic_lighting);
 	virtual bool32_t            IsDynamicLighting();
 	virtual void                SetEnumFlag(int flag); /* 0x60 */
 	virtual int                 GetEnumFlag();
@@ -157,15 +164,15 @@ public:
 	virtual int                 GetSpecialLight();
 	virtual void                SetDontDraw(int param_1); /* 0x70 */
 	virtual int                 GetDontDraw();
-	virtual void __fastcall     SetCastDynamicShadow(int param_1);
+	virtual void __fastcall     SetCastDynamicShadow(bool32_t cast_dynamic_shadow);
 	virtual bool32_t            IsCastDynamicShadow();
-	virtual void __fastcall     SetShadowOnTexture(int param_1); /* 0x80 */
+	virtual void __fastcall     SetShadowOnTexture(bool32_t shadow_on_texture); /* 0x80 */
 	virtual bool32_t            IsShadowOnTexture();
-	virtual void __fastcall     SetFootPrintOnTexture(int param_1);
+	virtual void __fastcall     SetFootPrintOnTexture(bool32_t foot_print_on_texture);
 	virtual bool32_t            IsFootPrintOnTexture();
-	virtual void __fastcall     SetShadowOnTextureChroma(int param_1); /* 0x90 */
+	virtual void __fastcall     SetShadowOnTextureChroma(bool32_t shadow_on_texture_chroma); /* 0x90 */
 	virtual bool32_t            IsShadowOnTextureChroma();
-	virtual void __fastcall     SetDisappear(int param_1);
+	virtual void __fastcall     SetDisappear(bool32_t disappear);
 	virtual bool32_t            IsDisappear();
 	virtual void __fastcall     SetNeedClipping(int value); /* 0xa0 */
 	virtual bool32_t            IsNeedClipping();
@@ -216,6 +223,10 @@ public:
 	virtual void                DrawFizz(float param_1, LH3DMaterial* material);
 	virtual void                DrawFroz();
 	virtual void                DrawFroz(float param_1, uint32_t param_2, LH3DMaterial* material);
+#ifdef VERSION_BW1WCI
+	virtual void CreatureIsleVirtual0x164(uint32_t param_1, uint32_t param_2, uint32_t param_3, uint32_t param_4,
+	                                      uint32_t param_5, uint32_t param_6);
+#endif
 	virtual void                DrawTextureShadow(uint32_t param_1, uint32_t param_2);
 	virtual void                DrawTextureShadow32x32(void* param_1);
 	virtual void                DrawMorphLand();
@@ -271,6 +282,10 @@ public:
 
 	// BW1W120 0080b4d0 BW1M119 0107fb80 (LHCombined Release)
 	static LH3DObject* __fastcall Create(ObjectType object_type);
+	// BW1W120 0080bbd0 BW1M119 0107f910 (LHCombined Release)
+	static bool32_t Open();
+	// BW1W120 0080bd70 BW1M119 0107f750 (LHCombined Release)
+	static bool32_t Close();
 
 	// Constructors
 

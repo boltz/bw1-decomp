@@ -13,12 +13,15 @@
 enum COLLIDE_TYPE
 {
 	COLLIDE_TYPE_NONE = 0x0,
+	COLLIDE_TYPE_WATER = 0x1,
 	COLLIDE_TYPE_FIXED = 0x8,
+	COLLIDE_TYPE_OFF_MAP = 0x10,
 };
 
 // Forward Declares
 
 class Citadel;
+class Creature;
 class Game3DObject;
 class GameThingWithPos;
 struct LH3DColor;
@@ -59,6 +62,8 @@ struct JustMapXZ
 	void Init(MapCell* cell);
 	// BW1W120 005e1860 BW1M119 01024c60
 	bool32_t InBounds();
+	// BW1W120 005e1890 BW1M119 011086b0
+	bool32_t InExplorationMapBounds();
 	// BW1W120 005e1950 BW1M119 0102d000
 	MapCell* ToMap() const;
 };
@@ -222,6 +227,10 @@ struct MapCoords : public LH3DMapCoords
 	LHPoint GetLHPoint() const;
 	// BW1W120 00605cd0 BW1M119 01053320
 	float GetDistance(const MapCoords& other) const;
+	// BW1W120 006057b0 BW1M119 0106b8f0
+	float GetAlignment() const;
+	// BW1W120 00605250 BW1M119 011ab0a0
+	Object* IsWithinBuilingSite();
 	// BW1W120 00605fb0 BW1M119 01034c00
 	float GetMetresDistanceSq(const MapCoords& param_2) const;
 	// BW1W120 inlined BW1M119 010ea620
@@ -249,6 +258,41 @@ struct MapCoords : public LH3DMapCoords
 	int Collide(COLLIDE_TYPE type) const;
 	// BW1W120 00603830 BW1M119 01083f60
 	GPlayer* CalculateMostInfluentialPlayer() const;
+	// BW1W120 00602c70 BW1M119 0150df90
+	bool32_t DoesRegionContainHill();
+	// BW1W120 00604d70 BW1M119 01162520
+	bool32_t DoesRegionContainCitadel();
+	// BW1W120 00604da0 BW1M119 0116fd30
+	bool32_t DoesRegionContainTown();
+	// BW1W120 00604dd0 BW1M119 01391a00
+	bool32_t DoesRegionContainField();
+	// BW1W120 00604de0 BW1M119 0156dc50
+	bool32_t DoesRegionContainForest();
+	// BW1W120 00604e10 BW1M119 011c5380
+	bool32_t DoesRegionContainCoast();
+	// BW1W120 00604e20 BW1M119 011ca5e0
+	bool32_t DoesRegionContainWater();
+	// BW1W120 00604e30 BW1M119 011c79a0
+	bool32_t DoesRegionContainLand();
+	// BW1W120 00604e40 BW1M119 01575a00
+	bool32_t GetExactMapSquareForCitadel();
+	// BW1W120 00604e70 BW1M119 01572ac0
+	bool32_t GetExactMapSquareForHill();
+	// BW1W120 00604eb0 BW1M119 015751c0
+	bool32_t GetExactMapSquareForTown();
+	// BW1W120 00604ee0 BW1M119 01575230
+	bool32_t GetExactMapSquareForField();
+	// BW1W120 00604ef0 BW1M119 0138a100
+	bool32_t GetExactMapSquareForForest();
+	// BW1W120 00604f20 BW1M119 01391a70
+	bool32_t GetExactMapSquareForCoast();
+	// BW1W120 00604f30 BW1M119 0156dbe0
+	bool32_t GetExactMapSquareForWater();
+	// BW1W120 00605870 BW1M119 015364a0
+	bool32_t GetClearAreaForActivity(Creature* creature, MapCoords* result, float search_radius, float radius,
+	                                 bool32_t avoid_living);
+	// BW1W120 006059a0 BW1M119 0151a8c0
+	static bool32_t IsSquareClearForActivity(Creature* creature, long x, long z, bool32_t avoid_living);
 };
 
 #pragma inline_depth(2)

@@ -245,7 +245,7 @@ void Villager::DeleteDependancys()
 	{
 		SetTopState(VILLAGER_STATE_SET_DYING);
 	}
-	if ((uint8_t)GetTopState() != VILLAGER_STATE_MOVE_ON_PATH && footpath_node != NULL &&
+	if (GetTopState() != VILLAGER_STATE_MOVE_ON_PATH && footpath_node != NULL &&
 	    footpath_node->followers.IsThisInList(this))
 	{
 		footpath_node->followers.Remove(this);
@@ -1928,9 +1928,9 @@ uint32_t Villager::ApplyThisToObject(GInterfaceStatus* status, Object* object, G
 			options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
 			options.SampleNumber = LH_SAMPLE_G_SACRIFICE_01;
 			options.AttachedObject = this;
-			options.Positional = 1;
+			options.Positional = true;
 			options.Pos = soundPos;
-			options.Looping = 0;
+			options.Follow = false;
 			GGlobal::Global.audio->PlaySoundEffect(&options);
 			if (IsChild())
 			{
@@ -2108,7 +2108,7 @@ uint16_t Villager::GetResourceFrom(Object* object, RESOURCE_TYPE resource_type, 
 	if (got != 0)
 	{
 		PickupResource(resource_type, got, object->GetCarriedTreeType());
-		if ((uint8_t)object->IsSpeedUp())
+		if (object->IsSpeedUp())
 		{
 			SetFoodSpeedup(true);
 		}

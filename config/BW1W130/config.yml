@@ -83,6 +83,92 @@ block_relocations:
   - source: 0x005C41F6
 
 add_relocations:
+# LH3DTech's front-facing tests: the triangle's g_cache_t_points entries (dtk leaves the lea displacement
+# unrelocated).
+  - source: 0x0081FB5C
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0081FB62
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0081FB79
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0081FBCE
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0081FBD4
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0081FBEB
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821099
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008210A8
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x008210B7
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821661
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821670
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x0082167F
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821D62
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821D71
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+  - source: 0x00821D80
+    type: x86_abs32
+    target: '?g_cache_t_points@LH3DTech@@2PAUVertex3D@@A'
+# LH3DRender's tilling helpers: the stage's D3DTSS_ADDRESS cache entry (dtk leaves the displacement unrelocated).
+  - source: 0x00835073
+    type: x86_abs32
+    target: '?g_texture_stage_state@LH3DRender@@2PAY0BAA@IA'
+    addend: 0x30
+  - source: 0x008350AC
+    type: x86_abs32
+    target: '?g_texture_stage_state@LH3DRender@@2PAY0BAA@IA'
+    addend: 0x30
+  - source: 0x008350EC
+    type: x86_abs32
+    target: '?g_texture_stage_state@LH3DRender@@2PAY0BAA@IA'
+    addend: 0x30
+# LH3DRender::Close2TexStuff and ResetAllState: loop bounds one past the end of an array.
+  - source: 0x00831805
+    type: x86_abs32
+    target: '?g_stateblock2tex@LH3DRender@@2PAULH3DStateBlock2Tex@@A'
+    addend: 0x40
+  - source: 0x00831B33
+    type: x86_abs32
+    target: '?g_original_render_states@@3PAIA'
+    addend: 0x400
+# LH3DRender::FinishFrame: loop bounds one past the end of an array (dtk reads them as the next symbol).
+  - source: 0x00834759
+    type: x86_abs32
+    target: '?g_list_vertex@BackgroundBox@@2PAUVertex3D@@A'
+    addend: 0x88
+  - source: 0x008347DC
+    type: x86_abs32
+    target: '?g_list_vertex@BackgroundBox@@2PAUVertex3D@@A'
+    addend: 0x88
+  - source: 0x00834900
+    type: x86_abs32
+    target: '?cache@FontCache@@2PAUCacheEntry@@A'
+    addend: 0x4000
+  - source: 0x00834941
+    type: x86_abs32
+    target: '?page@FontCache@@2PAUCachePage@@A'
+    addend: 0x4B9
 # CarriedObject::Reset: loop bound one past the end of Objects (dtk reads it as the next address).
   - source: 0x004633BC
     type: x86_abs32
@@ -496,31 +582,31 @@ add_relocations:
     addend: -0x20
   - source: 0x00754D73
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x80
   - source: 0x00754DBB
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x80
   - source: 0x00754F28
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x60
   - source: 0x0075969A
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x30
   - source: 0x0075970A
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x40
   - source: 0x0075B387
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x70
   - source: 0x0075B439
     type: x86_abs32
-    target: '?g_VillagerStateTable@@3PAU?$LivingStateTableEntry@VVillager@@@@A'
+    target: '?StateTable@VillagerStateTableEntry@@2PAU1@A'
     addend: 0x70
   - source: 0x007546B7
     type: x86_abs32

@@ -34,10 +34,12 @@ static float unused;
 #include <chlasm/LHSample.h>
 #include <chlasm/ScriptSfxEnum.h>
 
-#if defined(VERSION_BW1W100)
+#if defined(VERSION_BW1W100) || defined(VERSION_BW1WCI)
 #define PSYS_PROPERTIES_FILE "C:\\dev\\black\\PSysProperties.cpp"
 #elif defined(VERSION_BW1W110)
 #define PSYS_PROPERTIES_FILE "C:\\dev\\Black\\PSysProperties.cpp"
+#elif defined(VERSION_BW1W130)
+#define PSYS_PROPERTIES_FILE "D:\\Work\\Games\\dd\\Black\\PSysProperties.cpp"
 #else
 #define PSYS_PROPERTIES_FILE "C:\\dev\\MP\\Black\\PSysProperties.cpp"
 #endif
@@ -1793,10 +1795,16 @@ void LandscapeCollide::DefineProperties(PropertyList* list)
 // reference. That tie-break also depends on how many symbols are declared before RegisterModifiers;
 // the parameters pad the count for each version.
 #if defined(VERSION_BW1W100)
-static std::string EmptyString()
+static std::string EmptyString(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8,
+                               int arg9, int arg10, int arg11, int arg12, int arg13)
 {
 	std::string text[1];
 	return text[0];
+}
+#elif defined(VERSION_BW1W130) || defined(VERSION_BW1WCI)
+static void EmptyString(int arg0, int arg1, int arg2, int arg3, int arg4)
+{
+	std::string text;
 }
 #else
 static void EmptyString(int arg0)

@@ -63,6 +63,14 @@ class Villager;
 class WayPoint;
 class WeatherThing;
 class Whale;
+#ifdef VERSION_BW1WCI
+class Abode;
+class Cannon;
+class Die;
+class Dolphin;
+class GBaseOnly;
+class SpotVisualAlex;
+#endif
 
 class GlobalGameLists : public Base
 {
@@ -108,15 +116,27 @@ public:
 	LHLinkedList<Object*>           objects;
 	LHLinkedList<Tree*>             trees;
 	LHListHead<BigForest>           BigForests;
-	LHListHead<GBaseInfo>           BaseInfos;
-	LHLinkedList<GClimate*>         climates;
-	LHLinkedList<TownCentre*>       TownCentres;
-	LHListHead<Whale>               whales;
-	LHListHead<FireFly>             FireFlies;
-	LHListHead<PuzzleGame>          puzzle_game;
-	LHListHead<GameThing>           GameThings;
-	LHLinkedList<TownArtifact*>     TownArtifacts;
-	LHLinkedList<Fragment*>         fragments;
+#ifdef VERSION_BW1WCI
+	LHListHeadTail<GBaseInfo> BaseInfos;
+#else
+	LHListHead<GBaseInfo> BaseInfos;
+#endif
+	LHLinkedList<GClimate*>     climates;
+	LHLinkedList<TownCentre*>   TownCentres;
+	LHListHead<Whale>           whales;
+	LHListHead<FireFly>         FireFlies;
+	LHListHead<PuzzleGame>      puzzle_game;
+	LHListHead<GameThing>       GameThings;
+	LHLinkedList<TownArtifact*> TownArtifacts;
+	LHLinkedList<Fragment*>     fragments;
+#ifdef VERSION_BW1WCI
+	LHListHead<Die>            dice;
+	LHListHead<Dolphin>        dolphins;
+	LHLinkedList<GBaseOnly*>   BaseOnlys;
+	LHListHead<Cannon>         cannons;
+	LHLinkedList<Abode*>       abodes;
+	LHListHead<SpotVisualAlex> SpotVisualAlexes;
+#endif
 
 	// Override methods
 

@@ -60,30 +60,25 @@ public:
 	// BW1W120 10008350 BW1M119 0116ef10 (LHCombined Release)
 	~LHVersion();
 
-#ifdef _LH_MULTIPLAYER_LIB_
 	// BW1W120 10002740 BW1M119 null
 	static char* GetModuleChecksumString() { return ModuleChecksumString; }
-#else
-	// BW1W120 10002740 BW1M119 null
-	static char* GetModuleChecksumString();
-#endif
 	// BW1W120 10002750 BW1M119 null
 	static unsigned long GetModuleChecksum() { return ModuleChecksum; }
 
 	// BW1W120 10006b20 BW1M119 0116f660 (LHCombined Release)
-	static unsigned long ChecksumBlock(unsigned char* block, unsigned short length);
+	static unsigned long ChecksumBlock(uint8_t* block, uint16_t length);
 	// BW1W120 10006b70 BW1M119 0116f350 (LHCombined Release)
-	static void DecryptBlock(unsigned char* block, unsigned short length);
+	static void DecryptBlock(uint8_t* block, uint16_t length);
 	// BW1W120 10006ba0 BW1M119 0116f180 (LHCombined Release)
-	static void EncryptBlock(unsigned char* block, unsigned short length);
+	static void EncryptBlock(uint8_t* block, uint16_t length);
 	// BW1W120 100070b0 BW1M119 0116f8a0 (LHCombined Release)
 	static void SetModuleChecksumString(char* string);
 	// BW1W120 10007160 BW1M119 0116f700 (LHCombined Release)
-	int CopyrightDialogProc(HWND__* hwnd, unsigned int msg, unsigned int wparam, long lparam);
+	int CopyrightDialogProc(HWND__* hwnd, uint32_t msg, uint32_t wparam, long lparam);
 	// BW1W120 10007eb0 BW1M119 0116f950 (LHCombined Release)
 	static void SetModuleChecksumError();
 	// BW1W120 10008510 BW1M119 0116ec50 (LHCombined Release)
-	static int VersionDialogProc(HWND__* hwnd, unsigned int msg, unsigned int wparam, long lparam);
+	static int VersionDialogProc(HWND__* hwnd, uint32_t msg, uint32_t wparam, long lparam);
 	// BW1W120 10008760 BW1M119 0116ebb0 (LHCombined Release)
 	static LH_RETURN GetMajorMinor(char* module, unsigned long* major, unsigned long* minor);
 	// BW1W120 100087a0 BW1M119 0116eaa0 (LHCombined Release)
@@ -113,22 +108,20 @@ private:
 	// BW1W120 10008420 BW1M119 0116eca0 (LHCombined Release)
 	static void RepopulateList(HWND__* hwnd, unsigned long state);
 
-#ifdef _LH_MULTIPLAYER_LIB_
 public:
-	// BW1W120 10028be0 BW1M119 null
+	// BW1W120 10028be0 BW1M119 01389550 (LHCombined Release)
 	static int VersionDialogRunning;
 
 private:
-	// BW1W120 10028be4 BW1M119 null
+	// BW1W120 10028be4 BW1M119 01389554 (LHCombined Release)
 	static unsigned long CurrentListState;
-	// BW1W120 10028be8 BW1M119 null
+	// BW1W120 10028be8 BW1M119 01389560 (LHCombined Release)
 	static LHLinkedList<LHVersion*>* VersionInfo;
-	// BW1W120 10028bf0 BW1M119 null
+	// BW1W120 10028bf0 BW1M119 01389558 (LHCombined Release)
 	static char* ModuleChecksumString;
-#endif
 
 private:
-	// BW1W120 10028bec BW1M119 null
+	// BW1W120 10028bec BW1M119 0138955c (LHCombined Release)
 	static unsigned long ModuleChecksum;
 
 	LHVersionBlock* Block;
@@ -143,7 +136,7 @@ private:
 #define LH_VERSION_BUILD     "RELEASE"
 #define LH_VERSION_NONE      "NULL"
 
-#define LH_VERSION_INFO(name, major, minor, author, date, expiry, comments)                                            \
+#define LH_VERSION_INFO_STORAGE(name, major, minor, author, date, expiry, comments, pointer)                           \
 	static LHVersionBlock VersionBlock = {LH_VERSION_START_TAG,                                                        \
 	                                      LH_VERSION_BUILD,                                                            \
 	                                      name,                                                                        \
@@ -158,6 +151,12 @@ private:
 	                                      "",                                                                          \
 	                                      LH_VERSION_END_TAG};                                                         \
 	static LHVersion      VersionInformation(&VersionBlock);                                                           \
-	static LHVersion*     VersionPointer = &VersionInformation
+	pointer = &VersionInformation
+
+#define LH_VERSION_INFO(name, major, minor, author, date, expiry, comments)                                            \
+	LH_VERSION_INFO_STORAGE(name, major, minor, author, date, expiry, comments, static LHVersion* VersionPointer)
+
+#define LH_VERSION_INFO_NAMED(pointer_name, name, major, minor, author, date, expiry, comments)                        \
+	LH_VERSION_INFO_STORAGE(name, major, minor, author, date, expiry, comments, LHVersion* pointer_name)
 
 #endif /* BW1_DECOMP_LH_VERSION_INCLUDED_H */

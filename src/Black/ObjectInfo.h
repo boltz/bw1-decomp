@@ -58,6 +58,9 @@ public:
 	float                 ArtifactMultiplier;
 	float                 DrawImportance;
 	float                 ComputerAttackDesire;
+#ifdef VERSION_BW1WCI
+	float RestSpeedMultiplier;
+#endif
 
 	// Static data
 
@@ -88,12 +91,20 @@ public:
 	// Non-virtual methods
 
 	// BW1W120 00638c40 BW1M119 013dbff0
-	bool32_t IsOkToCreateAtPos(const MapCoords& coords, float param_2, float param_3) const;
+	bool32_t IsOkToCreateAtPos(const MapCoords& coords, float y_angle, float scale) const;
 	// BW1W120 00636e30 BW1M119 013dff10
 	float GetMesh2DRadius(float scale) const;
+#ifdef VERSION_BW1WCI
+	// BW1WCI inlined BW1M119 null
+	float GetRestSpeedMultiplier() const { return RestSpeedMultiplier; }
+#endif
 
 	// Out of line: LoadBinary at 0042ea60, Load at 0042e980.
+#ifdef VERSION_BW1WCI
+	INFO_DATA_BLOCK(type, RestSpeedMultiplier)
+#else
 	INFO_DATA_BLOCK(type, ComputerAttackDesire)
+#endif
 	INFO_ROOT_LOADERS_UNTAGGED()
 };
 

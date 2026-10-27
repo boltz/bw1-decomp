@@ -10,7 +10,7 @@
 #include "CreatureMentalDesire.h"
 #include "CreaturePlan.h"
 
-#if defined(VERSION_BW1W100)
+#if defined(VERSION_BW1W100) || defined(VERSION_BW1WCI)
 #define FILEPATH "C:\\dev\\black\\CreatureAttitudeToCreature.cpp"
 #elif defined(VERSION_BW1W110)
 #define FILEPATH "C:\\dev\\Black\\CreatureAttitudeToCreature.cpp"
@@ -63,7 +63,7 @@ void CreatureMental::UpdateHowNiceIsCreature(Creature* other_creature, float nic
 		CLAMP(attitude->HowNice, -1.0f, 1.0f);
 	}
 
-	CreatureBelief*  belief = AddBeliefAboutObject(creature, other_creature);
+	CreatureBelief*  belief = AddBeliefAboutObject(creature.Get(), other_creature);
 	unsigned long    lessonCount = 0;
 	CREATURE_DESIRES desireToEncourage;
 	CREATURE_DESIRES desireToDiscourage;
@@ -78,18 +78,18 @@ void CreatureMental::UpdateHowNiceIsCreature(Creature* other_creature, float nic
 		desireToDiscourage = CREATURE_DESIRE_ANGER;
 	}
 
-	CreaturePlan    encouragedPlan(desireToEncourage,
-	                               (CREATURE_ACTION)CreatureDesireActionEntry::GetInfo()[desireToEncourage].Actions[0],
-	                               belief, belief, belief, 1.0f);
-	CreatureContext encouragedContext(creature, encouragedPlan, INVALID_CREATURE_DESIRE_SOURCE, 0, ContextBelief);
+	CreaturePlan encouragedPlan(desireToEncourage, CreatureDesireActionEntry::GetInfo()[desireToEncourage].Actions[0],
+	                            belief, belief, belief, 1.0f);
+	CreatureContext encouragedContext(creature.Get(), encouragedPlan, INVALID_CREATURE_DESIRE_SOURCE, 0, ContextBelief);
 	LearnParticularLessonFromFeedback(encouragedContext, 0.5f, LESSON_TYPE_ACTIVITY_OBJECT, 1, &lessonCount,
 	                                  LESSON_ORIGIN_TYPE_DIRECT_PLAYER_FEEDBACK);
 	encouragedContext.CleanUp();
 
-	CreaturePlan discouragedPlan(desireToDiscourage,
-	                             (CREATURE_ACTION)CreatureDesireActionEntry::GetInfo()[desireToDiscourage].Actions[0],
-	                             belief, belief, belief, 1.0f);
-	CreatureContext discouragedContext(creature, discouragedPlan, INVALID_CREATURE_DESIRE_SOURCE, 0, ContextBelief);
+	CreaturePlan    discouragedPlan(desireToDiscourage,
+	                                CreatureDesireActionEntry::GetInfo()[desireToDiscourage].Actions[0], belief, belief,
+	                                belief, 1.0f);
+	CreatureContext discouragedContext(creature.Get(), discouragedPlan, INVALID_CREATURE_DESIRE_SOURCE, 0,
+	                                   ContextBelief);
 	LearnParticularLessonFromFeedback(discouragedContext, -0.5f, LESSON_TYPE_ACTIVITY_OBJECT, 1, &lessonCount,
 	                                  LESSON_ORIGIN_TYPE_DIRECT_PLAYER_FEEDBACK);
 	discouragedContext.CleanUp();

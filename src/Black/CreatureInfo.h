@@ -4,7 +4,7 @@
 #include <assert.h> /* For static_assert */
 #include <stdint.h> /* For uint32_t */
 
-#include <chlasm/CreatureEnum.h> /* For CREATURE_TYPE_LAST */
+#include <chlasm/CreatureEnum.h> /* For CREATURE_TYPE_LAST, THING_TO_LOOK_AT_TYPE_LAST */
 
 #include "LivingInfo.h"  /* For struct GLivingInfo */
 #include "InfoLoaders.h" /* For INFO_DATA_BLOCK */
@@ -22,8 +22,9 @@ public:
 	uint32_t field_0x208;
 	float    field_0x20c;
 	uint32_t field_0x210;
-	float    field_0x214[0x11];
-	float    RunSpeed; /* 0x258 */
+	float    field_0x214[0x10];
+	float    WalkSpeed; /* 0x254 */
+	float    RunSpeed;  /* 0x258 */
 	float    field_0x25c[0x3];
 	uint32_t field_0x268;
 	uint32_t field_0x26c;
@@ -33,15 +34,31 @@ public:
 	float    MinDesireIncreaseTime;
 	float    MaxDesireIncreaseTime;
 	uint32_t field_0x284;
-	float    field_0x288[0x8];
-	uint32_t field_0x2a8;
-	float    field_0x2ac[0x9];
+	float    field_0x288[0x6];
+	float    WatchingFeedback;
+	float    MinFeedback;
+	uint32_t ActionNoveltyTurns;
+	float    field_0x2ac[0x6];
+	float    DistancePriorityRange;
+	float    CarriedObjectDistancePriority;
+	float    field_0x2cc;
 	float    MaxDesireLevelFeedbackScale;
 	float    field_0x2d4[0x2];
 	float    SecondsBeforeReactingToSameCreatureAgain;
-	float    field_0x2e0[0x19];
+	float    field_0x2e0[0x16];
+	float    EmpathySourceIncrease; /* 0x338 */
+	float    field_0x33c[0x2];
 	uint32_t field_0x344;
-	float    MaxAlignmentChangePerGameTurn[0xf];
+	float    MaxAlignmentChangePerGameTurn;
+	float    field_0x34c;
+	float    InnateNiceness; /* 0x350 */
+	float    InnateAggression;
+	float    InnateLethargy;
+	float    InnateFriendliness;
+	float    InnateCommunicativeness; /* 0x360 */
+	float    InnateExtroversion;
+	float    InterestInThingToLookAt[THING_TO_LOOK_AT_TYPE_LAST];
+	float    field_0x374[0x4];
 	float    AlignmentChangeScale; /* 0x384 */
 	float    field_0x388[0x3];
 

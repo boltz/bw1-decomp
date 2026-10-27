@@ -187,12 +187,18 @@ config.lld_link_tag = "bw1-decomp-024"
 # A "<package>:<lib>" value reads orig/libs/<package>/<lib>.lib under another id:
 # LHAudio was linked against the SP4 libcmt (Rich header build 8797) in every
 # version, including 1.20 whose runblack and LHMultiplayer use SP5's.
+# libcmt_lhlog is the libcmt LHLogR.dll linked: SP4's in 1.00 and 1.10, and in
+# 1.20, rebuilt with Visual Studio .NET 2002, that one's (Utc13_C 9466). The two
+# libraries name their objects alike, so one LibObject per object serves every
+# version that has it; VS.NET 2002 keeps the C++ exception handling ones one
+# directory up (lhlog_eh).
+lhlog_eh = "..\\build\\intel\\mt_obj\\" if config.version in ("BW1W120", "BW1W130") else "build\\intel\\mt_obj\\"
 config.static_libs = {
-    "BW1W100": {"msvcrtd": "msvc6.5", "libcmt": "msvc6.4", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.0", "amaths": "amaths-2.0"},
-    "BW1W110": {"msvcrtd": "msvc6.5", "libcmt": "msvc6.4", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.0", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
-    "BW1W120": {"msvcrtd": "msvc6.5", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
-    "BW1W130": {"msvcrtd": "msvc6.5", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
-    "BW1WCI": {"msvcrtd": "msvc6.5", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
+    "BW1W100": {"msvcrtd": "msvc6.5", "libcmt_lhlog": "msvc6.4:libcmt", "libcmt": "msvc6.4", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.0", "amaths": "amaths-2.0"},
+    "BW1W110": {"msvcrtd": "msvc6.5", "libcmt_lhlog": "msvc6.4:libcmt", "libcmt": "msvc6.4", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.0", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
+    "BW1W120": {"msvcrtd": "msvc6.5", "libcmt_lhlog": "msvc7.0:libcmt", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
+    "BW1W130": {"msvcrtd": "msvc6.5", "libcmt_lhlog": "msvc7.0:libcmt", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
+    "BW1WCI": {"msvcrtd": "msvc6.5", "libcmt_lhlog": "msvc6.4:libcmt", "libcmt": "msvc6.5", "libcmt64": "msvc6.4:libcmt", "libcpmt": "msvc6.5", "libcimt": "msvc6.0", "amaths": "amaths-2.0", "libircmt": "icc-5.0.115"},
 }[config.version]
 
 config.context_keep_dirs = [
@@ -251,11 +257,19 @@ if config.version == "BW1W100":
     # nomemory.obj 1.00 never linked at all. Likewise GJProperty's
     # Persistent::SetUniqueName and PersistenceStreamer writers: 1.00 has no
     # PSysFileData::SaveToFile, so they were dropped too, and with them the only
-    # users of PersistentOwner::IsNameUsed and typeid's ___RTtypeid.
+    # users of PersistentOwner::IsNameUsed and typeid's ___RTtypeid. Nothing
+    # calls VillagerHome's Villager::ShallIWaitForDinner either, and it is the
+    # only caller of Villager::HousewifeAskForMeal. Villager's
+    # SetGotoWorshipSpeed and CheckRequestGoHome have no callers in 1.00, so
+    # they were dropped too, with the only users of WorshipSite's
+    # GetWorshipSpeed and AddVillagerRequestingToGoHome.
     for _dead_function in [
         "?_Nomemory@std@@YAXXZ",
         "?IsNameUsed@PersistentOwner@@QAEHPBD@Z",
         "___RTtypeid",
+        "?HousewifeAskForMeal@Villager@@QAEHXZ",
+        "?GetWorshipSpeed@WorshipSite@@QAEMXZ",
+        "?AddVillagerRequestingToGoHome@WorshipSite@@QAEXPAVVillager@@@Z",
     ]:
         config.base_ldflags.append(f"/alternatename:{_dead_function}=_abort")
     # GAudio's MusicSwitch, Shutdown and bank SampleSet3DPosition wrappers have
@@ -266,6 +280,46 @@ if config.version == "BW1W100":
         "__imp_?LHSampleSet3DPosition@LH_AudioSystem@@QAEPAULH_SampleInfo@@PAVLH_AudioBank@@KKMMMH@Z",
     ]:
         config.base_ldflags.append(f"/alternatename:{_dead_import}=__imp__ExitProcess@4")
+# LHLogR.dll is the one module whose project links without /DEBUG: unlike
+# LHAudio, LHMultiplayer, LHDialog (and runblack from 1.10 on) it has no debug
+# directory in any version. Without /DEBUG, link.exe (6.0 and VS.NET 2002's 7.0
+# alike) defaults to /OPT:REF and /OPT:ICF: only the functions of its libcmt
+# objects something references are in the image, and identical ones with the
+# same COMDAT checksum share one copy (trnsctrl.obj's _CallMemberFunction1 is
+# _CallMemberFunction0). lld-link would also move string literals to the end of
+# .rdata to merge their tails. As in runblack 1.00, what only the dropped
+# functions reference is aliased onto something the DLL has; lld-link resolves
+# symbols before it discards dead code.
+_lhlog_dead_imports = {
+    # mlock.obj's _lockerr_exit, tidtable.obj's ___threadhandle, winsig.obj's signal
+    "BW1W100": ["__imp__FatalAppExitA@8", "__imp__GetCurrentThread@0", "__imp__SetConsoleCtrlHandler@8"],
+    # mlock.obj's _lockerr_exit, winsig.obj's signal, and strftime.obj's
+    # _Strftime (it is linked for its data)
+    "BW1W120": ["__imp__FatalAppExitA@8", "__imp__SetConsoleCtrlHandler@8",
+                "__imp__GetDateFormatA@24", "__imp__GetTimeFormatA@24"],
+}
+_lhlog_dead_functions = {
+    # tzset, which strftime.obj's _Strftime calls: tzset.obj is not linked
+    "BW1W100": ["___tzset"],
+    # the same tzset; the dropped setlocale and ___lc_category of setlocal.obj
+    # and __init_time of inittime.obj call into getqloc, inithelp, initctyp,
+    # initcoll and nlsdata3, which are not linked
+    "BW1W120": ["___tzset", "___ctype1", "___get_qualified_locale", "___getlocaleinfo", "___init_collate", "___init_ctype", "___lc_id"],
+}
+_lhlog_version = {"BW1W110": "BW1W100", "BW1WCI": "BW1W100", "BW1W130": "BW1W120"}.get(config.version, config.version)
+config.module_ldflags = {
+    "LHLog": [
+        "/OPT:REF",
+        "/OPT:ICF",
+        "/OPT:NOLLDTAILMERGE",
+        # dtk's padding between the DLL's own data (VS.NET 2002 aligned strings
+        # to 8) and before its import thunk: COMDATs nothing references
+        "/includeglob:gap_*",
+        "/includeglob:pad_*",
+        *(f"/alternatename:{_name}=__imp__ExitProcess@4" for _name in _lhlog_dead_imports[_lhlog_version]),
+        *(f"/alternatename:{_name}=_abort" for _name in _lhlog_dead_functions[_lhlog_version]),
+    ],
+}
 config.reconfig_deps = []
 
 # Post-link patch: applies version-specific binary fixups after linking,
@@ -329,6 +383,14 @@ icc_version = "ICC/5.0.1"
 # LH3DP3.cpp is built with Intel C++ 5.0.1, repackaged at
 # github.com/bwrsandman/icc5.0.1.010525Z and fetched like the MSVC compilers.
 config.extra_compilers = {icc_version: ("icc", "main")}
+# LHLogR.dll was rebuilt for 1.20 with Visual Studio .NET 2002: its Rich header
+# lists 18 C++ objects from cl 13.00.9466 (Utc13_CPP), where 1.00 and 1.10 used
+# VC6 SP4 (Utc12_CPP 8799) like the rest of the game. 1.30 ships the same DLL,
+# Creature Isle the 1.10 one.
+msvc70_version = "MSVC/7.0"
+lhlog_compiler_version = msvc70_version if config.version in ("BW1W120", "BW1W130") else config.linker_version
+if lhlog_compiler_version == msvc70_version:
+    config.extra_compilers[msvc70_version] = ("compilers_msvc70", "release")
 includes_project = [
     "/I", "include",
     "/I", "orig/directx7.0/include",
@@ -477,6 +539,19 @@ def MultiplayerObject(completed, name, **options):
     return Object(completed, name, cflags=cflags_multiplayer, **options)
 
 
+# LHLogR.dll: C++ exception handling (EH funclets in LHGenLog and LHVersion), no RTTI.
+cflags_lhlog = [
+    *(f.replace(config.linker_version, lhlog_compiler_version) for f in cflags_base if f != "/GR"),
+    "/GX",
+    "/DLH_LOG_EXPORTS",
+]
+# cl 7.0's PDB writer (mspdb70.dll) delay-loads RPCRT4!UuidCreate, which wibo does not
+# provide, so /Zi aborts the compile on Linux. /Z7 keeps the debug info in the object
+# instead; every other section is byte-identical to a /Zi build.
+if lhlog_compiler_version == msvc70_version:
+    cflags_lhlog = ["/Z7" if f == "/Zi" else f for f in cflags_lhlog]
+
+
 # delayimp.lib's delay-load helper, rebuilt from the source MSVC 6 ships in its include
 # directory. Microsoft built it with /O1.
 cflags_delayimp = [*(f for f in cflags_base if f not in ("/O2", "/Og", "/Ob1")), "/O1"]
@@ -496,33 +571,61 @@ def GameSpyObject(completed, name, **options):
     return Object(completed, name, source=source, cflags=cflags_gamespy, **options)
 
 
+# A precompiled header (docs/msvc6_pch.md), for an object's `pch`: `header`, built once per
+# version from `source`, which compiles nothing else (like a StdAfx.cpp), with the cflags of
+# the units using it. It is forced in with /FI, so their sources do not change. With /Yu, cl
+# emits the inline bodies of the classes it declares after the scalar deleting destructor of
+# a class derived from them, and lays out a unit's uninitialised statics in reverse order of
+# their first mention instead of in the order of their name hashes.
+def PrecompiledHeader(header, source):
+    return {"header": header, "source": source}
+
+
+gamecode_pch = PrecompiledHeader("BlackPCH.h", "src/Black/BlackPCH.cpp")
+
+
+# For a game-code object's `pch`: the precompiled header, except in the versions named, in
+# which the unit's target has no <string> while ours brings it in through GameThingWithPos.h
+# (1.20 and 1.30; the original PCH did not carry it, docs/msvc6_pch.md §3). The target shows
+# this by lacking the std::ctype<unsigned short> guard or, LoadingScreen, by calling iswspace
+# as compiled before the standard library. These units used the PCH and get it back once
+# <string> moves to the header that gave the other units the guard.
+def PCHExceptNoStringIn(*versions):
+    return config.version not in versions
+
+
+PCH_EXCEPT_NO_STRING = PCHExceptNoStringIn("BW1W120", "BW1W130")
+
+
+# Units whose sources were fitted to the .bss layout of a compile without the precompiled
+# header (filler statics, names picked by their hash, definition order) before it was
+# modeled, although their target objects do not rule it out.
+PCH_PENDING = False
+
+
 # A game-code object (Black/), compiled with cflags_gamecode (Pentium Pro, /G6)
 # instead of the plain cflags_base used for the static libraries. Per-object
-# extra_cflags still apply on top, as with Object.
-def GameCodeObject(completed, name, **options):
-    return Object(completed, name, cflags=cflags_gamecode, **options)
+# extra_cflags still apply on top, as with Object. The game was built with its
+# precompiled header in nearly every unit, so it is built with /Yu against
+# gamecode_pch unless `pch` says otherwise: False where the target objects show
+# the unit was built without it (and the /vmg units, docs/msvc6_pch.md §4),
+# PCH_EXCEPT_NO_STRING or PCHExceptNoStringIn where the <string> in ours keeps a
+# unit off it, PCH_PENDING as above.
+def GameCodeObject(completed, name, pch=True, **options):
+    return Object(completed, name, cflags=cflags_gamecode, pch=gamecode_pch if pch else None, **options)
+
+
+# LH3DLib's precompiled header. Its contents are those the units built with it need: the
+# reverse first-mention .bss order of /Yu is the only thing that reproduces their .bss.
+lh3dlib_pch = PrecompiledHeader("LH3DLibPCH.h", "src/Lionhead/LH3DLib/development/LH3DLibPCH.cpp")
 
 
 # An LH3DLib object, compiled with cflags_lh3dlib (Pentium Pro, /G6) and counted
-# in the "sdk" progress category.
-def LH3DLibObject(completed, name, **options):
+# in the "sdk" progress category. Built against lh3dlib_pch when `pch` is True.
+def LH3DLibObject(completed, name, pch=False, **options):
     options.setdefault("progress_category", "sdk")
     options.setdefault("cflags", cflags_lh3dlib)
-    return Object(completed, name, **options)
-
-
-# An LH3DLib object built against the LH3DLibPCH.h precompiled header. With /Yu,
-# cl lays out zero-initialised and dynamically initialised globals in reverse
-# order of their first mention in the unit instead of in its name-hash order,
-# and only that reproduces the .bss of these units. /Zi is left out because a
-# /Yu build with it needs the PDB that built the PCH; the code is the same.
-def LH3DLibPCHObject(completed, name, **options):
-    options.setdefault("cflags", [flag for flag in cflags_lh3dlib if flag != "/Zi"])
-    options.setdefault("pch", {
-        "header": "LH3DLibPCH.h",
-        "source": "src/Lionhead/LH3DLib/development/LH3DLibPCH.cpp",
-    })
-    return LH3DLibObject(completed, name, **options)
+    return Object(completed, name, pch=lh3dlib_pch if pch else None, **options)
 
 
 # An object built with Intel C++ 5.0 instead of MSVC. MSVC's bin stays on PATH
@@ -544,7 +647,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Abode.cpp"),
             GameCodeObject(NonMatching, "Black/AbodeInfo.cpp"),
             GameCodeObject(NonMatching, "Black/alexmfc.cpp"),
-            GameCodeObject(NonMatching, "Black/Alignment.cpp"),
+            GameCodeObject(NonMatching, "Black/Alignment.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/AlignmentInfo.cpp"),
             GameCodeObject(NonMatching, "Black/Animal.cpp"),
             GameCodeObject(NonMatching, "Black/AnimalAnimation.cpp"),
@@ -577,17 +680,17 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Arrow.cpp"),
             GameCodeObject(NonMatching, "Black/ArrowInfo.cpp"),
             GameCodeObject(NonMatching, "Black/Artifact.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Audio.cpp"),
-            GameCodeObject(NonMatching, "Black/AudioAnalyse.cpp"),
+            GameCodeObject(Matching, "Black/Audio.cpp"),
+            GameCodeObject(NonMatching, "Black/AudioAnalyse.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/AudioAtmos.cpp"),
             GameCodeObject(NonMatching, "Black/AudioMusicThing.cpp"),
             GameCodeObject(NonMatching, "Black/audiotag.cpp"),
             GameCodeObject(NonMatching, "Black/Balance.cpp"),
             GameCodeObject(NonMatching, "Black/Ball.cpp"),
             GameCodeObject(NonMatching, "Black/BallInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/Base.cpp"),
+            GameCodeObject(Matching, "Black/Base.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/BaseInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/Belief.cpp"),
+            GameCodeObject(NonMatching, "Black/Belief.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/BeliefInfo.cpp"),
             GameCodeObject(NonMatching, "Black/BigForest.cpp"),
             GameCodeObject(NonMatching, "Black/BigForestInfo.cpp"),
@@ -596,7 +699,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Bookmark.cpp"),
             GameCodeObject(NonMatching, "Black/Bubble.cpp"),
             GameCodeObject(NonMatching, "Black/BuildingSite.cpp"),
-            GameCodeObject(NonMatching, "Black/BWGameSpy.cpp"),
+            GameCodeObject(NonMatching, "Black/BWGameSpy.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/BWLan.cpp"),
             GameCodeObject(NonMatching, "Black/Camera.cpp"),
             GameCodeObject(NonMatching, "Black/CameraEditor.cpp"),
@@ -605,19 +708,19 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/CameraMode.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeCitadel.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeCtrInteract.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/CameraModeDance.cpp"),
+            GameCodeObject(Matching, "Black/CameraModeDance.cpp"),
             GameCodeObject(MatchingFor("BW1W120"), "Black/CameraModeFlyAndClick.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeFollow.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/CameraModeFollowHeading.cpp"),
+            GameCodeObject(Matching, "Black/CameraModeFollowHeading.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeFree.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeNew.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeNew1.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeNew2.cpp"),
-            GameCodeObject(NonMatching, "Black/CameraModeNew3.cpp"),
+            GameCodeObject(NonMatching, "Black/CameraModeNew3.cpp", pch=PCH_PENDING),
             GameCodeObject(MatchingFor("BW1W120"), "Black/CameraModePath.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/CameraModeScript.cpp"),
+            GameCodeObject(Matching, "Black/CameraModeScript.cpp"),
             GameCodeObject(NonMatching, "Black/CameraModeTwoObjects.cpp"),
-            GameCodeObject(Matching, "Black/CarriedObject.cpp"),
+            GameCodeObject(Matching, "Black/CarriedObject.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/CDBox.cpp"),
             GameCodeObject(NonMatching, "Black/Chain.cpp"),
             GameCodeObject(NonMatching, "Black/ChallengeRoom.cpp"),
@@ -636,25 +739,27 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/ClimateRainInfo.cpp"),
             GameCodeObject(NonMatching, "Black/Collide.cpp"),
             GameCodeObject(NonMatching, "Black/Config.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Container.cpp"),
+            GameCodeObject(Matching, "Black/Container.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/ContainerInfo.cpp"),
             GameCodeObject(NonMatching, "Black/ControlHand.cpp"),
             GameCodeObject(NonMatching, "Black/ControlMap.cpp"),
             GameCodeObject(NonMatching, "Black/Cow.cpp"),
-            GameCodeObject(NonMatching, "Black/CPUCheck.cpp"),
+            GameCodeObject(Matching, "Black/CPUCheck.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/Creature.cpp"),
             GameCodeObject(NonMatching, "Black/Creature3D.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureAction.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureActionInfo.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureActionsKnownAbout.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/CreatureAttitudeToCreature.cpp"),
+            GameCodeObject(Matching, "Black/CreatureAttitudeToCreature.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureAttitudeToPlayer.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureCommandState.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureContext.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureDatabase.cpp"),
+            GameCodeObject(Matching, "Black/CreatureDecision.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureDevelopment.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureDirectControl.cpp"),
             GameCodeObject(Matching, "Black/CreatureDump.cpp"),
+            GameCodeObject(Matching, "Black/CreatureEmpathy.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureExplorationMap.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureFace.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureHelp.cpp"),
@@ -663,7 +768,8 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/CreatureInitialLesson.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureInitialSourceInfo.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureLearning.cpp"),
-            GameCodeObject(NonMatching, "Black/CreatureLessonChooser.cpp"),
+            GameCodeObject(Matching, "Black/CreatureLeash.cpp"),
+            GameCodeObject(Matching, "Black/CreatureLessonChooser.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureLook.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMental.cpp"),
             GameCodeObject(Matching, "Black/CreatureMentalActionTests.cpp"),
@@ -671,17 +777,17 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/CreatureMentalAttribute.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalAttributeTest.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalBelief.cpp"),
-            GameCodeObject(NonMatching, "Black/CreatureMentalBeliefs.cpp"),
+            GameCodeObject(Matching, "Black/CreatureMentalBeliefs.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalDebug.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalDesire.cpp"),
-            GameCodeObject(NonMatching, "Black/CreatureMentalDesireSource.cpp"),
+            GameCodeObject(NonMatching, "Black/CreatureMentalDesireSource.cpp", pch=PCH_PENDING),
             GameCodeObject(Matching, "Black/CreatureMentalDesireSourceValues.cpp"),
             GameCodeObject(Matching, "Black/CreatureMentalDesireTests.cpp"),
             GameCodeObject(Matching, "Black/CreatureMentalEditor.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalExploration.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalLearn.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalLearnAction.cpp"),
-            GameCodeObject(NonMatching, "Black/CreatureMentalMisc.cpp"),
+            GameCodeObject(Matching, "Black/CreatureMentalMisc.cpp"),
             GameCodeObject(Matching, "Black/CreatureMentalObjectMultipliers.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalObjectTests.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureMentalSaveAndLoad.cpp"),
@@ -693,7 +799,8 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/CreaturePen.cpp"),
             GameCodeObject(NonMatching, "Black/CreaturePenInfo.cpp"),
             GameCodeObject(NonMatching, "Black/CreaturePhysical.cpp"),
-            GameCodeObject(NonMatching, "Black/CreaturePlan.cpp"),
+            GameCodeObject(Matching, "Black/CreaturePlan.cpp"),
+            GameCodeObject(Matching, "Black/CreaturePreviousActionContext.cpp"),
             GameCodeObject(Matching, "Black/CreaturePreviousContext.cpp"),
             GameCodeObject(NonMatching, "Black/CreaturePreviousLesson.cpp"),
             GameCodeObject(NonMatching, "Black/CreatureReaction.cpp"),
@@ -720,11 +827,11 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/DanceShape.cpp"),
             GameCodeObject(NonMatching, "Black/Data.cpp"),
             GameCodeObject(NonMatching, "Black/DeadTree.cpp"),
-            GameCodeObject(NonMatching, "Black/Debug.cpp"),
+            GameCodeObject(NonMatching, "Black/Debug.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/DefensiveSphere.cpp"),
             GameCodeObject(NonMatching, "Black/DialogBoxBase.cpp"),
             GameCodeObject(NonMatching, "Black/DialogBoxImmersion.cpp"),
-            GameCodeObject(NonMatching, "Black/DialogBoxKeyBinding.cpp"),
+            GameCodeObject(NonMatching, "Black/DialogBoxKeyBinding.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/DialogBoxMain.cpp"),
             GameCodeObject(NonMatching, "Black/DialogBoxOptions.cpp"),
             GameCodeObject(NonMatching, "Black/DialogBoxSaveMessage.cpp"),
@@ -735,7 +842,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/EditorAnim.cpp"),
             GameCodeObject(NonMatching, "Black/EditorHug.cpp"),
             GameCodeObject(NonMatching, "Black/EditorIcon.cpp"),
-            GameCodeObject(NonMatching, "Black/EditorIconBase.cpp"),
+            GameCodeObject(NonMatching, "Black/EditorIconBase.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/EditorIconGraph.cpp"),
             GameCodeObject(NonMatching, "Black/EditorIconPDM.cpp"),
             GameCodeObject(NonMatching, "Black/EditorIconPlace.cpp"),
@@ -759,7 +866,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/FishFarm.cpp"),
             GameCodeObject(NonMatching, "Black/FishFarmInfo.cpp"),
             # EndPhysics passes a 16-byte member-function pointer to MapCoords::FindObject.
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Fixed.cpp", extra_cflags=["/vmg"]),
+            GameCodeObject(Matching, "Black/Fixed.cpp", extra_cflags=["/vmg"], pch=False),
             GameCodeObject(NonMatching, "Black/Flock.cpp"),
             GameCodeObject(NonMatching, "Black/Flower.cpp"),
             GameCodeObject(NonMatching, "Black/FlowersInfo.cpp"),
@@ -783,36 +890,36 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Game.cpp"),
             GameCodeObject(NonMatching, "Black/GameArea.cpp"),
             GameCodeObject(NonMatching, "Black/GameInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/GameOptionsRoom.cpp"),
+            GameCodeObject(NonMatching, "Black/GameOptionsRoom.cpp", pch=PCHExceptNoStringIn("BW1W130")),
             GameCodeObject(NonMatching, "Black/GameOSFile.cpp"),
             GameCodeObject(NonMatching, "Black/GameStats.cpp"),
             GameCodeObject(NonMatching, "Black/GameStatsFrontEnd.cpp"),
             GameCodeObject(NonMatching, "Black/GameStatsList.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GameThing.cpp"),
+            GameCodeObject(Matching, "Black/GameThing.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/GatheringBox.cpp"),
-            GameCodeObject(NonMatching, "Black/GatheringInterface.cpp"),
+            GameCodeObject(NonMatching, "Black/GatheringInterface.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/GatheringText.cpp"),
             GameCodeObject(NonMatching, "Black/GenerateCreatureHTML.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GestureSystem.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/GestureSystemData.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GestureSystemDataList.cpp"),
-            GameCodeObject(NonMatching, "Black/GestureSystemMatch.cpp"),
+            GameCodeObject(Matching, "Black/GestureSystem.cpp", pch=False),
+            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/GestureSystemData.cpp", pch=False),
+            GameCodeObject(Matching, "Black/GestureSystemDataList.cpp", pch=False),
+            GameCodeObject(NonMatching, "Black/GestureSystemMatch.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/GestureSystemResult.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/GestureSystemSamples.cpp"),
+            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/GestureSystemSamples.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/GJBaseUtils.cpp"),
             GameCodeObject(NonMatching, "Black/GJPersistent.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GJProperty.cpp"),
+            GameCodeObject(Matching, "Black/GJProperty.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/GJSpline.cpp"),
             GameCodeObject(NonMatching, "Black/GJUtils.cpp"),
             GameCodeObject(NonMatching, "Black/GJVnoise.cpp"),
             GameCodeObject(NonMatching, "Black/Global.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GlobalGameList.cpp"),
+            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1W130"), "Black/GlobalGameList.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/GlobalGameLists.cpp"),
             GameCodeObject(NonMatching, "Black/GraveYard.cpp"),
             GameCodeObject(NonMatching, "Black/GroupBehaviour.cpp"),
             GameCodeObject(NonMatching, "Black/GSFunctions.cpp"),
             GameCodeObject(NonMatching, "Black/GSLobbybox.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/GStates.cpp"),
+            GameCodeObject(Matching, "Black/GStates.cpp"),
             GameCodeObject(NonMatching, "Black/Guidance.cpp"),
             GameCodeObject(NonMatching, "Black/HairGroup.cpp"),
             GameCodeObject(NonMatching, "Black/HandState.cpp"),
@@ -829,9 +936,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/HandStateTug.cpp"),
             GameCodeObject(NonMatching, "Black/HanoiBlock.cpp"),
             GameCodeObject(NonMatching, "Black/helpdude.cpp"),
-            GameCodeObject(NonMatching, "Black/HelpDudeControl.cpp"),
+            GameCodeObject(NonMatching, "Black/HelpDudeControl.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/HelpDudeLipSync.cpp"),
-            GameCodeObject(NonMatching, "Black/HelpEditor.cpp"),
+            GameCodeObject(NonMatching, "Black/HelpEditor.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/HelpProfile.cpp"),
             GameCodeObject(NonMatching, "Black/HelpSpirit.cpp"),
             GameCodeObject(NonMatching, "Black/HelpSpiritInfo.cpp"),
@@ -865,7 +972,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/LandBalance.cpp"),
             GameCodeObject(NonMatching, "Black/LandFeature.cpp"),
             GameCodeObject(NonMatching, "Black/Landscape.cpp"),
-            GameCodeObject(NonMatching, "Black/Language.cpp"),
+            GameCodeObject(NonMatching, "Black/Language.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/LayerCommunication.cpp"),
             GameCodeObject(NonMatching, "Black/Leash.cpp"),
             GameCodeObject(NonMatching, "Black/LeashSelectorInfo.cpp"),
@@ -880,10 +987,10 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/LivingInfo.cpp"),
             GameCodeObject(NonMatching, "Black/LivingProjectile.cpp"),
             GameCodeObject(NonMatching, "Black/LivingReaction.cpp"),
-            GameCodeObject(NonMatching, "Black/LivingStates.cpp"),
+            GameCodeObject(NonMatching, "Black/LivingStates.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/LoaderAnon.cpp"),
             GameCodeObject(NonMatching, "Black/LoadingBox.cpp"),
-            GameCodeObject(NonMatching, "Black/LoadingScreen.cpp"),
+            GameCodeObject(NonMatching, "Black/LoadingScreen.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/Lobbybox.cpp"),
             GameCodeObject(NonMatching, "Black/LocalBase.cpp"),
             GameCodeObject(NonMatching, "Black/LoginBox.cpp"),
@@ -900,7 +1007,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/MagicHealInfo.cpp"),
             GameCodeObject(NonMatching, "Black/MagicInfo.cpp"),
             GameCodeObject(NonMatching, "Black/MagicLivingInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/MagicObjectInfo.cpp"),
+            GameCodeObject(NonMatching, "Black/MagicObjectInfo.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/MagicRadiusSpellInfo.cpp"),
             GameCodeObject(NonMatching, "Black/MagicResourceInfo.cpp"),
             GameCodeObject(NonMatching, "Black/MagicShield.cpp"),
@@ -920,9 +1027,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Meeting.cpp"),
             GameCodeObject(NonMatching, "Black/MiniDialogBoxOptions.cpp"),
             GameCodeObject(NonMatching, "Black/Mist.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Mobile.cpp"),
+            GameCodeObject(Matching, "Black/Mobile.cpp"),
             GameCodeObject(NonMatching, "Black/MobileInfo.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/MobileObject.cpp"),
+            GameCodeObject(Matching, "Black/MobileObject.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/MobileObjectInfo.cpp"),
             GameCodeObject(NonMatching, "Black/MobileStatic.cpp"),
             GameCodeObject(NonMatching, "Black/MobileStaticInfo.cpp"),
@@ -941,9 +1048,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/MPFEChooseConnection.cpp"),
             GameCodeObject(NonMatching, "Black/MPFEClanDetails.cpp"),
             GameCodeObject(NonMatching, "Black/MPFEClanList.cpp"),
-            GameCodeObject(NonMatching, "Black/MPFEConditionMessages.cpp"),
+            GameCodeObject(NonMatching, "Black/MPFEConditionMessages.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/MPFECondtionUpdateMessage.cpp"),
-            GameCodeObject(NonMatching, "Black/MPFEConnectionStatus.cpp"),
+            GameCodeObject(NonMatching, "Black/MPFEConnectionStatus.cpp", pch=PCHExceptNoStringIn("BW1W130")),
             GameCodeObject(NonMatching, "Black/MPFECreateGame.cpp"),
             GameCodeObject(NonMatching, "Black/MPFEDatabase.cpp"),
             GameCodeObject(NonMatching, "Black/MPFEDatabaseID.cpp"),
@@ -980,9 +1087,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Name.cpp"),
             GameCodeObject(NonMatching, "Black/Network.cpp"),
             GameCodeObject(NonMatching, "Black/NewProfileBox.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Object.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/Object3D.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/OnMapTrajectory.cpp"),
+            GameCodeObject(Matching, "Black/Object.cpp", pch=PCH_PENDING),
+            GameCodeObject(Matching, "Black/Object3D.cpp", pch=PCH_PENDING),
+            GameCodeObject(Matching, "Black/OnMapTrajectory.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/OOSDebug.cpp"),
             GameCodeObject(NonMatching, "Black/Packet.cpp"),
             GameCodeObject(NonMatching, "Black/Particle3DAnim.cpp"),
@@ -1000,7 +1107,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/PathCreator.cpp"),
             GameCodeObject(NonMatching, "Black/PBall.cpp"),
             GameCodeObject(NonMatching, "Black/PCInput.cpp"),
-            GameCodeObject(NonMatching, "Black/PCMain.cpp"),
+            GameCodeObject(NonMatching, "Black/PCMain.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/Persistent.cpp"),
             GameCodeObject(NonMatching, "Black/PFootball.cpp"),
             GameCodeObject(NonMatching, "Black/PhysicalShield.cpp"),
@@ -1031,7 +1138,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/PlayerComputerSpell.cpp"),
             GameCodeObject(NonMatching, "Black/PlayerComputerTown.cpp"),
             GameCodeObject(NonMatching, "Black/PlayerInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/PlayerMessage.cpp"),
+            GameCodeObject(NonMatching, "Black/PlayerMessage.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/PlayerProfile.cpp"),
             GameCodeObject(NonMatching, "Black/Playtime.cpp"),
             GameCodeObject(NonMatching, "Black/PlaytimeDance.cpp"),
@@ -1048,9 +1155,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Property.cpp"),
             GameCodeObject(NonMatching, "Black/PSys3d.cpp"),
             GameCodeObject(NonMatching, "Black/PSysAtomCore.cpp"),
-            GameCodeObject(NonMatching, "Black/PSysBase.cpp"),
+            GameCodeObject(NonMatching, "Black/PSysBase.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/PSysBaseModifiers.cpp"),
-            GameCodeObject(NonMatching, "Black/PSysBeam.cpp"),
+            GameCodeObject(NonMatching, "Black/PSysBeam.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/PSysCreature.cpp"),
             GameCodeObject(NonMatching, "Black/PSysDraw.cpp"),
             GameCodeObject(NonMatching, "Black/PSysEditor.cpp"),
@@ -1069,7 +1176,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/PSysModifiers.cpp"),
             GameCodeObject(NonMatching, "Black/PSysPCreator.cpp"),
             GameCodeObject(NonMatching, "Black/PSysProcessInfo.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/PSysProperties.cpp"),
+            GameCodeObject(Matching, "Black/PSysProperties.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/PSysRenderParticle.cpp"),
             GameCodeObject(NonMatching, "Black/PSysSave.cpp"),
             GameCodeObject(NonMatching, "Black/PSysShield.cpp"),
@@ -1077,7 +1184,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/PSysTornado.cpp"),
             GameCodeObject(NonMatching, "Black/puzzlegame.cpp"),
             GameCodeObject(NonMatching, "Black/Rand.cpp"),
-            GameCodeObject(NonMatching, "Black/RandomBuildingPlacement.cpp"),
+            GameCodeObject(NonMatching, "Black/RandomBuildingPlacement.cpp", pch=PCHExceptNoStringIn("BW1W120")),
             GameCodeObject(NonMatching, "Black/RandomBuildingPlacementDefence.cpp"),
             GameCodeObject(NonMatching, "Black/Rank.cpp"),
             GameCodeObject(NonMatching, "Black/RankInfo.cpp"),
@@ -1097,18 +1204,18 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/ScriptContainer.cpp"),
             GameCodeObject(NonMatching, "Black/ScriptCreateOrCall.cpp"),
             GameCodeObject(NonMatching, "Black/ScriptCreatureCurse.cpp"),
-            GameCodeObject(NonMatching, "Black/ScriptDLL.cpp"),
+            GameCodeObject(NonMatching, "Black/ScriptDLL.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/ScriptedCamera.cpp"),
-            GameCodeObject(MatchingFor("BW1W120"), "Black/ScriptFind.cpp"),
+            GameCodeObject(MatchingFor("BW1W120"), "Black/ScriptFind.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/ScriptFunctions.cpp"),
             GameCodeObject(MatchingFor("BW1W120"), "Black/ScriptFunctionTable.cpp"),
             GameCodeObject(NonMatching, "Black/ScriptGFX.cpp"),
             GameCodeObject(NonMatching, "Black/ScriptHighlight.cpp"),
             GameCodeObject(NonMatching, "Black/ScriptHighlightInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/ScriptManage.cpp"),
-            GameCodeObject(NonMatching, "Black/ScriptMarker.cpp"),
+            GameCodeObject(NonMatching, "Black/ScriptManage.cpp", pch=False),
+            GameCodeObject(NonMatching, "Black/ScriptMarker.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/ScriptTimer.cpp"),
-            GameCodeObject(NonMatching, "Black/SecretCreature.cpp"),
+            GameCodeObject(NonMatching, "Black/SecretCreature.cpp", pch=PCH_EXCEPT_NO_STRING),
             GameCodeObject(NonMatching, "Black/Serialise.cpp"),
             GameCodeObject(NonMatching, "Black/ServerLandscapeMap.cpp"),
             GameCodeObject(NonMatching, "Black/Settings.cpp"),
@@ -1149,7 +1256,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/SpellSeedGraphic.cpp"),
             GameCodeObject(NonMatching, "Black/SpellSeedInfo.cpp"),
             GameCodeObject(NonMatching, "Black/SpellSetupBox"),
-            GameCodeObject(NonMatching, "Black/SpellShield.cpp"),
+            GameCodeObject(NonMatching, "Black/SpellShield.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/SpellStormAndTornado"),
             GameCodeObject(NonMatching, "Black/SpellSystemInfo.cpp"),
             GameCodeObject(NonMatching, "Black/SpellTeleport"),
@@ -1185,9 +1292,9 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/TOMnavigator.cpp"),
             GameCodeObject(NonMatching, "Black/ToolTipsInfo.cpp"),
             GameCodeObject(NonMatching, "Black/Totem.cpp"),
-            GameCodeObject(NonMatching, "Black/TotemStatue.cpp"),
+            GameCodeObject(NonMatching, "Black/TotemStatue.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/TotemStatueInfo.cpp"),
-            GameCodeObject(NonMatching, "Black/Town.cpp", extra_cflags=["/vmg"]),
+            GameCodeObject(NonMatching, "Black/Town.cpp", extra_cflags=["/vmg"], pch=False),
             GameCodeObject(NonMatching, "Black/TownAttitudeToCreature.cpp"),
             GameCodeObject(NonMatching, "Black/TownCentre.cpp"),
             GameCodeObject(NonMatching, "Black/TownCreatureInfo.cpp"),
@@ -1215,7 +1322,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/VillagerFood.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerFootball.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerForester.cpp"),
-            GameCodeObject(NonMatching, "Black/VillagerHome.cpp"),
+            GameCodeObject(Matching, "Black/VillagerHome.cpp", extra_cflags=["/vmg"], pch=False),
             GameCodeObject(NonMatching, "Black/VillagerHousewife.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerInfo.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerLeader.cpp"),
@@ -1225,10 +1332,10 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/VillagerReactionToCreature.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerScript.cpp"),
             GameCodeObject(NonMatching, "Black/VillagerShepherd.cpp"),
-            GameCodeObject(NonMatching, "Black/VillagerStates.cpp"),
+            GameCodeObject(NonMatching, "Black/VillagerStates.cpp", pch=False),
             GameCodeObject(NonMatching, "Black/VillagerStateTableInfo.cpp"),
             GameCodeObject(Matching, "Black/VillagerTrader.cpp"),
-            GameCodeObject(NonMatching, "Black/VillagerWorshipper.cpp"),
+            GameCodeObject(Matching, "Black/VillagerWorshipper.cpp"),
             GameCodeObject(NonMatching, "Black/VirtualInfluence.cpp"),
             GameCodeObject(NonMatching, "Black/ViscousLiquid.cpp"),
             GameCodeObject(NonMatching, "Black/VortexInfo.cpp"),
@@ -1249,12 +1356,12 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Worship.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSite.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSiteInfo.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/WorshipSiteUpgrade.cpp"),
+            GameCodeObject(Matching, "Black/WorshipSiteUpgrade.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSiteUpgradeInfo.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSpell.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSpellIcon.cpp"),
-            GameCodeObject(NonMatching, "Black/WorshipTotem.cpp"),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120"), "Black/WorldRoom.cpp"),
+            GameCodeObject(NonMatching, "Black/WorshipTotem.cpp", pch=False),
+            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/WorldRoom.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/WorldRoomCamera.cpp"),
 
             # Contains SSE instructions, could be result of compiling with intel compiler
@@ -1559,12 +1666,12 @@ config.libs = [
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHConvert.cpp", progress_category="sdk"),
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHSprite.cpp", progress_category="sdk"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DSmoke.cpp"),
-            LH3DLibPCHObject(NonMatching, "Lionhead/LH3DLib/development/LH3DIsland.cpp", extra_cflags=["/GX"]),
+            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DIsland.cpp", extra_cflags=["/GX"], pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DMesh.cpp"),
-            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DTech.cpp"),
+            LH3DLibObject(Matching, "Lionhead/LH3DLib/development/LH3DTech.cpp", pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/Fish.cpp"),
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHCollide.cpp", progress_category="sdk"),
-            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DRender.cpp"),
+            LH3DLibObject(Matching, "Lionhead/LH3DLib/development/LH3DRender.cpp", pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DText.cpp"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/ValueSpinner.cpp"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DLightningSheet.cpp"),
@@ -1801,8 +1908,8 @@ config.libs = [
     },
     {
         "lib": "LHLog",
-        "compiler_version": config.linker_version,
-        "cflags": cflags_base,
+        "compiler_version": lhlog_compiler_version,
+        "cflags": cflags_lhlog,
         "progress_category": "sdk",
         "objects": [
             Object(NonMatching, "Lionhead/LHLog/ver4.0/ErrorCodes.cpp"),
@@ -1812,6 +1919,158 @@ config.libs = [
             Object(NonMatching, "Lionhead/LHLog/ver4.0/LHLogProps.cpp"),
             Object(NonMatching, "Lionhead/LHLog/ver4.0/LHVersion.cpp"),
             Object(NonMatching, "Lionhead/LHLog/ver4.0/LogUtils.cpp"),
+            # libcmt_lhlog: SP4's libcmt in 1.00 and 1.10, Visual Studio .NET 2002's in 1.20.
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\new.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fclose.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fflush.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fprintf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fopen.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\chkstk.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\delete.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\sprintf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\splitpat.obj", module="LHLog", progress_category="sdk"),
+            # exsup.obj defines __except_list for the EH and SEH frames.
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\exsup.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\exsup3.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strstr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\onexit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\wcslen.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\wcscat.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_ctype.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\fpinit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\vsprintf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strncpy.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\wcsncpy.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "trnsctrl.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "..\\build\\intel\\mt_obj\\ftol.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\unlink.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fputs.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\getpid.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\free.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\thread.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\malloc.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\atox.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\crt0dat.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\sscanf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "ehvecctr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W110", "BW1W120", "BW1W130", "BW1WCI"), "libcmt_lhlog", lhlog_eh + "ehvecdtr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\rand.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\dllcrt0.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_file.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\close.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_freebuf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\commit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\write.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\mlock.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_sftbuf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\output.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_open.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\stream.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_flsbuf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\mbctype.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\mbsnbcpy.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strlen.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strchr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\realloc.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\msize.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\isctype.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fp8.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\testfdiv.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\cvt.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "frame.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "lowhelpr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\tidtable.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "hooks.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\dosmap.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\fwrite.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\heapinit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\sbheap.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\calloc.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\winxfltr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\handler.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\llmul.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\input.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\ioinit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\stdenvp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\stdargv.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\a_env.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\crt0msg.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\closeall.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\osfinfo.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\lseek.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\isatty.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\wctomb.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\ulldiv.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\ullrem.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\open.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_getbuf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\a_map.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\a_str.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\memcpy.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\ieee87.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\tolower.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\intrncvt.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_fptostr.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\cfout.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strcat.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\memset.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\memmove.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\crt0fp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "unhandld.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", lhlog_eh + "validate.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strcmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\abort.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\strtol.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strncmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\mbtowc.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\llshl.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_filbuf.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\ungetc.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\crtmbox.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\chsize.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\read.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\winsig.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\mantold.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\strgtold.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\x10fout.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\toupper.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strcspn.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strpbrk.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\setmode.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\tenpow.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\stricmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\strnicmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\mbsdup.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\crt0init.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\ctype.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\nlsdata1.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\cmiscdat.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "..\\build\\intel\\mt_obj\\constpow.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\_newmode.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\ncommode.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\nlsdata2.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\txtmode.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\strftime.obj", module="LHLog", progress_category="sdk"),
+            LibObject(Matching, "libcmt_lhlog", "build\\intel\\mt_obj\\timeset.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W100", "BW1W110", "BW1WCI"), "libcmt_lhlog", "build\\intel\\mt_obj\\days.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "..\\build\\intel\\mt_obj\\ftol2.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\sehprolg.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\setlocal.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\lseeki64.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\initcrit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\ulldvrm.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\inittime.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\initnum.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\initmon.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\memcmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\resetstk.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\seccinit.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\secfail.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\convrtcp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\_stricmp.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\_strnicm.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\strdup.obj", module="LHLog", progress_category="sdk"),
+            LibObject(MatchingFor("BW1W120", "BW1W130"), "libcmt_lhlog", "build\\intel\\mt_obj\\seccook.obj", module="LHLog", progress_category="sdk"),
         ],
     },
     {
@@ -1847,7 +2106,7 @@ config.libs = [
             MultiplayerObject(MatchingFor("BW1W120", "BW1W130", "BW1WCI"), "Lionhead/LHMultiplayer/ver4.0/LHTCPServerListener.cpp"),
             MultiplayerObject(NonMatching, "Lionhead/LHMultiplayer/ver4.0/LHTransport.cpp"),
             MultiplayerObject(Matching, "Lionhead/LHMultiplayer/ver4.0/LHTransportInfo.cpp"),
-            MultiplayerObject(NonMatching, "Lionhead/LHMultiplayer/ver4.0/Version.cpp"),
+            MultiplayerObject(Matching, "Lionhead/LHMultiplayer/ver4.0/Version.cpp"),
 
             Object(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1W130"), "LHMultiplayer/delayimp/delayhlp.cpp", source="delayimp/delayhlp.cpp", cflags=cflags_delayimp),
 
