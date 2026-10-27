@@ -607,7 +607,7 @@ float LH3DSky::GetSunVisibility()
 		}
 		occludedSamples += (occluded != false);
 	}
-	if (readDepth)
+	if (readDepth && lockResult == DD_OK)
 	{
 		LH3DRender::ZBufferSurface->Unlock(NULL);
 	}
