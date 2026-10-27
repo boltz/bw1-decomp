@@ -14,6 +14,8 @@ enum LH3D_SUB_MESH_FLAGS
 {
 	// The sub-mesh's vertex groups are moved by the bones of the object's skeleton.
 	LH3D_SUB_MESH_FLAGS_SKINNED = 0x1,
+	LH3D_SUB_MESH_FLAGS_COLLISION = 0x2000,
+	LH3D_SUB_MESH_FLAGS_INTERSECTION = 0x20000000,
 };
 
 struct LH3DSubMesh
