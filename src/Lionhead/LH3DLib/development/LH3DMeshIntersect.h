@@ -53,15 +53,6 @@ struct TextureRef
 
 struct MeshIntersect
 {
-	// BW1W120 00f8a3c0 BW1M119 01299a88 (LHCombined Release)
-	static uint32_t WorldTris[MESH_INTERSECT_MAX_VERTICES][MESH_INTERSECT_TRIANGLE_VERTICES];
-	// BW1W120 00f963c0 BW1M119 012a5a88 (LHCombined Release)
-	static LHPoint WorldPoints[MESH_INTERSECT_MAX_VERTICES];
-	// BW1W120 00fa23c0 BW1M119 012b1a88 (LHCombined Release)
-	static LHPoint WorldHitPos;
-	// BW1W120 00fa23d0 BW1M119 012b1a94 (LHCombined Release)
-	static MeshIntersectData GMeshIntersect;
-
 	// BW1W120 00865000 BW1M119 01070130 (LHCombined Release)
 	static void InitialiseMeshIntersect();
 	uint32_t    PrimitiveIndex;
