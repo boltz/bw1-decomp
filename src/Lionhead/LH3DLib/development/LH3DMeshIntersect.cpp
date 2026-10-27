@@ -22,7 +22,9 @@ LHPoint           WorldPoints[MESH_INTERSECT_MAX_VERTICES];
 LHPoint           WorldHitPos;
 MeshIntersectData GMeshIntersect;
 bool              ScarLoaded;
-} // namespace
+// clang-format off
+}
+// clang-format on
 
 // BW1W120 00866ec0 BW1M119 0106e560 (LHCombined Release)
 void LoadScar();
