@@ -96,6 +96,20 @@ jobs:
         python configure.py --map --version ${{ matrix.version }}
         ninja all_source progress build/${{ matrix.version }}/report.json
 
+    - name: Diagnose executable differences
+      if: ${{ !cancelled() }}
+      run: |
+        python tools/executable_diagnostics.py --version ${{ matrix.version }} --output-dir executable-diagnostics/${{ matrix.version }}
+        cat executable-diagnostics/${{ matrix.version }}/report.md >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload executable diagnostics
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: executable-diagnostics-${{ matrix.version }}
+        path: executable-diagnostics/${{ matrix.version }}/
+        if-no-files-found: warn
+
     - name: Collect binary review evidence
       if: ${{ !cancelled() && github.event_name == 'pull_request' }}
       env:
