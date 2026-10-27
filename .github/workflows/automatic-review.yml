@@ -19,6 +19,7 @@ concurrency:
 jobs:
   review:
     if: >-
+      github.repository == 'boltz/bw1-decomp' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       vars.AI_PR_REVIEW_ENABLED == 'true'
@@ -46,6 +47,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+
+      - name: Install YAML tokenizer
+        run: python -m pip install PyYAML==6.0.3
 
       - name: Resolve current pull request
         id: pr
@@ -116,3 +120,11 @@ jobs:
           PR_REVIEW_INSTRUCTIONS: tools/automatic_pr_review_instructions.md
           PR_REVIEW_GUIDE: upstream-guide/AGENTS.md
         run: python tools/automatic_pr_review.py
+
+      - name: Upload quality scorecard and full token inventory
+        if: ${{ !cancelled() && steps.pr.outputs.number != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-quality-${{ steps.pr.outputs.number }}
+          path: review-quality.json
+          if-no-files-found: warn

@@ -34,7 +34,8 @@ def connect(path: Path) -> sqlite3.Connection:
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA journal_mode=WAL")
-    db.executescript("""
+    db.executescript(
+        """
         CREATE TABLE IF NOT EXISTS metadata (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -95,7 +96,8 @@ def connect(path: Path) -> sqlite3.Connection:
             kind UNINDEXED, title, body, author, path,
             tokenize='unicode61'
         );
-    """)
+    """
+    )
     version = db.execute("SELECT value FROM metadata WHERE key='schema'").fetchone()
     if version and version[0] != SCHEMA_VERSION:
         db.close()
@@ -155,18 +157,41 @@ def _pull_number_from_url(url: str | None) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def replace_repository_data(db: sqlite3.Connection, repository: str, pulls: list[dict],
-                            docs: list[dict], files: list[tuple[int, dict]], *,
-                            fetched_at: str | None = None) -> dict:
+def replace_repository_data(
+    db: sqlite3.Connection,
+    repository: str,
+    pulls: list[dict],
+    docs: list[dict],
+    files: list[tuple[int, dict]],
+    *,
+    fetched_at: str | None = None,
+) -> dict:
     """Atomically replace one repository snapshot after a complete fetch."""
     merged = [row for row in pulls if row.get("merged_at")]
     merged_numbers = {int(row["number"]) for row in merged}
     merged_by_number = {int(row["number"]): row for row in merged}
-    document_fields = ("id", "repository", "pr_number", "kind", "title", "body", "author",
-                       "author_association", "state", "path", "line", "created_at", "updated_at",
-                       "html_url", "raw_json")
-    selected_docs = [{key: doc.get(key) for key in document_fields}
-                     for doc in docs if doc["pr_number"] in merged_numbers and doc.get("body")]
+    document_fields = (
+        "id",
+        "repository",
+        "pr_number",
+        "kind",
+        "title",
+        "body",
+        "author",
+        "author_association",
+        "state",
+        "path",
+        "line",
+        "created_at",
+        "updated_at",
+        "html_url",
+        "raw_json",
+    )
+    selected_docs = [
+        {key: doc.get(key) for key in document_fields}
+        for doc in docs
+        if doc["pr_number"] in merged_numbers and doc.get("body")
+    ]
     for number, file_row in files:
         if number not in merged_numbers:
             continue
@@ -174,43 +199,97 @@ def replace_repository_data(db: sqlite3.Connection, repository: str, pulls: list
         if not file_path:
             continue
         pr = merged_by_number[number]
-        selected_docs.append({
-            "id": f"{repository}#{number}:file:{file_path}", "repository": repository,
-            "pr_number": number, "kind": "changed_file", "title": file_row.get("status") or "",
-            "body": file_path, "author": None, "author_association": None, "state": None,
-            "path": file_path, "line": None, "created_at": pr.get("merged_at"),
-            "updated_at": pr.get("merged_at"),
-            "html_url": pr.get("html_url") or f"https://github.com/{repository}/pull/{number}",
-            "raw_json": json.dumps(file_row, ensure_ascii=False, sort_keys=True),
-        })
+        selected_docs.append(
+            {
+                "id": f"{repository}#{number}:file:{file_path}",
+                "repository": repository,
+                "pr_number": number,
+                "kind": "changed_file",
+                "title": file_row.get("status") or "",
+                "body": file_path,
+                "author": None,
+                "author_association": None,
+                "state": None,
+                "path": file_path,
+                "line": None,
+                "created_at": pr.get("merged_at"),
+                "updated_at": pr.get("merged_at"),
+                "html_url": pr.get("html_url") or f"https://github.com/{repository}/pull/{number}",
+                "raw_json": json.dumps(file_row, ensure_ascii=False, sort_keys=True),
+            }
+        )
     with db:
         db.execute("DELETE FROM documents_fts WHERE repository=?", (repository,))
         db.execute("DELETE FROM pulls WHERE repository=?", (repository,))
         for pr in merged:
             number = int(pr["number"])
-            db.execute("""INSERT INTO pulls VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-                repository, number, pr.get("title") or "", pr.get("body") or "",
-                (pr.get("user") or {}).get("login"), pr.get("author_association"),
-                (pr.get("merged_by") or {}).get("login"), pr.get("merged_at"),
-                pr.get("created_at"), pr.get("updated_at"),
-                pr.get("html_url") or f"https://github.com/{repository}/pull/{number}",
-                (pr.get("base") or {}).get("ref"), (pr.get("head") or {}).get("ref"),
-                pr.get("merge_commit_sha"), json.dumps(pr, ensure_ascii=False, sort_keys=True)))
-        db.executemany("""INSERT INTO documents VALUES(
+            db.execute(
+                """INSERT INTO pulls VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    repository,
+                    number,
+                    pr.get("title") or "",
+                    pr.get("body") or "",
+                    (pr.get("user") or {}).get("login"),
+                    pr.get("author_association"),
+                    (pr.get("merged_by") or {}).get("login"),
+                    pr.get("merged_at"),
+                    pr.get("created_at"),
+                    pr.get("updated_at"),
+                    pr.get("html_url") or f"https://github.com/{repository}/pull/{number}",
+                    (pr.get("base") or {}).get("ref"),
+                    (pr.get("head") or {}).get("ref"),
+                    pr.get("merge_commit_sha"),
+                    json.dumps(pr, ensure_ascii=False, sort_keys=True),
+                ),
+            )
+        db.executemany(
+            """INSERT INTO documents VALUES(
             :id,:repository,:pr_number,:kind,:title,:body,:author,:author_association,
-            :state,:path,:line,:created_at,:updated_at,:html_url,:raw_json)""", selected_docs)
-        db.executemany("INSERT INTO documents_fts VALUES(?,?,?,?,?,?,?,?)", [(
-            d["id"], d["repository"], d["pr_number"], d["kind"], d["title"], d["body"],
-            d["author"] or "", d["path"] or "") for d in selected_docs])
-        db.executemany("INSERT INTO pr_files VALUES(?,?,?,?,?,?,?)", [(
-            repository, number, row.get("filename") or "", row.get("status"),
-            row.get("additions"), row.get("deletions"),
-            json.dumps(row, ensure_ascii=False, sort_keys=True))
-            for number, row in files if number in merged_numbers])
-        db.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)",
-                   (f"last_sync:{repository}", fetched_at or datetime.now(timezone.utc).isoformat()))
-    return {"merged_pulls": len(merged), "documents": len(selected_docs),
-            "files": sum(number in merged_numbers for number, _ in files)}
+            :state,:path,:line,:created_at,:updated_at,:html_url,:raw_json)""",
+            selected_docs,
+        )
+        db.executemany(
+            "INSERT INTO documents_fts VALUES(?,?,?,?,?,?,?,?)",
+            [
+                (
+                    d["id"],
+                    d["repository"],
+                    d["pr_number"],
+                    d["kind"],
+                    d["title"],
+                    d["body"],
+                    d["author"] or "",
+                    d["path"] or "",
+                )
+                for d in selected_docs
+            ],
+        )
+        db.executemany(
+            "INSERT INTO pr_files VALUES(?,?,?,?,?,?,?)",
+            [
+                (
+                    repository,
+                    number,
+                    row.get("filename") or "",
+                    row.get("status"),
+                    row.get("additions"),
+                    row.get("deletions"),
+                    json.dumps(row, ensure_ascii=False, sort_keys=True),
+                )
+                for number, row in files
+                if number in merged_numbers
+            ],
+        )
+        db.execute(
+            "INSERT OR REPLACE INTO metadata(key,value) VALUES(?,?)",
+            (f"last_sync:{repository}", fetched_at or datetime.now(timezone.utc).isoformat()),
+        )
+    return {
+        "merged_pulls": len(merged),
+        "documents": len(selected_docs),
+        "files": sum(number in merged_numbers for number, _ in files),
+    }
 
 
 class GitHub:
@@ -230,12 +309,15 @@ class GitHub:
         rows = []
         while url:
             for attempt in range(7):
-                request = urllib.request.Request(url, headers={
-                    "Accept": "application/vnd.github+json",
-                    "Authorization": f"Bearer {self.token}",
-                    "X-GitHub-Api-Version": "2022-11-28",
-                    "User-Agent": "bw1-decomp-pr-rag/1",
-                })
+                request = urllib.request.Request(
+                    url,
+                    headers={
+                        "Accept": "application/vnd.github+json",
+                        "Authorization": f"Bearer {self.token}",
+                        "X-GitHub-Api-Version": "2022-11-28",
+                        "User-Agent": "bw1-decomp-pr-rag/1",
+                    },
+                )
                 try:
                     with urllib.request.urlopen(request, timeout=45) as response:
                         payload = json.loads(response.read().decode("utf-8"))
@@ -253,7 +335,7 @@ class GitHub:
                     if exc.code in (403, 429) and remaining == "0" and reset:
                         delay = max(1, int(reset) - int(time.time()) + 1)
                     elif exc.code in (403, 429, 500, 502, 503, 504) and attempt < 6:
-                        delay = int(retry_after) if retry_after and retry_after.isdigit() else min(60, 2 ** attempt)
+                        delay = int(retry_after) if retry_after and retry_after.isdigit() else min(60, 2**attempt)
                     else:
                         detail = exc.read().decode("utf-8", "replace")[:500]
                         raise RuntimeError(f"GitHub HTTP {exc.code} for {url}: {detail}") from exc
@@ -261,7 +343,7 @@ class GitHub:
                 except (urllib.error.URLError, TimeoutError) as exc:
                     if attempt >= 6:
                         raise RuntimeError(f"GitHub connection failed for {url}: {exc}") from exc
-                    time.sleep(min(60, 2 ** attempt))
+                    time.sleep(min(60, 2**attempt))
         return rows
 
     def fetch_repository(self, repository: str, *, include_files: bool = True) -> tuple[list, list, list]:
@@ -273,14 +355,17 @@ class GitHub:
         documents: list[dict] = []
 
         # Global comment endpoints avoid two HTTP calls for every individual PR.
-        for kind, endpoint in (("conversation_comment", f"repos/{repository}/issues/comments?per_page=100"),
-                               ("inline_review_comment", f"repos/{repository}/pulls/comments?per_page=100")):
+        for kind, endpoint in (
+            ("conversation_comment", f"repos/{repository}/issues/comments?per_page=100"),
+            ("inline_review_comment", f"repos/{repository}/pulls/comments?per_page=100"),
+        ):
             for row in self.pages(endpoint):
                 number = _pull_number_from_url(row.get("issue_url") or row.get("pull_request_url"))
                 if number in merged_numbers:
                     documents.append(_document(repository, number, kind, row))
 
         files: list[tuple[int, dict]] = []
+
         def fetch_pr_details(pr):
             number = int(pr["number"])
             reviews = self.pages(f"repos/{repository}/pulls/{number}/reviews?per_page=100")
@@ -307,18 +392,38 @@ def _fts_query(query: str) -> str:
     return " AND ".join('"' + term.replace('"', '""') + '"' for term in terms)
 
 
-def retrieve(db: sqlite3.Connection, query: str, *, repository: str = REPOSITORY,
-             limit: int = 8, max_chars: int = MAX_RESULT_CHARS) -> dict:
+def retrieve(
+    db: sqlite3.Connection,
+    query: str,
+    *,
+    repository: str = REPOSITORY,
+    limit: int = 8,
+    max_chars: int = MAX_RESULT_CHARS,
+    discussions_only: bool = False,
+) -> dict:
     if not 1 <= limit <= 50 or max_chars < 256:
         raise ValueError("limit must be 1..50 and max_chars must be at least 256")
     fts = _fts_query(query)
-    rows = db.execute("""SELECT d.*, p.title AS pr_title, p.merged_by, p.merged_at,
+    discussion_filter = (
+        " AND d.kind IN ('review','inline_review_comment','conversation_comment')" if discussions_only else ""
+    )
+    authority_order = (
+        "CASE WHEN d.author_association IN ('OWNER','MEMBER','COLLABORATOR') THEN 0 ELSE 1 END, "
+        if discussions_only
+        else ""
+    )
+    rows = db.execute(
+        """SELECT d.*, p.title AS pr_title, p.merged_by, p.merged_at,
             p.html_url AS pr_url, p.author AS pr_author, p.base_ref, p.head_ref,
             bm25(documents_fts,0,0,0,0,5.0,1.0,0.25,0.8) AS rank
         FROM documents_fts JOIN documents d ON d.id=documents_fts.id
         JOIN pulls p ON p.repository=d.repository AND p.number=d.pr_number
-        WHERE documents_fts MATCH ? AND d.repository=?
-        ORDER BY rank LIMIT ?""", (fts, repository, limit)).fetchall()
+        WHERE documents_fts MATCH ? AND d.repository=?{}
+        ORDER BY {}rank LIMIT ?""".format(
+            discussion_filter, authority_order
+        ),
+        (fts, repository, limit),
+    ).fetchall()
     results = []
     used = 0
     for row in rows:
@@ -330,30 +435,53 @@ def retrieve(db: sqlite3.Connection, query: str, *, repository: str = REPOSITORY
         if len(content) > len(excerpt):
             excerpt = excerpt.rstrip() + " …[excerpt truncated]"
         used += len(excerpt)
-        results.append({
-            "document_id": row["id"], "kind": row["kind"], "pr_number": row["pr_number"],
-            "pr_title": row["pr_title"], "title": row["title"], "author": row["author"],
-            "author_association": row["author_association"], "review_state": row["state"],
-            "path": row["path"], "line": row["line"], "created_at": row["created_at"],
-            "url": row["html_url"] or row["pr_url"], "pr_url": row["pr_url"],
-            "merged_at": row["merged_at"], "merged_by": row["merged_by"],
-            "pr_author": row["pr_author"], "base_ref": row["base_ref"],
-            "head_ref": row["head_ref"], "relevance": -float(row["rank"]),
-            "excerpt": excerpt,
-        })
-    return {"schema": "bw1-pr-rag-results-v1", "repository": repository,
-            "query": query, "results": results, "result_count": len(results),
-            "source_policy": "Merged PR records and associated GitHub discussions; retrieval is precedent, not proof or an automatic project rule."}
+        results.append(
+            {
+                "document_id": row["id"],
+                "kind": row["kind"],
+                "pr_number": row["pr_number"],
+                "pr_title": row["pr_title"],
+                "title": row["title"],
+                "author": row["author"],
+                "author_association": row["author_association"],
+                "review_state": row["state"],
+                "path": row["path"],
+                "line": row["line"],
+                "created_at": row["created_at"],
+                "url": row["html_url"] or row["pr_url"],
+                "pr_url": row["pr_url"],
+                "merged_at": row["merged_at"],
+                "merged_by": row["merged_by"],
+                "pr_author": row["pr_author"],
+                "base_ref": row["base_ref"],
+                "head_ref": row["head_ref"],
+                "relevance": -float(row["rank"]),
+                "excerpt": excerpt,
+            }
+        )
+    return {
+        "schema": "bw1-pr-rag-results-v1",
+        "repository": repository,
+        "query": query,
+        "results": results,
+        "result_count": len(results),
+        "source_policy": "Merged PR records and associated GitHub discussions; retrieval is precedent, not proof or an automatic project rule.",
+    }
 
 
 def status(db: sqlite3.Connection, repository: str = REPOSITORY) -> dict:
-    counts = db.execute("SELECT kind,COUNT(*) AS n FROM documents WHERE repository=? GROUP BY kind",
-                        (repository,)).fetchall()
-    return {"schema": SCHEMA_VERSION, "repository": repository,
-            "merged_pulls": db.execute("SELECT COUNT(*) FROM pulls WHERE repository=?", (repository,)).fetchone()[0],
-            "documents_by_kind": {row["kind"]: row["n"] for row in counts},
-            "last_sync": (lambda r: r[0] if r else None)(db.execute(
-                "SELECT value FROM metadata WHERE key=?", (f"last_sync:{repository}",)).fetchone())}
+    counts = db.execute(
+        "SELECT kind,COUNT(*) AS n FROM documents WHERE repository=? GROUP BY kind", (repository,)
+    ).fetchall()
+    return {
+        "schema": SCHEMA_VERSION,
+        "repository": repository,
+        "merged_pulls": db.execute("SELECT COUNT(*) FROM pulls WHERE repository=?", (repository,)).fetchone()[0],
+        "documents_by_kind": {row["kind"]: row["n"] for row in counts},
+        "last_sync": (lambda r: r[0] if r else None)(
+            db.execute("SELECT value FROM metadata WHERE key=?", (f"last_sync:{repository}",)).fetchone()
+        ),
+    }
 
 
 def main(argv=None) -> int:
@@ -383,14 +511,19 @@ def main(argv=None) -> int:
                 request = json.load(sys.stdin)
                 if not isinstance(request, dict) or not isinstance(request.get("query"), str):
                     raise ValueError("stdin JSON must be an object with a string query")
-                result = retrieve(db, request["query"], repository=request.get("repository", args.repository),
-                                  limit=int(request.get("limit", args.limit)),
-                                  max_chars=int(request.get("max_chars", args.max_chars)))
+                result = retrieve(
+                    db,
+                    request["query"],
+                    repository=request.get("repository", args.repository),
+                    limit=int(request.get("limit", args.limit)),
+                    max_chars=int(request.get("max_chars", args.max_chars)),
+                )
             else:
                 if not args.query:
                     raise ValueError("Provide query text or use --stdin")
-                result = retrieve(db, args.query, repository=args.repository, limit=args.limit,
-                                  max_chars=args.max_chars)
+                result = retrieve(
+                    db, args.query, repository=args.repository, limit=args.limit, max_chars=args.max_chars
+                )
         else:
             result = status(db)
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
