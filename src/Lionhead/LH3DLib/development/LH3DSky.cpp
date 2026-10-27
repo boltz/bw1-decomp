@@ -420,7 +420,7 @@ void LH3DSky::Init(float time, float overcast)
 	{
 		TextureFormat format;
 		sky_texture[i] = LH3DTexture::Create(NULL, LH3D_SKY_TEXTURE_SIZE, 0, &format);
-		sky_material[i] = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_0x2, sky_texture[i]);
+		sky_material[i] = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_TEXTURED, sky_texture[i]);
 	}
 
 	int height = LH3DTexture::g_b_use_low_res ? SKY_TEXTURE_HEIGHT_LOW : SKY_TEXTURE_HEIGHT;
@@ -464,7 +464,7 @@ void LH3DSky::Init(float time, float overcast)
 		for (j = 0; j < submesh->NumPrimitives; j++)
 		{
 			LH3DPrimitive* primitive = submesh->primitives_[j];
-			primitive->Material.render_mode = LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_0xd;
+			primitive->Material.render_mode = LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_ALPHA_TEXTURED_ALPHA_ADDITIF_NZ;
 			primitive->Material.Flags = primitive->Material.Flags | LH3DMaterial::FLAG_DOUBLE_SIDED;
 			primitive->Material.texture = g_sun_texture;
 		}

@@ -71,39 +71,6 @@ struct LH3DStateBlock2Tex
 
 struct LH3DRender
 {
-	// Original Mac imported names; storage remains extracted.
-	static int          g_started_frame; // 00eca644
-	static LH3DZSorter* g_zsorter;       // 00eca648
-	static bool32_t     g_mode_cleaning; // 00c3871c
-	// Original Mac import g_frame__10LH3DRender.
-	// BW1W120 00eca640 BW1M119 012cf838 (LHCombined Release)
-	static int g_frame;
-	// Original Mac import g_b_do_update_material__10LH3DRender.
-	// BW1W120 00c38714 BW1M119 011d0e2c (LHCombined Release)
-	static int g_b_do_update_material;
-	// BW1W120 00eca64c BW1M119 012cf82c (LHCombined Release)
-	static LH3DMaterial* g_current_active_material;
-	// Descriptive names for the depth-pass override state. Storage remains extracted.
-	static int OverrideMaterial;   // 00eca658
-	static int OverrideRenderMode; // 00eca65c
-	// BW1W120 00eca624 BW1M119 012cf854 (LHCombined Release)
-	static bool32_t b_need_init;
-	// BW1W120 00ec7fd0 BW1M119 012cf920 (LHCombined Release)
-	static LHMatrix g_d3d_view2proj;
-	// BW1W120 00ec8010 BW1M119 012cf960 (LHCombined Release)
-	static LHMatrix g_d3d_world2view;
-	// BW1W120 00ec81f0 BW1M119 012cfa00 (LHCombined Release)
-	static uint32_t g_texture_stage_state[0x800];
-	// BW1W120 00eca1f0 BW1M119 012d1a00 (LHCombined Release)
-	static uint32_t g_render_states[D3DRENDERSTATE_CLIPPLANEENABLE + 1];
-	// BW1W120 00eca614 BW1M119 012d1e00 (LHCombined Release)
-	static bool32_t g_b_need_tilling;
-	// BW1W120 00eca620 BW1M119 012cf858 (LHCombined Release)
-	static bool32_t b_open;
-	// BW1W120 00eca638
-	static IDirect3DDevice7* Direct3DDevice7;
-	// BW1W120 00eca63c BW1M119 012cf83c (LHCombined Release)
-	static IDirectDrawSurface7* ZBufferSurface;
 	typedef void(__fastcall* DrawTriangleFunc)(Vertex3D* vertices, unsigned long vertex_count, uint16_t* indices,
 	                                           unsigned long index_count);
 	typedef void(__stdcall* FinishFrameCallback)(void* data);
