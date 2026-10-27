@@ -12,14 +12,17 @@
 #include <stdio.h>
 #include <math.h>
 
+namespace
+{
 LH3DColor         OldCols[SCAR_TEXTURE_SIZE][SCAR_TEXTURE_SIZE];
 LH3DColor         NewCols[SCAR_TEXTURE_SIZE][SCAR_TEXTURE_SIZE];
 long              GpIdx[MESH_INTERSECT_MAX_VERTICES];
-uint32_t          MeshIntersect::WorldTris[MESH_INTERSECT_MAX_VERTICES][MESH_INTERSECT_TRIANGLE_VERTICES];
-LHPoint           MeshIntersect::WorldPoints[MESH_INTERSECT_MAX_VERTICES];
-LHPoint           MeshIntersect::WorldHitPos;
-MeshIntersectData MeshIntersect::GMeshIntersect;
+uint32_t          WorldTris[MESH_INTERSECT_MAX_VERTICES][MESH_INTERSECT_TRIANGLE_VERTICES];
+LHPoint           WorldPoints[MESH_INTERSECT_MAX_VERTICES];
+LHPoint           WorldHitPos;
+MeshIntersectData GMeshIntersect;
 bool              ScarLoaded;
+} // namespace
 
 // BW1W120 00866ec0 BW1M119 0106e560 (LHCombined Release)
 void LoadScar();
