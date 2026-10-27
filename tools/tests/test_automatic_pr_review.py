@@ -30,21 +30,48 @@ class AutomaticReviewTests(unittest.TestCase):
 
     def test_reposcout_queries_existing_index_read_only_and_keeps_citations(self):
         from tools import reposcout
+
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "index.sqlite3"
             db = reposcout.connect(path)
-            pull = {"number": 12, "title": "LH3DSky review", "body": "Preserve original behavior",
-                    "merged_at": "2026-01-02T00:00:00Z", "user": {},
-                    "html_url": "https://github.com/openblack/bw1-decomp/pull/12"}
-            reposcout.replace_repository_data(db, reposcout.REPOSITORY, [pull],
-                                              [reposcout._pull_doc(reposcout.REPOSITORY, pull)], [])
+            pull = {
+                "number": 12,
+                "title": "LH3DSky review",
+                "body": "Preserve original behavior",
+                "merged_at": "2026-01-02T00:00:00Z",
+                "user": {},
+                "html_url": "https://github.com/openblack/bw1-decomp/pull/12",
+            }
+            reposcout.replace_repository_data(
+                db,
+                reposcout.REPOSITORY,
+                [pull],
+                [
+                    reposcout._pull_doc(reposcout.REPOSITORY, pull),
+                    reposcout._document(
+                        reposcout.REPOSITORY,
+                        12,
+                        "review",
+                        {
+                            "id": 1,
+                            "body": "Use LH3DSky.",
+                            "state": "APPROVED",
+                            "user": {"login": "maintainer"},
+                            "author_association": "MEMBER",
+                            "html_url": pull["html_url"] + "#pullrequestreview-1",
+                        },
+                    ),
+                ],
+                [],
+            )
             db.close()
             before = path.read_bytes()
             with mock.patch.dict("os.environ", {"PR_REVIEW_REPOSCOUT_DB": str(path)}):
-                evidence = automatic_pr_review.collect_reposcout_evidence([
-                    {"filename": "src/Lionhead/LH3DSky.cpp"}, {"filename": "src/Lionhead/LH3DSky.h"}])
+                evidence = automatic_pr_review.collect_reposcout_evidence(
+                    [{"filename": "src/Lionhead/LH3DSky.cpp"}, {"filename": "src/Lionhead/LH3DSky.h"}]
+                )
             self.assertEqual(evidence["status"], "queried index")
-            self.assertEqual(len(evidence["queries"]), 1)
+            self.assertEqual(len(evidence["queries"]), 7)
             self.assertEqual(evidence["queries"][0]["results"][0]["pr_url"], pull["html_url"])
             self.assertIn("returning 1 excerpt", automatic_pr_review.reposcout_review_status(evidence))
             self.assertEqual(before, path.read_bytes())
@@ -55,9 +82,12 @@ class AutomaticReviewTests(unittest.TestCase):
             with mock.patch.dict("os.environ", {"PR_REVIEW_EVIDENCE_DIR": directory}):
                 self.assertEqual(automatic_pr_review.load_binary_evidence(pr), ([], True))
                 for version in ("BW1W100", "BW1W110", "BW1W120", "BW1W130", "BW1WCI"):
-                    Path(directory, version + ".json").write_text(json.dumps({
-                        "version": version, "head_sha": "head", "base_sha": "base",
-                        "limitations": [], "units": []}), encoding="utf-8")
+                    Path(directory, version + ".json").write_text(
+                        json.dumps(
+                            {"version": version, "head_sha": "head", "base_sha": "base", "limitations": [], "units": []}
+                        ),
+                        encoding="utf-8",
+                    )
                 evidence, limited = automatic_pr_review.load_binary_evidence(pr)
                 self.assertEqual(len(evidence), 5)
                 self.assertFalse(limited)
@@ -81,8 +111,7 @@ class AutomaticReviewTests(unittest.TestCase):
     def test_file_pagination_reports_when_the_review_limit_omits_files(self):
         github = GitHub("owner/repository", "token")
         pages = [
-            [{"filename": "file-{}".format(index)} for index in range(start, start + 100)]
-            for start in (0, 100, 200)
+            [{"filename": "file-{}".format(index)} for index in range(start, start + 100)] for start in (0, 100, 200)
         ]
         with mock.patch.object(github, "request", side_effect=pages):
             files, truncated = github.list_changed_files(1)
@@ -92,8 +121,7 @@ class AutomaticReviewTests(unittest.TestCase):
     def test_exact_file_limit_is_not_reported_as_omitted(self):
         github = GitHub("owner/repository", "token")
         pages = [
-            [{"filename": "file-{}".format(index)} for index in range(start, start + 100)]
-            for start in (0, 100)
+            [{"filename": "file-{}".format(index)} for index in range(start, start + 100)] for start in (0, 100)
         ] + [[]]
         with mock.patch.object(github, "request", side_effect=pages):
             files, truncated = github.list_changed_files(1)
@@ -319,9 +347,7 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(len(findings), automatic_pr_review.MAX_FINDINGS)
         self.assertEqual(invalid_count, 0)
         self.assertEqual(omitted_count, 1)
-        self.assertEqual(
-            choose_review_event(findings, 0, 0, invalid_count, omitted_count), "COMMENT"
-        )
+        self.assertEqual(choose_review_event(findings, 0, 0, invalid_count, omitted_count), "COMMENT")
 
     def test_finding_can_anchor_to_a_changed_function(self):
         finding = {
@@ -343,9 +369,7 @@ class AutomaticReviewTests(unittest.TestCase):
         findings, invalid_count, omitted_count = valid_findings(
             {"findings": [finding]},
             {"src/example.cpp": set()},
-            {
-                "src/example.cpp": "@@ -0,0 +1,2 @@\n+bool MeshIntersect::GetImpactPointAlex() {\n+    return false;\n"
-            },
+            {"src/example.cpp": "@@ -0,0 +1,2 @@\n+bool MeshIntersect::GetImpactPointAlex() {\n+    return false;\n"},
         )
         self.assertEqual(invalid_count, 0)
         self.assertEqual(omitted_count, 0)
@@ -377,15 +401,11 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(invalid_count, 1)
 
     def test_correctness_findings_request_changes(self):
-        findings = [
-            {"classification": "correctness defect", "severity": "medium"}
-        ]
+        findings = [{"classification": "correctness defect", "severity": "medium"}]
         self.assertEqual(choose_review_event(findings, 0, 0), "REQUEST_CHANGES")
 
     def test_other_findings_are_comments(self):
-        findings = [
-            {"classification": "unconfirmed risk", "severity": "high"}
-        ]
+        findings = [{"classification": "unconfirmed risk", "severity": "high"}]
         self.assertEqual(choose_review_event(findings, 0, 0), "COMMENT")
 
     def test_no_finding_review_body_is_advisory(self):
@@ -424,7 +444,7 @@ class AutomaticReviewTests(unittest.TestCase):
         responses = [
             response({"output": [{"type": "reasoning"}]}),
             response({"output_text": "not JSON"}),
-            response({"output_text": '{"findings": []}'}),
+            response({"output_text": '{"findings": [], "quality": {}}'}),
         ]
         opener = mock.MagicMock()
         opener.open.side_effect = responses
@@ -433,7 +453,7 @@ class AutomaticReviewTests(unittest.TestCase):
             mock.patch.object(automatic_pr_review.time, "sleep"),
         ):
             result = call_model("https://example.test/v1", "token", "model", "system", "user")
-        self.assertEqual(result, {"findings": []})
+        self.assertEqual(result, {"findings": [], "quality": {}})
         self.assertEqual(opener.open.call_count, 3)
 
 

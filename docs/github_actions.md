@@ -100,3 +100,39 @@ reviewer. Approvals require **Allow GitHub Actions to create and approve pull
 requests** under Settings > Actions > General. This setting applies to all
 workflows in the repository. Review text goes to the configured model provider,
 and maintainers still own the merge decision.
+
+
+Every personal-fork review begins with a human-readability scorecard: confirmed
+magic-number occurrences, unresolved numeric candidates, added/edited comment
+counts (including exempt annotations), and a readability score out of 100.
+Readability is the first review priority. Naming, intent, control flow, data types,
+and consistency each contribute up to 20 points. The score is an advisory model
+assessment, supported by concrete changed-code examples; missing evidence yields
+an unavailable or provisional score rather than a fabricated clean result.
+Documentation-only changes have no assessable code score.
+
+The report separates readable portions, requested changes, magic numbers and
+justifications, comment removals, and RepoScout precedents. Source locations link
+to the reviewed commit. Matching and binary evidence sit in expandable sections.
+The early-2000s Lionhead/MSVC 6.0 explanation is an evidence-based inference, never
+a claim to know the original author's intent. Precedents quote actual indexed
+discussions with the author's relationship and formal review state when available;
+a merged PR alone does not establish acceptance of a particular coding pattern.
+
+Numeric token inventories cover added lines of owned C/C++, Python tooling, and
+GitHub YAML scalar values. Strings, Python docstrings, embedded YAML scripts,
+documentation and vendored sources are outside this token inventory. Numeric
+literals require contextual classification as magic, justified, or uncertain;
+zero literals alone is not the only way to pass. The model must classify every
+supplied occurrence exactly once. Caps, missing context, and uncertain judgments
+are visible and prevent a claim that the audit was complete.
+
+The Boltz-only added-comment lint compares base/head comment inventories so
+unchanged or moved comments are not treated as new merely because nearby code
+changed. It requests removal of added or edited prose comments while preserving
+required address/inliner annotations, initializer formatting, format directives,
+and interpreter/encoding directives. Missing base evidence fails the comment
+check rather than guessing. New prose comments and confirmed actionable readability
+issues request changes even when binary evidence is incomplete. Complete
+inventories and the validated scorecard are uploaded as workflow artifacts.
+The trusted automatic-review workflow uses these changes after they merge to main.
