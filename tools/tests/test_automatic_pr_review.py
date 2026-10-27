@@ -1,3 +1,4 @@
+import json
 import unittest
 from unittest import mock
 
@@ -9,6 +10,7 @@ from tools.automatic_pr_review import (
     choose_review_event,
     collect_configure_status,
     collect_source_context,
+    call_model,
     make_review_body,
     make_prompt,
     response_output_text,
@@ -364,6 +366,31 @@ class AutomaticReviewTests(unittest.TestCase):
             ]
         }
         self.assertEqual(response_output_text(envelope), '{"findings": []}')
+
+    def test_responses_api_text_extraction_accepts_top_level_text(self):
+        self.assertEqual(response_output_text({"output_text": '{"findings": []}'}), '{"findings": []}')
+
+    def test_model_retries_empty_and_malformed_responses(self):
+        def response(envelope):
+            result = mock.MagicMock()
+            result.read.return_value = json.dumps(envelope).encode("utf-8")
+            result.__enter__.return_value = result
+            return result
+
+        responses = [
+            response({"output": [{"type": "reasoning"}]}),
+            response({"output_text": "not JSON"}),
+            response({"output_text": '{"findings": []}'}),
+        ]
+        opener = mock.MagicMock()
+        opener.open.side_effect = responses
+        with (
+            mock.patch.object(automatic_pr_review.urllib.request, "build_opener", return_value=opener),
+            mock.patch.object(automatic_pr_review.time, "sleep"),
+        ):
+            result = call_model("https://example.test/v1", "token", "model", "system", "user")
+        self.assertEqual(result, {"findings": []})
+        self.assertEqual(opener.open.call_count, 3)
 
 
 if __name__ == "__main__":
