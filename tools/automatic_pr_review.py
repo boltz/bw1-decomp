@@ -88,6 +88,10 @@ class ReviewError(Exception):
     """A safe, actionable error for the workflow log."""
 
 
+class RetryableModelResponse(ReviewError):
+    """A successful API request that did not contain usable model output."""
+
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     """Do not forward model credentials to a redirect target."""
 
@@ -507,7 +511,7 @@ def call_model(api_base, api_key, model, system, user):
             content = response_output_text(envelope)
             result = json.loads(content)
             if not isinstance(result, dict) or not isinstance(result.get("findings"), list):
-                raise ReviewError("Model returned an invalid review object")
+                raise RetryableModelResponse("Model returned an invalid review object")
             return result
         except urllib.error.HTTPError as error:
             if error.code not in (429, 500, 502, 503, 504) or attempt + 1 == MAX_RETRIES:
@@ -518,22 +522,42 @@ def call_model(api_base, api_key, model, system, user):
             if attempt + 1 == MAX_RETRIES:
                 raise ReviewError("Model API request failed: {}".format(error)) from error
             time.sleep(2 ** attempt)
+        except RetryableModelResponse as error:
+            if attempt + 1 == MAX_RETRIES:
+                raise ReviewError(
+                    "Model API repeatedly returned unusable output: {}".format(error)
+                ) from error
+            time.sleep(2 ** attempt)
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as error:
-            raise ReviewError("Model returned an invalid JSON response") from error
+            if attempt + 1 == MAX_RETRIES:
+                raise ReviewError("Model repeatedly returned an invalid JSON response") from error
+            time.sleep(2 ** attempt)
     raise ReviewError("Model API request failed after retries")
 
 
 def response_output_text(envelope):
+    if not isinstance(envelope, dict):
+        raise RetryableModelResponse("Responses API returned an invalid response object")
+    direct_text = envelope.get("output_text")
+    if isinstance(direct_text, str) and direct_text:
+        return direct_text
     output = envelope.get("output")
     if not isinstance(output, list):
-        raise ReviewError("Responses API returned no output list")
+        raise RetryableModelResponse("Responses API returned no output list")
     for item in output:
+        if not isinstance(item, dict):
+            continue
         if item.get("type") != "message" or item.get("role") != "assistant":
             continue
-        for content in item.get("content", []):
+        content_items = item.get("content", [])
+        if not isinstance(content_items, list):
+            continue
+        for content in content_items:
+            if not isinstance(content, dict):
+                continue
             if content.get("type") == "output_text" and isinstance(content.get("text"), str):
                 return content["text"]
-    raise ReviewError("Responses API returned no assistant text")
+    raise RetryableModelResponse("Responses API returned no assistant text")
 
 
 def valid_findings(result, changed_lines, changed_text):
