@@ -497,9 +497,14 @@ bool32_t MeshIntersect::GetImpactPointAlex(LHPoint& start, LHPoint& direction, L
 		}
 	}
 
+	if (!found)
+	{
+		return false;
+	}
+
 	normal = nearestNormal;
 	impact = nearestImpact;
-	return found;
+	return true;
 }
 
 bool32_t MeshIntersect::GetImpactPoint(LHPoint& start, LHPoint& direction, LHPoint& impact, LHPoint& normal,
