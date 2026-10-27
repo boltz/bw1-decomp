@@ -64,8 +64,27 @@ contents or PR code with the review credentials. Closed, draft, and superseded
 PRs are skipped. These workflow changes must be present on the fork's default
 branch before they can handle Build completion events.
 
-RepoScout is not available in GitHub Actions, so the bot
-states that it was not used.
+RepoScout uses `tools/reposcout.py`, the existing standalone Python/SQLite
+retriever also used by the local OpenCode workflow. The RepoScout index workflow
+refreshes public upstream merged-PR discussions daily, manually, and when its
+code changes on `main`. It uploads an index artifact retained for 30 days.
+The review downloads the latest successful default-branch index and runs bounded
+lexical searches for up to eight changed source-file stems. It supplies cited
+excerpts and the index sync date to the model. The scheduled index omits changed-file
+records to reduce API requests; it retains PR descriptions and review discussions.
+No results, stale index dates, expired artifacts, and failed retrieval must be
+reported honestly. A maintainer discussion is precedent, not a binding rule.
+
+This automation does not run Codex or OpenCode. Installing a skill locally does
+not make its tools or data available to the hosted review job. The Python retriever
+can also be invoked locally from either agent; it needs no agent-specific rewrite.
+
+Binary evidence collection and map/report uploads run even when a preceding build
+step fails, unless the workflow is cancelled. This preserves usable object evidence
+when compilation succeeds but the final executable hash check fails. Actual compile
+failures can still leave evidence unavailable; the failed build remains a failed
+check. Changed source units are selected before the bounded list of potential
+header consumers.
 
 Set the Actions variable `AI_PR_REVIEW_ENABLED` to `true` and the secret
 `PR_REVIEW_API_KEY` to an OpenAI API key. The workflow defaults to `gpt-6-luna`;
