@@ -22,6 +22,33 @@ from tools.automatic_pr_review import (
 
 
 class AutomaticReviewTests(unittest.TestCase):
+    def test_reposcout_reports_missing_index_without_claiming_search(self):
+        with mock.patch.dict("os.environ", {"PR_REVIEW_REPOSCOUT_DB": "/nonexistent/reposcout.sqlite3"}):
+            evidence = automatic_pr_review.collect_reposcout_evidence([])
+        self.assertIn("unavailable", evidence["status"])
+        self.assertNotIn("queried", automatic_pr_review.reposcout_review_status(evidence))
+
+    def test_reposcout_queries_existing_index_read_only_and_keeps_citations(self):
+        from tools import reposcout
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "index.sqlite3"
+            db = reposcout.connect(path)
+            pull = {"number": 12, "title": "LH3DSky review", "body": "Preserve original behavior",
+                    "merged_at": "2026-01-02T00:00:00Z", "user": {},
+                    "html_url": "https://github.com/openblack/bw1-decomp/pull/12"}
+            reposcout.replace_repository_data(db, reposcout.REPOSITORY, [pull],
+                                              [reposcout._pull_doc(reposcout.REPOSITORY, pull)], [])
+            db.close()
+            before = path.read_bytes()
+            with mock.patch.dict("os.environ", {"PR_REVIEW_REPOSCOUT_DB": str(path)}):
+                evidence = automatic_pr_review.collect_reposcout_evidence([
+                    {"filename": "src/Lionhead/LH3DSky.cpp"}, {"filename": "src/Lionhead/LH3DSky.h"}])
+            self.assertEqual(evidence["status"], "queried index")
+            self.assertEqual(len(evidence["queries"]), 1)
+            self.assertEqual(evidence["queries"][0]["results"][0]["pr_url"], pull["html_url"])
+            self.assertIn("returning 1 excerpt", automatic_pr_review.reposcout_review_status(evidence))
+            self.assertEqual(before, path.read_bytes())
+
     def test_binary_evidence_requires_all_versions_and_matching_revisions(self):
         pr = {"head": {"sha": "head"}, "base": {"sha": "base"}}
         with tempfile.TemporaryDirectory() as directory:

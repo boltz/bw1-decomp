@@ -97,7 +97,7 @@ jobs:
         ninja all_source progress build/${{ matrix.version }}/report.json
 
     - name: Collect binary review evidence
-      if: github.event_name == 'pull_request'
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
       env:
         BASE_SHA: ${{ github.event.pull_request.base.sha }}
         HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -108,7 +108,7 @@ jobs:
         --output binary-evidence/${{ matrix.version }}.json
 
     - name: Upload binary review evidence
-      if: github.event_name == 'pull_request'
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
       uses: actions/upload-artifact@v4
       with:
         name: binary-evidence-${{ matrix.version }}
@@ -116,6 +116,7 @@ jobs:
 
     # Upload map files
     - name: Upload map
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.version }}_maps
@@ -123,6 +124,7 @@ jobs:
 
     # Upload progress report
     - name: Upload report
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.version }}_report

@@ -15,8 +15,11 @@ def collect(base, head, version):
         ['git', 'diff', '--name-only', base, head], text=True
     ).splitlines()
     headers_changed = any(path.endswith(('.h', '.hpp', '.inc')) for path in changed)
-    units = [unit for unit in load_project()['units']
-             if headers_changed or unit.get('metadata', {}).get('source_path') in changed]
+    project_units = load_project()['units']
+    direct = [unit for unit in project_units
+              if unit.get('metadata', {}).get('source_path') in changed]
+    consumers = [unit for unit in project_units if unit not in direct] if headers_changed else []
+    units = direct + consumers
     result = {'version': version, 'base_sha': base, 'head_sha': head,
               'mode': 'strict object comparison, functionRelocDiffs=all',
               'compiled_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),

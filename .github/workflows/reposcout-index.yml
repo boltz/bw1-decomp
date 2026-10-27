@@ -1,0 +1,40 @@
+name: RepoScout index
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/reposcout.py'
+      - '.github/workflows/reposcout-index.yml'
+  schedule:
+    - cron: '20 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reposcout-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Index public upstream maintainer discussions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/reposcout.py --db build/reposcout/index.sqlite3 sync --no-files
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reposcout-index
+          path: build/reposcout/index.sqlite3
+          retention-days: 30
