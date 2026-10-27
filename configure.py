@@ -1668,6 +1668,7 @@ config.libs = [
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DSmoke.cpp"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DIsland.cpp", extra_cflags=["/GX"], pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DMesh.cpp"),
+            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DMeshIntersect.cpp"),
             LH3DLibObject(Matching, "Lionhead/LH3DLib/development/LH3DTech.cpp", pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/Fish.cpp"),
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHCollide.cpp", progress_category="sdk"),
