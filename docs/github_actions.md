@@ -41,7 +41,7 @@ The upstream decomp.dev page and bot are separate from this fork's Actions setup
 
 ## Automatic PR review
 
-`automatic-review.yml` reviews ready PRs with the upstream `AGENTS.md` as its
+`automatic-review.yml` runs after the Build workflow completes and reviews ready PRs with the upstream `AGENTS.md` as its
 source guide. It reads patches through the GitHub API and checks out only the
 trusted revision that supplied the workflow; it never checks out or runs PR
 code. Review text is sent to the configured OpenAI-compatible API, so enable it
@@ -50,7 +50,21 @@ only if that provider may receive repository diffs.
 The reviewer instructions are in `tools/automatic_pr_review_instructions.md`.
 The job supplies changed source files, matching configure entries, base-source
 method-name matches as caller candidates, and the check-run states available
-when review starts. RepoScout is not available in GitHub Actions, so the bot
+when review starts. Each version build also uploads a `binary-evidence-*`
+artifact with strict object comparison summaries and bounded disassembly for
+changed source units. Header changes select all units, with an explicit eight-unit
+limit. Output truncation and failed comparisons are recorded. Artifacts identify
+the PR base, head, and actual compiled checkout (normally the PR merge commit).
+The review reads these artifacts as untrusted data and validates their PR revision
+identities. Missing versions, stale artifacts, or truncated evidence prevent an
+automatic approval. No game executables or object files are uploaded.
+
+The review workflow uses trusted default-branch code and never executes artifact
+contents or PR code with the review credentials. Closed, draft, and superseded
+PRs are skipped. These workflow changes must be present on the fork's default
+branch before they can handle Build completion events.
+
+RepoScout is not available in GitHub Actions, so the bot
 states that it was not used.
 
 Set the Actions variable `AI_PR_REVIEW_ENABLED` to `true` and the secret

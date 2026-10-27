@@ -1,5 +1,7 @@
 import json
 import unittest
+import tempfile
+from pathlib import Path
 from unittest import mock
 
 import tools.automatic_pr_review as automatic_pr_review
@@ -20,6 +22,21 @@ from tools.automatic_pr_review import (
 
 
 class AutomaticReviewTests(unittest.TestCase):
+    def test_binary_evidence_requires_all_versions_and_matching_revisions(self):
+        pr = {"head": {"sha": "head"}, "base": {"sha": "base"}}
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.dict("os.environ", {"PR_REVIEW_EVIDENCE_DIR": directory}):
+                self.assertEqual(automatic_pr_review.load_binary_evidence(pr), ([], True))
+                for version in ("BW1W100", "BW1W110", "BW1W120", "BW1W130", "BW1WCI"):
+                    Path(directory, version + ".json").write_text(json.dumps({
+                        "version": version, "head_sha": "head", "base_sha": "base",
+                        "limitations": [], "units": []}), encoding="utf-8")
+                evidence, limited = automatic_pr_review.load_binary_evidence(pr)
+                self.assertEqual(len(evidence), 5)
+                self.assertFalse(limited)
+                pr["head"]["sha"] = "new-head"
+                self.assertEqual(automatic_pr_review.load_binary_evidence(pr), ([], True))
+
     def test_submit_review_uses_github_review_event(self):
         github = GitHub("owner/repository", "token")
         with (

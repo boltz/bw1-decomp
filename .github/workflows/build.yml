@@ -96,6 +96,24 @@ jobs:
         python configure.py --map --version ${{ matrix.version }}
         ninja all_source progress build/${{ matrix.version }}/report.json
 
+    - name: Collect binary review evidence
+      if: github.event_name == 'pull_request'
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: >-
+        python tools/pr_binary_evidence.py
+        --base "$BASE_SHA" --head "$HEAD_SHA"
+        --version ${{ matrix.version }}
+        --output binary-evidence/${{ matrix.version }}.json
+
+    - name: Upload binary review evidence
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary-evidence-${{ matrix.version }}
+        path: binary-evidence/*.json
+
     # Upload map files
     - name: Upload map
       uses: actions/upload-artifact@v4

@@ -436,6 +436,7 @@ def make_prompt(
     caller_context,
     check_runs,
     check_runs_truncated,
+    binary_evidence=None,
 ):
     system = instructions + """
 
@@ -452,11 +453,13 @@ Return only JSON matching this shape: {\"findings\":[{\"path\":string,\"line\":i
         "limited_source_file_count": limited_source_files,
         "available_analysis_tools": {
             "reposcout": "unavailable in this GitHub Actions workflow",
-            "original_binary": "unavailable in this workflow",
+            "original_binary": "extracted CI evidence only; no interactive binary access",
             "build_or_recompile": "not permitted for this review",
         },
         "configure_entries_for_changed_translation_units": configure_status,
         "base_revision_method_matches_call_candidates": caller_context,
+        "binary_evidence": binary_evidence,
+        "completed_build_conclusion": os.environ.get("PR_REVIEW_BUILD_CONCLUSION", "unavailable"),
         "existing_check_runs_for_head": check_runs,
         "check_run_list_truncated": check_runs_truncated,
         "changed_source_file_contents": source_context,
@@ -687,12 +690,13 @@ def make_review_body(
     invalid_findings=0,
     omitted_findings=0,
     limited_context_files=0,
+    binary_evidence_status="Original game binaries were not available to this review.",
 ):
     lines = [
         MARKER,
         "Automated review for `{}`.".format(head_sha[:12]),
         "RepoScout was unavailable in this Actions run; upstream AGENTS.md was used.",
-        "Original game binaries were not available to this review.",
+        binary_evidence_status,
         "",
     ]
     if event == "APPROVE":
@@ -767,6 +771,38 @@ def make_review_body(
     return "\n".join(lines)
 
 
+def load_binary_evidence(pull_request):
+    """Treat artifacts as bounded untrusted data, bound to both PR revisions."""
+    directory = Path(os.environ.get("PR_REVIEW_EVIDENCE_DIR", "binary-evidence"))
+    expected_versions = {"BW1W100", "BW1W110", "BW1W120", "BW1W130", "BW1WCI"}
+    evidence = []
+    remaining = 120_000
+    limited = False
+    seen = set()
+    for path in sorted(directory.glob("**/*.json"))[:10]:
+        if path.is_symlink() or path.stat().st_size > 500_000:
+            limited = True
+            continue
+        try:
+            item = json.loads(path.read_text(encoding="utf-8"))
+            if (not isinstance(item, dict) or item.get("head_sha") != pull_request["head"]["sha"] or
+                    item.get("base_sha") != pull_request["base"]["sha"] or
+                    item.get("version") not in expected_versions or item.get("version") in seen):
+                limited = True
+                continue
+            encoded = json.dumps(item)
+            if len(encoded) > remaining:
+                limited = True
+                continue
+            remaining -= len(encoded)
+            seen.add(item["version"])
+            limited |= bool(item.get("limitations"))
+            evidence.append(item)
+        except (OSError, ValueError):
+            limited = True
+    return evidence, limited or seen != expected_versions
+
+
 def main():
     repository = os.environ.get("GITHUB_REPOSITORY", "")
     token = os.environ.get("GITHUB_TOKEN", "")
@@ -790,9 +826,20 @@ def main():
 
     event_path = Path(os.environ.get("GITHUB_EVENT_PATH", ""))
     event = json.loads(event_path.read_text(encoding="utf-8"))
-    pull_request = event.get("pull_request")
-    if not isinstance(pull_request, dict):
-        raise ReviewError("GitHub event does not contain a pull request")
+    github = GitHub(repository, token)
+    pull_request = github.request("GET", "/repos/{}/pulls/{}".format(repository, number))
+    expected_sha = os.environ.get("PR_REVIEW_EXPECTED_SHA")
+    if (pull_request.get("state") != "open" or pull_request.get("draft") or
+            (expected_sha and pull_request["head"]["sha"] != expected_sha)):
+        print("Skipping closed, draft, or superseded pull request")
+        return
+    binary_evidence, evidence_limited = load_binary_evidence(pull_request)
+    evidence_status = (
+        "Reviewed extracted binary comparison evidence for: {}. No interactive binary access.".format(
+            ", ".join(item['version'] for item in binary_evidence))
+        if binary_evidence else "Binary comparison evidence was unavailable for this build.")
+    if evidence_limited:
+        evidence_status += " Binary evidence coverage is limited."
 
     guide = guide_path.read_text(encoding="utf-8")
     if len(guide) > 100_000:
@@ -822,7 +869,7 @@ def main():
         except ReviewError:
             check_runs, check_runs_truncated = [], True
         unknown_config_entries = sum(entry["status"] != "observed" for entry in configure_status)
-        limited_context_files = limited_source_files + unknown_config_entries
+        limited_context_files = limited_source_files + unknown_config_entries + int(evidence_limited)
         model_result = call_model(
             api_base,
             api_key,
@@ -842,6 +889,7 @@ def main():
                 caller_context,
                 check_runs,
                 check_runs_truncated,
+                binary_evidence,
             ),
         )
         findings, invalid_findings, omitted_findings = valid_findings(
@@ -865,6 +913,11 @@ def main():
             omitted_findings,
             limited_context_files,
         )
+        body = body.replace("Original game binaries were not available to this review.", evidence_status)
+        current = github.request("GET", "/repos/{}/pulls/{}".format(repository, number))
+        if current["head"]["sha"] != pull_request["head"]["sha"] or current.get("state") != "open":
+            print("Skipping superseded review")
+            return
         github.submit_review(int(number), pull_request["head"]["sha"], event, body)
 
 
