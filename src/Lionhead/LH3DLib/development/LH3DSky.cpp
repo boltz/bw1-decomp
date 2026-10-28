@@ -1,27 +1,27 @@
 #include "LH3DSky.h"
 
-#include <math.h>   /* For fabs */
-#include <string.h> /* For memset, strcat, strcpy */
+#include <math.h>
+#include <string.h>
 
-#include <re_common.h> /* For bool32_t */
+#include <re_common.h>
 
-#include "LH3DAtmos.h"         /* For LH3DAtmos */
-#include "LH3DColor.h"         /* For struct LH3DColor */
-#include "LH3DIsland.h"        /* For LH3DIsland */
-#include "LH3DLevelOfDetail.h" /* For LH3DLevelOfDetail */
-#include "LH3DMaterial.h"      /* For struct LH3DMaterial */
-#include "LH3DMem.h"           /* For LH3DMem */
-#include "LH3DMesh.h"          /* For struct LH3DMesh */
-#include "LH3DObject.h"        /* For LH3DObject */
-#include "LH3DPrimitive.h"     /* For struct LH3DPrimitive */
-#include "LH3DRender.h"        /* For LH3DRender */
-#include "LH3DSubMesh.h"       /* For struct LH3DSubMesh */
-#include "LH3DTech.h"          /* For LH3DTech */
-#include "LH3DTexture.h"       /* For LH3DTexture */
-#include "LHMatrix.h"          /* For struct LHMatrix */
-#include "LHPoint.h"           /* For struct LHPoint */
+#include "LH3DAtmos.h"
+#include "LH3DColor.h"
+#include "LH3DIsland.h"
+#include "LH3DLevelOfDetail.h"
+#include "LH3DMaterial.h"
+#include "LH3DMem.h"
+#include "LH3DMesh.h"
+#include "LH3DObject.h"
+#include "LH3DPrimitive.h"
+#include "LH3DRender.h"
+#include "LH3DSubMesh.h"
+#include "LH3DTech.h"
+#include "LH3DTexture.h"
+#include "LHMatrix.h"
+#include "LHPoint.h"
 
-#include <Lionhead/LHFile/ver3.0/LHOSFile.h> /* For LHFileLength, LHLoadData */
+#include <Lionhead/LHFile/ver3.0/LHOSFile.h>
 
 int         LH3DSky::g_b_we_are_inside_citadel;
 float       LH3DSky::g_alpha_sun = 255.0f;

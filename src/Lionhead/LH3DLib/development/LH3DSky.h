@@ -1,11 +1,11 @@
 #ifndef BW1_DECOMP_LH3D_SKY_INCLUDED_H
 #define BW1_DECOMP_LH3D_SKY_INCLUDED_H
 
-#include <stdint.h> /* For uint16_t, uint8_t */
+#include <stdint.h>
 
-#include <re_common.h> /* For bool32_t */
+#include <re_common.h>
 
-#include "LH3DColor.h" /* For struct LH3DColor */
+#include "LH3DColor.h"
 
 class LH3DObject;
 struct LH3DMesh;
