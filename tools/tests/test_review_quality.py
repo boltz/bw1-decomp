@@ -107,6 +107,13 @@ class TokenInventoryTests(unittest.TestCase):
             self.assertEqual(result["eligible_files"], 0)
             self.assertEqual(result["number_count"], 0)
 
+    def test_sky_sized_number_inventory_is_not_truncated(self):
+        text = "\n".join("int value{} = {};".format(i, i) for i in range(349))
+        result = inventory(text)
+        self.assertEqual(result["number_count"], 349)
+        self.assertEqual(len(result["numbers"]), 349)
+        self.assertEqual(result["limitations"], [])
+
     def test_number_cap_does_not_make_complete_comment_audit_incomplete(self):
         result = inventory("\n".join("int v{} = {};".format(i, i) for i in range(audit.MAX_NUMBERS + 1)))
         self.assertEqual(result["number_count"], audit.MAX_NUMBERS + 1)

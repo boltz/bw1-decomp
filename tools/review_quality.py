@@ -13,7 +13,7 @@ import re
 import subprocess
 
 CPP_EXTENSIONS = (".c", ".cc", ".cpp", ".h", ".hpp", ".inl")
-MAX_NUMBERS = 256
+MAX_NUMBERS = 1024
 MAX_NUMBER_CONTEXT_CHARS = 240
 MAX_COMMENT_TEXT_CHARS = 300
 MAX_LINT_COMMENT_CHARS = 180

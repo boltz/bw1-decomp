@@ -25,17 +25,18 @@ except ImportError:
 
 MARKER = "<!-- bw1-automatic-review -->"
 MAX_FILES = 200
-MAX_FILE_PATCH_CHARS = 32_000
-MAX_TOTAL_PATCH_CHARS = 64_000
-MAX_SOURCE_CONTEXT_CHARS = 80_000
-MAX_SOURCE_CONTEXT_FILES = 12
+MAX_FILE_PATCH_CHARS = 64_000
+MAX_TOTAL_PATCH_CHARS = 192_000
+MAX_SOURCE_CONTEXT_CHARS = 400_000
+MAX_SOURCE_CONTEXT_FILES = 40
 MAX_CALLER_CONTEXT_LINES = 40
 MAX_CONFIG_LINES = 100
 MAX_CHECK_RUNS = 100
 MAX_FINDINGS = 12
 MAX_RESPONSE_BYTES = 1_000_000
 MAX_RETRIES = 3
-MAX_MODEL_OUTPUT_TOKENS = 10_000
+MAX_MODEL_OUTPUT_TOKENS = 20_000
+MODEL_REQUEST_TIMEOUT_SECONDS = 180
 MAX_REVIEW_BODY_CHARS = 58_000
 REVIEW_BODY_FOOTER_CHARS = 1000
 MAX_REPOSCOUT_FILE_TOPICS = 4
@@ -281,13 +282,26 @@ def added_line_numbers(patch):
     return lines
 
 
+def review_file_priority(item):
+    path = item.get("filename", "")
+    if not isinstance(path, str):
+        return 4
+    if path.startswith("src/") and review_quality.owned_source(path):
+        return 0
+    if path.startswith(("tools/", ".github/")) and review_quality.owned_source(path):
+        return 1
+    if path == "configure.py":
+        return 2
+    return 3
+
+
 def build_diff_context(files):
     allowed_lines = {}
     sections = []
     total_chars = 0
     limited = 0
 
-    for item in files:
+    for item in sorted(files, key=review_file_priority):
         path = item.get("filename")
         if not isinstance(path, str):
             continue
@@ -327,7 +341,7 @@ def collect_source_context(github, files, head_sha, base_sha=None):
     limited = 0
     used_chars = 0
     code_extensions = (".c", ".cc", ".cpp", ".h", ".hpp", ".inl", ".py", ".yml", ".yaml")
-    for item in files:
+    for item in sorted(files, key=review_file_priority):
         path = item.get("filename")
         if not isinstance(path, str) or not (
             path.startswith(("src/", "include/", "tools/", ".github/")) or path == "configure.py"
@@ -537,7 +551,7 @@ def call_model(api_base, api_key, model, system, user):
     opener = urllib.request.build_opener(NoRedirect)
     for attempt in range(MAX_RETRIES):
         try:
-            with opener.open(request, timeout=90) as response:
+            with opener.open(request, timeout=MODEL_REQUEST_TIMEOUT_SECONDS) as response:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
             if len(raw) > MAX_RESPONSE_BYTES:
                 raise ReviewError("Model response exceeded the size limit")

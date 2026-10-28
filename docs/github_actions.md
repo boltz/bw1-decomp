@@ -154,3 +154,14 @@ not his personal correspondence. The report template uses plain labels and keeps
 score details, required-comment locations, and long lists of missing files in
 expandable sections. The score, counts, review limits, and requested fixes remain
 visible. Changing the process does not edit previously posted reviews.
+
+
+Source collection and diff selection put changed owned C/C++ files first, then
+workflow/tooling code, then configure.py, then other files such as symbol records.
+A large configuration file cannot consume the review budget before game code is
+read. The bounded source allowance is 400,000 characters across 40 files; patches
+have a 192,000-character total allowance and a 64,000-character per-file cap.
+The numeric inventory holds up to 1,024 occurrences, and model output has a
+20,000-token allowance for their classifications and findings. These limits cover
+PR #19's 11 source files and 349 numeric occurrences. Larger changes still report
+incomplete coverage instead of claiming that an unfinished audit passed.

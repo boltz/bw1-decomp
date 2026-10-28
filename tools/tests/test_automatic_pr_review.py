@@ -163,6 +163,55 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(contexts[0]["text"], "source")
         self.assertEqual(limited, 1)
 
+    def test_large_configure_file_does_not_hide_cpp_source(self):
+        github = GitHub("owner/repository", "token")
+        files = [{"filename": "configure.py", "status": "modified"}, {"filename": "src/sky.cpp", "status": "added"}]
+
+        def source(path, ref):
+            return "x" * 200_000 if path == "configure.py" else "int value = 37;\n"
+
+        with mock.patch.object(github, "get_text_file", side_effect=source):
+            contexts, limited = collect_source_context(github, files, "head", "base")
+        self.assertEqual(limited, 0)
+        self.assertEqual([c["path"] for c in contexts], ["src/sky.cpp", "configure.py"])
+        self.assertTrue(all(c["status"] == "complete" for c in contexts))
+        self.assertTrue(contexts[0]["base_comments_complete"])
+        self.assertEqual(contexts[0]["base_comment_signatures"], [])
+
+    def test_cpp_is_retained_first_when_source_budget_is_exhausted(self):
+        github = GitHub("owner/repository", "token")
+        files = [{"filename": "configure.py", "status": "modified"}, {"filename": "src/sky.cpp", "status": "added"}]
+        with (
+            mock.patch.object(github, "get_text_file", return_value="int x;\n"),
+            mock.patch.object(automatic_pr_review, "MAX_SOURCE_CONTEXT_CHARS", 7),
+        ):
+            contexts, limited = collect_source_context(github, files, "head")
+        self.assertEqual(contexts[0]["path"], "src/sky.cpp")
+        self.assertEqual(contexts[0]["status"], "complete")
+        self.assertEqual(contexts[1]["status"], "omitted by size limit")
+        self.assertEqual(limited, 1)
+
+    def test_cpp_patch_is_retained_before_large_symbol_records(self):
+        files = [
+            {"filename": "config/BW1W120/symbols.txt", "patch": "s" * 100},
+            {"filename": "src/sky.cpp", "patch": "@@ -0,0 +1 @@\n+int x;"},
+        ]
+        with mock.patch.object(automatic_pr_review, "MAX_TOTAL_PATCH_CHARS", 30):
+            context, lines, limited = build_diff_context(files)
+        self.assertLess(context.index("src/sky.cpp"), context.index("symbols.txt"))
+        self.assertEqual(lines["src/sky.cpp"], {1})
+        self.assertEqual(limited, 1)
+
+    def test_all_patches_in_a_sky_sized_change_fit(self):
+        files = [
+            {"filename": "config/BW1W120/symbols{}.txt".format(i), "patch": "@@ -0,0 +1 @@\n+" + "s" * 14_000}
+            for i in range(6)
+        ]
+        files.append({"filename": "src/sky.cpp", "patch": "@@ -0,0 +1 @@\n+" + "c" * 18_000})
+        _, lines, limited = build_diff_context(files)
+        self.assertEqual(limited, 0)
+        self.assertTrue(all(value == {1} for value in lines.values()))
+
     def test_missing_configure_status_is_unknown(self):
         github = GitHub("owner/repository", "token")
         with mock.patch.object(github, "get_text_file", return_value=None):
