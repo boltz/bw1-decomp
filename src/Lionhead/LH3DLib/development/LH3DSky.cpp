@@ -211,47 +211,60 @@ void LH3DSky::Update()
 
 void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& moon_matrix)
 {
-	LH3DAtmos::v_idx[0][0] = 0;
-	LH3DAtmos::v_idx[0][1] = 1;
-	LH3DAtmos::v_idx[0][2] = 3;
-	LH3DAtmos::v_idx[0][3] = 3;
-	LH3DAtmos::v_idx[0][4] = 2;
-	LH3DAtmos::v_idx[0][5] = 0;
+	enum MoonVertex
+	{
+		MOON_LOWER_LEFT = 0,
+		MOON_LOWER_RIGHT = 1,
+		MOON_UPPER_LEFT = 2,
+		MOON_UPPER_RIGHT = 3
+	};
+	enum
+	{
+		MOON_ATMOS_BUFFER = 0
+	};
 
-	LH3DAtmos::v_uv[0][0] = LH3D_SKY_MOON_UV_MIN;
-	LH3DAtmos::v_uv[0][1] = LH3D_SKY_MOON_UV_MIN;
-	LH3DAtmos::v_uv[0][2] = LH3D_SKY_MOON_UV_MAX;
-	LH3DAtmos::v_uv[0][3] = LH3D_SKY_MOON_UV_MIN;
-	LH3DAtmos::v_uv[0][4] = LH3D_SKY_MOON_UV_MIN;
-	LH3DAtmos::v_uv[0][5] = LH3D_SKY_MOON_UV_MAX;
-	LH3DAtmos::v_uv[0][6] = LH3D_SKY_MOON_UV_MAX;
-	LH3DAtmos::v_uv[0][7] = LH3D_SKY_MOON_UV_MAX;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][0] = MOON_LOWER_LEFT;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][1] = MOON_LOWER_RIGHT;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][2] = MOON_UPPER_RIGHT;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][3] = MOON_UPPER_RIGHT;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][4] = MOON_UPPER_LEFT;
+	LH3DAtmos::v_idx[MOON_ATMOS_BUFFER][5] = MOON_LOWER_LEFT;
+
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][0] = LH3D_SKY_MOON_UV_MIN;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][1] = LH3D_SKY_MOON_UV_MIN;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][2] = LH3D_SKY_MOON_UV_MAX;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][3] = LH3D_SKY_MOON_UV_MIN;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][4] = LH3D_SKY_MOON_UV_MIN;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][5] = LH3D_SKY_MOON_UV_MAX;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][6] = LH3D_SKY_MOON_UV_MAX;
+	LH3DAtmos::v_uv[MOON_ATMOS_BUFFER][7] = LH3D_SKY_MOON_UV_MAX;
 
 	LH3DColor glowColour = colour;
 	glowColour.r = (uint8_t)((int)glowColour.r / LH3D_SKY_MOON_RED_DIVISOR);
 	glowColour.g = (uint8_t)((int)glowColour.g / LH3D_SKY_MOON_GREEN_DIVISOR);
 	glowColour.b >>= LH3D_SKY_MOON_BLUE_SHIFT;
 
-	LH3DAtmos::v_col[0][0] = glowColour;
-	LH3DAtmos::v_col[0][1] = glowColour;
-	LH3DAtmos::v_col[0][2] = glowColour;
-	LH3DAtmos::v_col[0][3] = glowColour;
+	LH3DAtmos::v_col[MOON_ATMOS_BUFFER][MOON_LOWER_LEFT] = glowColour;
+	LH3DAtmos::v_col[MOON_ATMOS_BUFFER][MOON_LOWER_RIGHT] = glowColour;
+	LH3DAtmos::v_col[MOON_ATMOS_BUFFER][MOON_UPPER_LEFT] = glowColour;
+	LH3DAtmos::v_col[MOON_ATMOS_BUFFER][MOON_UPPER_RIGHT] = glowColour;
 
 	LHPoint  lowerLeft(-LH3D_SKY_MOON_QUAD_SIZE, -LH3D_SKY_MOON_QUAD_SIZE, 0.0f);
-	LHPoint& lowerLeftOutput = LH3DAtmos::v_pnt[0][0];
+	LHPoint& lowerLeftOutput = LH3DAtmos::v_pnt[MOON_ATMOS_BUFFER][MOON_LOWER_LEFT];
 	LHMATRIX_TRANSFORM_POINT(lowerLeftOutput, lowerLeft, quad_matrix);
 	LHPoint  lowerRight(LH3D_SKY_MOON_QUAD_SIZE, -LH3D_SKY_MOON_QUAD_SIZE, 0.0f);
-	LHPoint& lowerRightOutput = LH3DAtmos::v_pnt[0][1];
+	LHPoint& lowerRightOutput = LH3DAtmos::v_pnt[MOON_ATMOS_BUFFER][MOON_LOWER_RIGHT];
 	LHMATRIX_TRANSFORM_POINT(lowerRightOutput, lowerRight, quad_matrix);
 	LHPoint  upperLeft(-LH3D_SKY_MOON_QUAD_SIZE, LH3D_SKY_MOON_QUAD_SIZE, 0.0f);
-	LHPoint& upperLeftOutput = LH3DAtmos::v_pnt[0][2];
+	LHPoint& upperLeftOutput = LH3DAtmos::v_pnt[MOON_ATMOS_BUFFER][MOON_UPPER_LEFT];
 	LHMATRIX_TRANSFORM_POINT(upperLeftOutput, upperLeft, quad_matrix);
 	LHPoint  upperRight(LH3D_SKY_MOON_QUAD_SIZE, LH3D_SKY_MOON_QUAD_SIZE, 0.0f);
-	LHPoint& upperRightOutput = LH3DAtmos::v_pnt[0][3];
+	LHPoint& upperRightOutput = LH3DAtmos::v_pnt[MOON_ATMOS_BUFFER][MOON_UPPER_RIGHT];
 	LHMATRIX_TRANSFORM_POINT(upperRightOutput, upperRight, quad_matrix);
 
-	LH3DTech::Draw3DWorldTriangle(LH3D_SKY_MOON_VERTEX_COUNT, LH3DAtmos::v_pnt[0], LH3DAtmos::v_col[0],
-	                              LH3DAtmos::v_uv[0], LH3D_SKY_MOON_TRIANGLE_COUNT, LH3DAtmos::v_idx[0],
+	LH3DTech::Draw3DWorldTriangle(LH3D_SKY_MOON_VERTEX_COUNT, LH3DAtmos::v_pnt[MOON_ATMOS_BUFFER],
+	                              LH3DAtmos::v_col[MOON_ATMOS_BUFFER], LH3DAtmos::v_uv[MOON_ATMOS_BUFFER],
+	                              LH3D_SKY_MOON_TRIANGLE_COUNT, LH3DAtmos::v_idx[MOON_ATMOS_BUFFER],
 	                              LH3DAtmos::AdditiveMaterial, false);
 
 	moonobj->matrix.Set(moon_matrix);
