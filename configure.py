@@ -399,7 +399,7 @@ includes_project = [
 ]
 cflags_base = [
     "/nologo",
-    "/W3",
+    "/W0",
     "/O2",
     "/Og",
     "/Ob1",
@@ -462,7 +462,7 @@ if config.version == "BW1W100":
 cflags_lhdialog = [
     "/nologo",
     "/MDd",
-    "/W3",
+    "/W0",
     "/GX",
     "/ZI",
     "/Od",
@@ -481,7 +481,7 @@ cflags_lhdialog = [
 cflags_mfcs42d = [
     "/nologo",
     "/MDd",
-    "/W3",
+    "/W0",
     "/GX",
     "/GR",
     "/GF",
@@ -1087,7 +1087,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Name.cpp"),
             GameCodeObject(NonMatching, "Black/Network.cpp"),
             GameCodeObject(NonMatching, "Black/NewProfileBox.cpp"),
-            GameCodeObject(Matching, "Black/Object.cpp", pch=PCH_PENDING),
+            GameCodeObject(Matching, "Black/Object.cpp"),
             GameCodeObject(Matching, "Black/Object3D.cpp", pch=PCH_PENDING),
             GameCodeObject(Matching, "Black/OnMapTrajectory.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/OOSDebug.cpp"),
@@ -1667,7 +1667,7 @@ config.libs = [
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHSprite.cpp", progress_category="sdk"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DSmoke.cpp"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DIsland.cpp", extra_cflags=["/GX"], pch=True),
-            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DMesh.cpp"),
+            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DMesh.cpp", extra_cflags=["/GX"], pch=True),
             LH3DLibObject(Matching, "Lionhead/LH3DLib/development/LH3DTech.cpp", pch=True),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/Fish.cpp"),
             Object(NonMatching, "Lionhead/LHLib/ver5.0/LHCollide.cpp", progress_category="sdk"),
