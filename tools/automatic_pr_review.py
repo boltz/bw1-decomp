@@ -723,6 +723,64 @@ def choose_review_event(
     return "COMMENT"
 
 
+def render_requested_changes(findings, quality, repository, head_sha, incomplete=False):
+    requests, optional, investigations = [], [], []
+
+    def add(target, item, action, reason):
+        location = readability_review.location_label(
+            item["path"], item["line"], safe_markdown, repository, head_sha
+        ) if item.get("line") else "`{}: {}`".format(
+            safe_markdown(item["path"]), safe_markdown(item.get("function", ""))
+        )
+        target.append((location, action, reason))
+
+    for finding in findings:
+        classification = finding["classification"]
+        target = investigations if classification == "unconfirmed risk" else (
+            optional if classification == "stylistic preference" else requests
+        )
+        add(target, finding, finding["suggestion"], finding["why_it_matters"])
+    if quality:
+        for item in quality["bad"]:
+            add(requests, item, item["suggestion"], item["reason"])
+        for item in quality["magic"]:
+            add(requests, item, item["suggestion"], item["reason"])
+        for item in quality["inventory"]["comments"]:
+            if item["kind"] == "remove prose comment":
+                action = "Remove only the added prose; keep the existing comment." if (
+                    item.get("started_in_added_line") is False
+                ) else "Remove this added prose comment."
+                add(requests, item, action, item["text"])
+        for item in quality["uncertain"]:
+            add(investigations, item, "Check the meaning of literal `{}` before changing it.".format(item["literal"]), item["reason"])
+        incomplete = incomplete or bool(quality["invalid"]) or not quality["numbers_complete"] or bool(
+            quality["inventory"]["limitations"] or quality.get("scope_limited")
+        ) or not quality["inventory"]["comments_complete"]
+    else:
+        incomplete = True
+
+    lines = ["## Changes requested", ""]
+    for title, entries in ((None, requests), ("Optional suggestions", optional), ("Needs investigation", investigations)):
+        if title:
+            lines += ["## " + title, ""]
+        if not entries:
+            if title is None:
+                lines += ["No confirmed code edits are listed in this review.", ""]
+                if incomplete:
+                    lines += ["This review is incomplete. That does not mean the PR is ready to merge.", ""]
+            else:
+                lines += ["None.", ""]
+            continue
+        if title == "Needs investigation":
+            lines += ["These are questions to check, not instructions to change behavior.", ""]
+        unique = list(dict.fromkeys(entries))
+        for location, action, reason in unique[:24]:
+            lines += ["- [ ] {}: {}".format(location, safe_markdown(action)), "  Why: " + safe_markdown(reason), ""]
+        if len(unique) > 24:
+            lines += ["{} more items are listed in the detailed sections below.".format(len(unique) - 24), ""]
+    return lines
+
+
 def make_review_body(
     findings,
     head_sha,
@@ -749,6 +807,8 @@ def make_review_body(
         lines.append("Fix the issues below before merging.")
     elif quality and quality["blocking"]:
         lines.append("Fix the issues below. Some files could not be fully reviewed.")
+    elif quality and (quality["bad"] or quality["magic"] or quality["inventory"]["remove_comment_count"]):
+        lines.append("Review the changes requested below.")
     elif not findings:
         if limited_files or omitted_files or invalid_findings or omitted_findings or limited_context_files:
             lines.append("The supplied files were not enough to finish this review.")
@@ -757,7 +817,9 @@ def make_review_body(
     else:
         lines.append("Review the suggestions below.")
 
-    lines += ["", *readability_review.render_quality(quality, safe_markdown, repository, head_sha)]
+    incomplete = bool(limited_files or omitted_files or invalid_findings or omitted_findings or limited_context_files)
+    lines += ["", *render_requested_changes(findings, quality, repository, head_sha, incomplete)]
+    lines += readability_review.render_quality(quality, safe_markdown, repository, head_sha)
     if findings:
         lines += ["## Other findings", ""]
     for index, finding in enumerate(findings, 1):

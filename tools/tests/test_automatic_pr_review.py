@@ -15,6 +15,7 @@ from tools.automatic_pr_review import (
     collect_source_context,
     call_model,
     make_review_body,
+    render_requested_changes,
     make_prompt,
     response_output_text,
     safe_markdown,
@@ -526,6 +527,49 @@ class AutomaticReviewTests(unittest.TestCase):
         body = make_review_body([], "0123456789abcdef", "APPROVE", 0, 0)
         self.assertIn("No changes needed in the code reviewed", body)
         self.assertIn("Maintainers decide whether to merge", body)
+
+    def test_requested_changes_are_visible_before_the_scorecard(self):
+        body = make_review_body([], "head", "COMMENT", 0, 0)
+        self.assertLess(body.index("## Changes requested"), body.index("## Review scorecard"))
+        self.assertIn("No confirmed code edits are listed", body)
+        self.assertIn("That does not mean the PR is ready to merge", body)
+
+    def test_change_checklist_separates_fixes_preferences_and_risks(self):
+        findings = [
+            {"path": "src/sky.cpp", "line": 4, "classification": kind,
+             "suggestion": action, "why_it_matters": "Explain the reason."}
+            for kind, action in (("maintainability/readability issue", "Remove unused header LH3DRender.h."),
+                                 ("stylistic preference", "Consider a shorter name."),
+                                 ("unconfirmed risk", "Check the original branch before changing it."))
+        ]
+        body = "\n".join(render_requested_changes(findings, None, "boltz/bw1-decomp", "head"))
+        changes, rest = body.split("## Optional suggestions")
+        optional, investigation = rest.split("## Needs investigation")
+        self.assertIn("- [ ]", changes)
+        self.assertIn("Remove unused header LH3DRender.h.", changes)
+        self.assertIn("/blob/head/src/sky.cpp#L4", changes)
+        self.assertNotIn("Check the original", changes)
+        self.assertIn("Consider a shorter name.", optional)
+        self.assertIn("not instructions to change behavior", investigation)
+        self.assertIn("Check the original branch", investigation)
+
+    def test_quality_checklist_includes_each_kind_of_action(self):
+        location = {"path": "src/sky.cpp", "line": 4}
+        quality = {
+            "bad": [dict(location, suggestion="Remove unused LH3DRender.h.", reason="It is unused.")],
+            "magic": [dict(location, suggestion="Use the existing count.", reason="This is a count.")],
+            "uncertain": [dict(location, literal="0", reason="The argument type is missing.")],
+            "inventory": {"comments": [dict(location, kind="remove prose comment", text="new explanation")],
+                          "limitations": [], "comments_complete": True},
+            "invalid": 0, "numbers_complete": False,
+        }
+        body = "\n".join(render_requested_changes([], quality, "", "head"))
+        changes, investigation = body.split("## Needs investigation")
+        self.assertIn("Remove unused LH3DRender.h.", changes)
+        self.assertIn("Use the existing count.", changes)
+        self.assertIn("Remove this added prose comment.", changes)
+        self.assertNotIn("argument type is missing", changes)
+        self.assertIn("argument type is missing", investigation)
 
     def test_review_timestamp_uses_eastern_daylight_and_standard_time(self):
         for month, expected in ((7, "2026-07-15 08:30:00 AM EDT"), (1, "2026-01-15 07:30:00 AM EST")):

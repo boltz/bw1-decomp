@@ -137,6 +137,15 @@ issues request changes even when binary evidence is incomplete. Complete
 inventories and the validated scorecard are uploaded as workflow artifacts.
 The trusted automatic-review workflow uses these changes after they merge to main.
 
+Every review starts with an Eastern Time timestamp and a `Changes requested`
+checklist before the scorecard. Each item identifies the file and line, the exact
+edit, and its reason. Optional style preferences and unconfirmed concerns appear
+under `Optional suggestions` and `Needs investigation`, respectively. Readability,
+magic-number, and comment-removal requests all feed the checklist. An incomplete
+review with no validated edits says so explicitly; it does not imply approval.
+The model must put each proposed edit in a structured finding and name the exact
+identifiers involved, rather than burying a request in its summary.
+
 
 Review prose follows the TimVoice rules in
 `tools/automatic_pr_review_voice.md`. The model receives this file as trusted

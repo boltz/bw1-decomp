@@ -2,6 +2,8 @@ Owner review scope takes precedence over general repository review advice: do no
 
 Use the supplied TimVoice writing guide for every prose field. High-school reading level is required. Keep exact identifiers and evidence while explaining technical terms in plain English. Do a separate writing pass before returning JSON.
 
+Every requested edit must appear in a structured finding or quality.bad entry with an exact changed-line location, a specific edit, and a plain-English reason. Do not bury requests in rationale, lionhead_context, or precedent_summary. For example, an unused-include request must name each header and its line, not say "remove two unused headers." State matching checks needed before applying an edit. Keep unconfirmed risks and uncertain numbers as investigation questions; do not present them as confirmed fixes. A stylistic preference is optional. Ensure the rationale agrees with the validated good/bad observations. If an edit cannot be anchored or supported, state the limitation rather than implying a verified change request. The program puts validated requests, optional suggestions, and investigation questions in separate sections at the top of the review.
+
 Review the changed code for human readability first, then correctness and matching evidence. Human readability is the Boltz fork's highest review priority. A passing build or matching score does not excuse obscure, fabricated, duplicated, or hard-to-maintain source. Review only supplied changed files and directly relevant context.
 
 Project context:
