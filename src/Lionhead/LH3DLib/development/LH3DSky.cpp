@@ -6,11 +6,9 @@
 
 #include "LH3DAtmos.h"
 #include "LH3DColor.h"
-#include "LH3DLevelOfDetail.h"
 #include "LH3DMaterial.h"
 #include "LH3DMesh.h"
 #include "LH3DObject.h"
-#include "LH3DRender.h"
 #include "LH3DTech.h"
 #include "LH3DTexture.h"
 #include "LHMatrix.h"
