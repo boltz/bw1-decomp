@@ -1,5 +1,6 @@
 #include "LH3DSky.h"
 
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -277,6 +278,37 @@ void LH3DSky::Update()
 	}
 	CalculateTextures(curst, cury, SKY_TEXTURE_UPDATE_LINES);
 	cury += SKY_TEXTURE_UPDATE_LINES;
+}
+
+void LH3DSky::Close()
+{
+	g_jc_caca_first_init_sky = true;
+	for (int index = 0; index < SKY_TYPE_LAST; ++index)
+	{
+		if (sky_material[index] != NULL)
+		{
+			sky_material[index]->texture = NULL;
+		}
+		if (sky_texture[index] != NULL)
+		{
+			sky_texture[index]->Release();
+		}
+		for (int skyType = 0; skyType < SKY_TYPE_LAST; ++skyType)
+		{
+			if (bitmaps[skyType][SKY_ALIGNMENT_GOOD] == bitmaps[skyType][SKY_ALIGNMENT_NEUTRAL])
+			{
+				bitmaps[skyType][SKY_ALIGNMENT_GOOD] = NULL;
+			}
+			if (bitmaps[skyType][SKY_ALIGNMENT_EVIL] == bitmaps[skyType][SKY_ALIGNMENT_NEUTRAL])
+			{
+				bitmaps[skyType][SKY_ALIGNMENT_EVIL] = NULL;
+			}
+			if (bitmaps[skyType][index] != NULL)
+			{
+				free(bitmaps[skyType][index]);
+			}
+		}
+	}
 }
 
 float LH3DSky::CalcMoonRot(bool32_t& changed)
