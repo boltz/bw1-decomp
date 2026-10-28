@@ -20,14 +20,14 @@ def inventory(text, path="src/example.cpp", added=None):
 def quality():
     return {
         "dimensions": dict.fromkeys(scorecard.DIMENSIONS, 16),
-        "rationale": "The helper states its intent, but the unexplained limit makes maintenance harder.",
-        "lionhead_context": "A min helper is plausible in this MSVC 6.0-era code; this is an inference.",
-        "precedent_summary": "No directly comparable maintainer decision was supplied.",
+        "rationale": "The helper is easy to follow, but the limit needs a clear name.",
+        "lionhead_context": "Using min fits this project's older C++ tools. That does not prove Lionhead wrote it this way.",
+        "precedent_summary": "The supplied reviews did not show a clear decision on similar code.",
         "good": [
             {
                 "path": "src/example.cpp",
                 "line": 4,
-                "reason": "min makes the cap operation immediately recognizable.",
+                "reason": "Using min makes it easy to see where the value is capped.",
                 "suggestion": "",
             }
         ],
@@ -38,7 +38,7 @@ def quality():
             {
                 "ids": ["N1"],
                 "classification": "magic",
-                "reason": "The capacity has no domain name.",
+                "reason": "The number does not tell the reader what the limit means.",
                 "suggestion": "Use the existing named capacity if one is defined.",
             }
         ],
@@ -141,12 +141,12 @@ class QualityScorecardTests(unittest.TestCase):
         self.assertTrue(result["blocking"])
         body = make_review_body([], "abcdef", "REQUEST_CHANGES", 0, 0, quality=result)
         self.assertIn("| Human readability | 80 / 100 |", body)
-        self.assertIn("1 confirmed; 0 unresolved", body)
-        self.assertIn("1 total; 1 to remove; 0 allowed", body)
+        self.assertIn("1 found; 0 still unclear", body)
+        self.assertIn("1 total; 1 to remove; 0 required comments kept", body)
         self.assertIn("## Human readability", body)
-        self.assertIn("## RepoScout precedents", body)
+        self.assertIn("## Past reviews from RepoScout", body)
         self.assertIn("src/example.cpp:4", body)
-        self.assertIn("Remove 1 added/edited prose comment.", body)
+        self.assertIn("Remove 1 added or edited comment.", body)
         self.assertNotIn("No actionable findings", body)
 
     def test_clean_numeric_audit_explicitly_praises_no_magic_numbers(self):
@@ -293,6 +293,78 @@ class AdditionalQualityPolicyTests(unittest.TestCase):
         self.assertEqual(result["comment_count"], 0)
 
 
+class PlainReviewWritingTests(unittest.TestCase):
+    def test_visible_report_uses_plain_text_and_keeps_counts(self):
+        import re
+
+        result = scorecard.validate_quality(quality(), inventory(EXAMPLE), {"src/example.cpp": set(range(1, 6))}, {})
+        result["inventory"]["limitations"] = ["src/example.cpp: source context is incomplete"]
+        result["inventory"]["comments_complete"] = False
+        body = make_review_body([], "abcdef", "REQUEST_CHANGES", 1, 0, quality=result)
+        visible = re.sub(r"<details>.*?</details>", "", body, flags=re.S)
+        self.assertTrue(body.startswith("<!-- bw1-automatic-review -->\nFix the issues below before merging."))
+        self.assertIn("| Human readability | 80 / 100 (partial review) |", visible)
+        self.assertIn("1 found; 0 still unclear; checked: 1", visible)
+        self.assertIn("1 to remove", visible)
+        self.assertIn("Lionhead C++ style", visible)
+        self.assertIn("Some files or results were missing", visible)
+        self.assertNotIn("source context is incomplete", visible)
+        self.assertNotIn("naming 16/20", visible)
+        self.assertIn("source context is incomplete", body)
+        for phrase in (
+            "**",
+            "\u2014",
+            "\u2013",
+            "provisional",
+            "inspected literals",
+            "source fidelity",
+            "plausibility",
+        ):
+            self.assertNotIn(phrase, body)
+        self.assertEqual(body.count("<details>"), body.count("</details>"))
+
+    def test_required_comment_locations_are_collapsed_not_dropped(self):
+        import re
+
+        source = "// BW1W120 00401000\nstatic void F();\n"
+        inv = inventory(source)
+        raw = quality()
+        raw["numeric_decisions"] = []
+        raw["good"][0]["line"] = 2
+        result = scorecard.validate_quality(raw, inv, {"src/example.cpp": {1, 2}}, {})
+        body = "\n".join(scorecard.render_quality(result, safe_markdown))
+        visible = re.sub(r"<details>.*?</details>", "", body, flags=re.S)
+        self.assertIn("1 required comments kept", visible)
+        self.assertIn("Required comments kept (1)", body)
+        self.assertIn("src/example.cpp:1", body)
+        self.assertNotIn("src/example.cpp:1", visible)
+
+    def test_fix_comes_before_reason_and_build_evidence_is_collapsed(self):
+        import re
+
+        finding = dict(
+            path="src/example.cpp",
+            line=1,
+            function="",
+            severity="medium",
+            classification="maintainability/readability issue",
+            title="Remove the include comments",
+            suggestion="Remove the comments beside the includes.",
+            why_it_matters="The header names already explain them.",
+            evidence="Exact compiler evidence.",
+            assumptions="",
+            matching_effect="",
+            source_linking="",
+            checks="",
+            unresolved_decision="",
+        )
+        body = make_review_body([finding], "abcdef", "REQUEST_CHANGES", 0, 0)
+        visible = re.sub(r"<details>.*?</details>", "", body, flags=re.S)
+        self.assertLess(visible.index(finding["suggestion"]), visible.index(finding["why_it_matters"]))
+        self.assertNotIn(finding["evidence"], visible)
+        self.assertIn(finding["evidence"], body)
+
+
 class BaseCommentTests(unittest.TestCase):
     def audit_change(self, before, after):
         path = "src/example.cpp"
@@ -420,8 +492,8 @@ class ReviewIntegrationTests(unittest.TestCase):
             submitted = github.submit_review.call_args.args
             self.assertEqual(submitted[2], "REQUEST_CHANGES")
             self.assertIn("| Human readability | 80 / 100 |", submitted[3])
-            self.assertIn("1 confirmed; 0 unresolved", submitted[3])
-            self.assertIn("Remove 1 added/edited prose comment.", submitted[3])
+            self.assertIn("1 found; 0 still unclear", submitted[3])
+            self.assertIn("Remove 1 added or edited comment.", submitted[3])
             self.assertIn("Binary comparison evidence was unavailable", submitted[3])
             artifact = json.loads((root / "quality.json").read_text())
             self.assertEqual(artifact["inventory"]["comment_count"], 1)

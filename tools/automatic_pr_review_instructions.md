@@ -1,3 +1,5 @@
+Use the supplied TimVoice writing guide for every prose field. High-school reading level is required. Keep exact identifiers and evidence while explaining technical terms in plain English. Do a separate writing pass before returning JSON.
+
 Review the changed code for human readability first, then correctness and matching evidence. Human readability is the Boltz fork's highest review priority. A passing build or matching score does not excuse obscure, fabricated, duplicated, or hard-to-maintain source. Review only supplied changed files and directly relevant context.
 
 Project context:

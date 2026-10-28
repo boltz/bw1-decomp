@@ -321,7 +321,17 @@ class AutomaticReviewTests(unittest.TestCase):
             False,
         )
         self.assertIn("RepoScout", system)
+        self.assertIn("TimVoice (myvoice)", system)
+        self.assertIn("high-school reading level (grades 9-10)", system)
+        self.assertIn("do a separate writing pass", system)
+        self.assertIn("all prose fields", system)
+        self.assertIn("Keep file names, function names, values, quoted maintainer text, and links exact", system)
         self.assertIn("untrusted review input", user)
+
+    def test_missing_voice_guide_stops_review_instead_of_silently_using_default_voice(self):
+        with mock.patch.object(Path, "read_text", side_effect=OSError("missing guide")):
+            with self.assertRaisesRegex(automatic_pr_review.ReviewError, "writing guide could not be loaded"):
+                make_prompt("instructions", "guide", "title", "body", [], "diff", 0, 0, [], 0, [], [], [], False)
 
     def test_findings_beyond_limit_prevent_approval(self):
         finding = {
@@ -410,13 +420,13 @@ class AutomaticReviewTests(unittest.TestCase):
 
     def test_no_finding_review_body_is_advisory(self):
         body = make_review_body([], "0123456789abcdef", "APPROVE", 0, 0)
-        self.assertIn("No actionable findings", body)
-        self.assertIn("Maintainers make the final call", body)
+        self.assertIn("No changes needed in the code reviewed", body)
+        self.assertIn("Maintainers decide whether to merge", body)
 
     def test_review_body_reports_unreviewed_overflow(self):
         body = make_review_body([], "0123456789abcdef", "COMMENT", 0, 0, 0, 1)
-        self.assertIn("No validated findings were available", body)
-        self.assertIn("beyond the output limit were not reviewed", body)
+        self.assertIn("not enough to finish this review", body)
+        self.assertIn("more issue(s) did not fit", body)
 
     def test_responses_api_text_extraction_skips_non_message_items(self):
         envelope = {
