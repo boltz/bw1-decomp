@@ -1,7 +1,6 @@
 #include "LH3DSky.h"
 
 #include <math.h>
-#include <string.h>
 
 #include <re_common.h>
 
@@ -10,18 +9,13 @@
 #include "LH3DIsland.h"
 #include "LH3DLevelOfDetail.h"
 #include "LH3DMaterial.h"
-#include "LH3DMem.h"
 #include "LH3DMesh.h"
 #include "LH3DObject.h"
-#include "LH3DPrimitive.h"
 #include "LH3DRender.h"
-#include "LH3DSubMesh.h"
 #include "LH3DTech.h"
 #include "LH3DTexture.h"
 #include "LHMatrix.h"
 #include "LHPoint.h"
-
-#include <Lionhead/LHFile/ver3.0/LHOSFile.h>
 
 int         LH3DSky::g_b_we_are_inside_citadel;
 float       LH3DSky::g_alpha_sun = LH3D_SKY_ALPHA_MAX;
@@ -415,7 +409,7 @@ void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& m
 
 	LH3DTech::Draw3DWorldTriangle(LH3D_SKY_MOON_VERTEX_COUNT, LH3DAtmos::v_pnt[0], LH3DAtmos::v_col[0],
 	                              LH3DAtmos::v_uv[0], LH3D_SKY_MOON_TRIANGLE_COUNT, LH3DAtmos::v_idx[0],
-	                              LH3DAtmos::AdditiveMaterial, 0);
+	                              LH3DAtmos::AdditiveMaterial, false);
 
 	moonobj->matrix = moon_matrix;
 	moonobj->SetColorSpecular(colour.GetColor(), 0);
