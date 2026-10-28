@@ -1088,7 +1088,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/Name.cpp"),
             GameCodeObject(NonMatching, "Black/Network.cpp"),
             GameCodeObject(NonMatching, "Black/NewProfileBox.cpp"),
-            GameCodeObject(Matching, "Black/Object.cpp"),
+            GameCodeObject(NonMatching, "Black/Object.cpp"),
             GameCodeObject(Matching, "Black/Object3D.cpp", pch=PCH_PENDING),
             GameCodeObject(Matching, "Black/OnMapTrajectory.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/OOSDebug.cpp"),
@@ -1362,7 +1362,7 @@ config.libs = [
             GameCodeObject(NonMatching, "Black/WorshipSpell.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipSpellIcon.cpp"),
             GameCodeObject(NonMatching, "Black/WorshipTotem.cpp", pch=False),
-            GameCodeObject(MatchingFor("BW1W100", "BW1W110", "BW1W120", "BW1WCI"), "Black/WorldRoom.cpp", pch=PCH_PENDING),
+            GameCodeObject(NonMatching, "Black/WorldRoom.cpp", pch=PCH_PENDING),
             GameCodeObject(NonMatching, "Black/WorldRoomCamera.cpp"),
 
             # Contains SSE instructions, could be result of compiling with intel compiler
@@ -1694,6 +1694,7 @@ config.libs = [
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DVRAMTex.cpp"),
             LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/CAnim.cpp"),
             Object(NonMatching, "Lionhead/LHLib/ver5.0/RPFollow.cpp", progress_category="sdk"),
+            LH3DLibObject(NonMatching, "Lionhead/LH3DLib/development/LH3DSky.cpp"),
 
             LibObject(MatchingFor("BW1W110", "BW1W120", "BW1W130"), "libcimt", "build\\intel\\mt_obj\\_ios.obj", progress_category="sdk"),
             LibObject(MatchingFor("BW1W110", "BW1W120", "BW1W130"), "libcimt", "build\\intel\\mt_obj\\fstream.obj", progress_category="sdk"),
