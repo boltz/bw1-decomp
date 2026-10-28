@@ -18,10 +18,8 @@ struct LHPoint;
 #define SKY_TEXTURE_HEIGHT           0x100
 #define SKY_TEXTURE_UPDATE_LINES     0x20
 #define SKY_TYPE_CHANGE_THRESHOLD    0.03f
-#define SKY_TYPE_COUNT               3
-#define SKY_DETAIL_COUNT             3
-#define SKY_DETAIL_COUNT_DAY         1
-#define LH3D_SKY_EVIL_SCALE          2.0f
+#define LH3D_SKY_LIGHT_COLOUR_COUNT  8
+#define LH3D_SKY_MOON_COLOUR         5
 #define LH3D_SKY_MOON_QUAD_SIZE      500.0f
 #define LH3D_SKY_MOON_UV_MIN         0.25f
 #define LH3D_SKY_MOON_UV_MAX         0.49375f
@@ -39,19 +37,6 @@ struct LHPoint;
 #define LH3D_SKY_TOP_GREEN_SCALE     1.7f
 #define LH3D_SKY_TOP_BLUE_SCALE      1.5f
 #define LH3D_ATMOS_ALIGNMENT_FADE    150
-#define LH3D_SKY_DEFAULT_NIGHT       4.5f
-#define LH3D_SKY_DEFAULT_DUSK        7.0f
-#define LH3D_SKY_DEFAULT_DUSK_END    7.5f
-#define LH3D_SKY_DEFAULT_DAY         8.25f
-#define LH3D_SKY_MOON_SIZE           4.0f
-#define LH3D_SKY_MOON_SIZE_DEFAULT   3.0f
-#define LH3D_SKY_TEXTURE_SIZE        0x104
-#define LH3D_SKY_POSITION            2560.0f
-#define LH3D_SKY_SCALE               5.0f
-#define LH3D_SKY_SUN_SAMPLE_OFFSET   500.0f
-#define LH3D_SKY_SUN_SAMPLE_WEIGHT   0.2f
-#define LH3D_SKY_SUN_MIN_HEIGHT      10.0f
-#define LH3D_SKY_SUN_DEPTH_THRESHOLD 0xfde8
 #define LH3D_SKY_ALPHA_MAX           255.0f
 
 enum SKY_TYPE
@@ -59,6 +44,15 @@ enum SKY_TYPE
 	SKY_TYPE_DAY,
 	SKY_TYPE_DUSK,
 	SKY_TYPE_NIGHT,
+	SKY_TYPE_LAST,
+};
+
+enum SKY_ALIGNMENT
+{
+	SKY_ALIGNMENT_GOOD,
+	SKY_ALIGNMENT_NEUTRAL,
+	SKY_ALIGNMENT_EVIL,
+	SKY_ALIGNMENT_LAST,
 };
 
 class LH3DSky
@@ -97,9 +91,9 @@ public:
 	// BW1W120 00fa26a4 BW1M119 012d3528 (LHCombined Release)
 	static LH3DColor topcol;
 	// BW1W120 00fa26c8 BW1M119 012d355c (LHCombined Release)
-	static LH3DColor lightcols[8];
+	static LH3DColor lightcols[LH3D_SKY_LIGHT_COLOUR_COUNT];
 	// BW1W120 00fa26e8 BW1M119 012d357c (LHCombined Release)
-	static void* bitmaps[3][3];
+	static void* bitmaps[SKY_TYPE_LAST][SKY_ALIGNMENT_LAST];
 	// BW1W120 00fa2710 BW1M119 012d35a0 (LHCombined Release)
 	static LHPoint g_sun_pos;
 	// BW1W120 00fa271c BW1M119 012d35ac (LHCombined Release)
@@ -147,7 +141,7 @@ public:
 	// BW1W120 0086a330 BW1M119 01038150 (LHCombined Release)
 	static void Update();
 	// BW1W120 0086a3b0 BW1M119 010b12a0 (LHCombined Release)
-	static void Init(float time, float overcast);
+	static void Init(float alignment, float time);
 	// BW1W120 0086a770 BW1M119 010b11a0 (LHCombined Release)
 	static void Close();
 	// BW1W120 0086a7f0 BW1M119 010b1030 (LHCombined Release)
@@ -155,7 +149,7 @@ public:
 	// BW1W120 0086a890 BW1M119 010b0e00 (LHCombined Release)
 	static void CalcMoonPhase();
 	// BW1W120 0086a930 BW1M119 010b0910 (LHCombined Release)
-	static void DrawMoonPost(LH3DColor& colour, LHMatrix& matrix, LHMatrix& moon_matrix);
+	static void DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& moon_matrix);
 	// BW1W120 0086ac60 BW1M119 010b02d0 (LHCombined Release)
 	static void CalcMoonMat(LHPoint& pos, LHMatrix& matrix, LHMatrix& moon_matrix);
 	// BW1W120 0086b010 BW1M119 01014310 (LHCombined Release)
