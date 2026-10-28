@@ -88,4 +88,4 @@ jobs:
       with:
         python-version: '3.x'
     - run: python -m pip install PyYAML==6.0.3
-    - run: python -m unittest tools.tests.test_automatic_pr_review tools.tests.test_review_quality tools.tests.test_reposcout
+    - run: python -m unittest tools.tests.test_automatic_pr_review tools.tests.test_review_quality tools.tests.test_reposcout tools.tests.test_build_evidence_report
