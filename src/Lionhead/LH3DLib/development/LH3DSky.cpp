@@ -33,6 +33,7 @@
 #define LH3D_SKY_MOON_UV_OFFSET       0.25f
 #define LH3D_SKY_MOON_TILT_ANGLE      (-0.1308997f)
 #define LH3D_SKY_MOON_SHADING_SCALE   0.65f
+#define LH3D_SKY_SUN_INITIAL_XZ       (-30000.0f)
 #define LH3D_SKY_SUNRISE_TIME         6.0f
 #define LH3D_SKY_SUNSET_TIME          18.0f
 #define LH3D_SKY_SUN_FADE_DURATION    3.0f
@@ -62,7 +63,7 @@ float       LH3DSky::curtime;
 LH3DColor   LH3DSky::topcol;
 LH3DColor   LH3DSky::lightcols[LH3D_SKY_LIGHT_COLOUR_COUNT];
 void*       LH3DSky::bitmaps[SKY_TYPE_LAST][SKY_ALIGNMENT_LAST];
-LHPoint     LH3DSky::g_sun_pos;
+LHPoint     LH3DSky::g_sun_pos(LH3D_SKY_SUN_INITIAL_XZ, 0.0f, LH3D_SKY_SUN_INITIAL_XZ);
 LH3DObject* LH3DSky::sunobj;
 LH3DMesh*   LH3DSky::sun;
 float       LH3DSky::moonphase;
