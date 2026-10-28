@@ -1,6 +1,7 @@
 import json
 import unittest
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -525,6 +526,14 @@ class AutomaticReviewTests(unittest.TestCase):
         body = make_review_body([], "0123456789abcdef", "APPROVE", 0, 0)
         self.assertIn("No changes needed in the code reviewed", body)
         self.assertIn("Maintainers decide whether to merge", body)
+
+    def test_review_timestamp_uses_eastern_daylight_and_standard_time(self):
+        for month, expected in ((7, "2026-07-15 08:30:00 AM EDT"), (1, "2026-01-15 07:30:00 AM EST")):
+            with self.subTest(month=month), mock.patch.object(automatic_pr_review, "datetime") as clock:
+                instant = datetime(2026, month, 15, 12, 30, tzinfo=timezone.utc)
+                clock.now.side_effect = lambda zone: instant.astimezone(zone)
+                body = make_review_body([], "0123456789abcdef", "COMMENT", 0, 0)
+            self.assertEqual(body.splitlines()[1], "Reviewed: {} (Eastern Time)".format(expected))
 
     def test_review_body_reports_unreviewed_overflow(self):
         body = make_review_body([], "0123456789abcdef", "COMMENT", 0, 0, 0, 1)

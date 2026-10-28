@@ -309,7 +309,8 @@ class PlainReviewWritingTests(unittest.TestCase):
         result["inventory"]["comments_complete"] = False
         body = make_review_body([], "abcdef", "REQUEST_CHANGES", 1, 0, quality=result)
         visible = re.sub(r"<details>.*?</details>", "", body, flags=re.S)
-        self.assertTrue(body.startswith("<!-- bw1-automatic-review -->\nFix the issues below before merging."))
+        self.assertTrue(body.startswith("<!-- bw1-automatic-review -->\nReviewed: "))
+        self.assertIn("\n\nFix the issues below before merging.", body)
         self.assertIn("| Human readability | 80 / 100 (partial review) |", visible)
         self.assertIn("1 found; 0 still unclear; checked: 1", visible)
         self.assertIn("1 to remove", visible)

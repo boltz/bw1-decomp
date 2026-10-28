@@ -3,6 +3,7 @@
 
 import base64
 from contextlib import closing
+from datetime import datetime
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 try:
@@ -736,6 +738,10 @@ def make_review_body(
 ):
     lines = [
         MARKER,
+        "Reviewed: {} (Eastern Time)".format(
+            datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %I:%M:%S %p %Z")
+        ),
+        "",
     ]
     if event == "APPROVE":
         lines.append("Approved. No changes needed in the code reviewed.")
