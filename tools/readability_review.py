@@ -263,30 +263,32 @@ def render_quality(result, escape, repository="", commit=""):
             "",
             "| Check | Result |",
             "| --- | --- |",
-            "| Human readability | Unavailable / 100 |",
+            "| Human readability | Not scored / 100 |",
             "| Magic numbers | Unavailable |",
             "| Added comments | Unavailable |",
             "",
-            "Quality evidence was not supplied; no clean result is claimed.",
+            "The review data is missing. These checks are unfinished.",
             "",
         ]
     inventory = result["inventory"]
-    score = "{} / 100".format(result["score"]) if result["score"] is not None else "N/A / 100 — no supported score"
+    score = (
+        "{} / 100".format(result["score"]) if result["score"] is not None else "N/A / 100 - not enough code to score"
+    )
     incomplete = bool(
         result["invalid"] or inventory["limitations"] or not result["numbers_complete"] or result.get("scope_limited")
     )
     if incomplete and result["score"] is not None:
-        score += " (provisional)"
+        score += " (partial review)"
     lines = [
         "## Review scorecard",
         "",
         "| Check | Result |",
         "| --- | --- |",
         "| Human readability | {} |".format(score),
-        "| Magic numbers | {} confirmed; {} unresolved of {} inspected literals |".format(
+        "| Magic numbers | {} found; {} still unclear; checked: {} |".format(
             len(result["magic"]), result.get("unresolved_numbers", inventory["number_count"]), inventory["number_count"]
         ),
-        "| Added/edited comments | {} total; {} to remove; {} allowed annotations |".format(
+        "| Added/edited comments | {} total; {} to remove; {} required comments kept |".format(
             (
                 str(inventory["comment_count"])
                 if inventory["comments_complete"]
@@ -295,44 +297,49 @@ def render_quality(result, escape, repository="", commit=""):
             inventory["remove_comment_count"],
             inventory["allowed_comment_count"],
         ),
-        "| Audit coverage | {} |".format(
-            "Limited; counts may be lower bounds" if incomplete else "Complete for inspected scope"
+        "| Review coverage | {} |".format(
+            "Partial. Counts may be too low" if incomplete else "Complete for the code checked"
         ),
         "",
-        "Token-count scope: {}.".format(escape(inventory["scope"])),
+        "Counts cover the added code this check could read. Strings, vendor code, and docs are excluded.",
         "",
         "## Human readability",
         "",
-        escape(result["rationale"]) or "Assessment unavailable.",
+        escape(result["rationale"]) or "There was not enough code to assess readability.",
         "",
     ]
     if result["dimensions"]:
         lines += [
-            "Rubric: "
+            "<details>",
+            "<summary>Score breakdown</summary>",
+            "",
+            "Score breakdown: "
             + "; ".join("{} {}/20".format(name.replace("_", " "), result["dimensions"][name]) for name in DIMENSIONS)
             + ".",
             "",
-            "The score is a model judgment, not proof of correctness or original source fidelity.",
+            "This score rates how easy the code is to read. It does not prove the code is correct or matches the game.",
+            "",
+            "</details>",
             "",
         ]
-    for kind, title in [("good", "Readable portions"), ("bad", "Readability changes")]:
+    for kind, title in [("good", "Readable code"), ("bad", "Changes needed")]:
         lines += ["### " + title, ""]
         if not result[kind]:
             if kind == "bad" and (result["magic"] or inventory["remove_comment_count"]):
                 lines += [
-                    "The magic-number and comment issues below reduce readability; their exact locations are listed in those sections.",
+                    "See the numbers and comments listed below.",
                     "",
                 ]
             else:
                 lines += [
-                    "No specific {} identified in the available changes.".format(
+                    "No specific {} found in the code reviewed.".format(
                         "strengths" if kind == "good" else "readability problems"
                     ),
                     "",
                 ]
         for entry in result[kind]:
             lines += [
-                "- {} — {}".format(
+                "- {} - {}".format(
                     location_label(entry["path"], entry["line"], escape, repository, commit), escape(entry["reason"])
                 )
             ]
@@ -340,23 +347,25 @@ def render_quality(result, escape, repository="", commit=""):
                 lines += ["  Change: " + escape(entry["suggestion"])]
         lines.append("")
     lines += [
-        "### Lionhead-era C++ plausibility (reasoned inference)",
+        "### Lionhead C++ style",
         "",
-        escape(result["lionhead_context"]) or "Not assessed.",
+        escape(result["lionhead_context"]) or "There was not enough code to assess this.",
         "",
         "## Magic numbers",
+        "",
+        "These are numbers whose purpose needs a clear name or an existing constant.",
         "",
     ]
     if not result["magic"]:
         if result["numbers_complete"] and inventory["eligible_files"]:
             lines += ["Good: no magic numbers found in the inspected additions."]
         elif not inventory["eligible_files"]:
-            lines += ["No owned source additions to audit; count is zero for this scope."]
+            lines += ["No added code was covered by this check."]
         else:
-            lines += ["No confirmed magic numbers yet; incomplete or uncertain inspection prevents a clean result."]
+            lines += ["No magic numbers were confirmed. Some code or numbers still need checking."]
     for item in result["magic"][:MAX_DETAILS]:
         lines += [
-            "- {} literal `{}` — {} Change: {}".format(
+            "- {} literal `{}` - {} Change: {}".format(
                 location_label(item["path"], item["line"], escape, repository, commit),
                 escape(item["literal"]),
                 escape(item["reason"]),
@@ -364,13 +373,11 @@ def render_quality(result, escape, repository="", commit=""):
             )
         ]
     if len(result["magic"]) > MAX_DETAILS:
-        lines += [
-            "First {} occurrences shown; the full inventory is in the review-quality artifact.".format(MAX_DETAILS)
-        ]
+        lines += ["Only the first {} are shown. The review-quality download has the full list.".format(MAX_DETAILS)]
     if result["uncertain"]:
-        lines += ["", "Uncertain numeric uses:"]
+        lines += ["", "Numbers that still need checking:"]
         lines += [
-            "- {} `{}` — {}".format(
+            "- {} `{}` - {}".format(
                 location_label(n["path"], n["line"], escape, repository, commit),
                 escape(n["literal"]),
                 escape(n["reason"]),
@@ -379,74 +386,97 @@ def render_quality(result, escape, repository="", commit=""):
         ]
     justified_reasons = list(dict.fromkeys(item["reason"] for item in result["justified"]))
     if justified_reasons:
-        lines += ["", "Why other inspected literals are justified:"]
+        lines += ["", "Numbers that are clear in context:"]
         lines += ["- " + escape(reason) for reason in justified_reasons[:MAX_JUSTIFICATION_REASONS]]
     lines += ["", "## Added comments", ""]
     if inventory["remove_comment_count"]:
         count = inventory["remove_comment_count"]
         lines += [
-            "Remove {} added/edited prose comment{}. Required annotations are exempt. Preserve unchanged text in edited existing blocks.".format(
+            "Remove {} added or edited comment{}. Keep required address and format comments, and leave unchanged text alone.".format(
                 count, "" if count == 1 else "s"
             ),
             "",
         ]
     elif not inventory["eligible_files"]:
-        lines += ["No owned source additions to audit; no added comments in this scope.", ""]
+        lines += ["No added code was covered by this comment check.", ""]
     elif inventory["comments_complete"]:
         lines += ["Good: no added prose comments require removal.", ""]
     else:
-        lines += ["No removal candidates in the available source; uninspected additions may contain more.", ""]
-    comments = sorted(inventory["comments"], key=lambda item: item["kind"] != "remove prose comment")
+        lines += ["No added comments were found in the code supplied. The rest still needs checking.", ""]
+    comments = [item for item in inventory["comments"] if item["kind"] == "remove prose comment"]
     for comment in comments[:MAX_DETAILS]:
         lines += [
-            "- {} — {}: `{}`".format(
+            "- {} - {}: `{}`".format(
                 location_label(comment["path"], comment["line"], escape, repository, commit),
                 escape(
-                    "remove added prose only; preserve existing block"
+                    "remove only the added text; keep the existing comment"
                     if comment.get("started_in_added_line") is False
-                    else comment["kind"]
+                    else "remove this added comment"
                 ),
                 escape(comment["text"][:MAX_INLINE_COMMENT_CHARS]),
             )
         ]
-    if len(inventory["comments"]) > MAX_DETAILS:
+    if len(comments) > MAX_DETAILS:
         lines += [
-            "First {} comments shown; all comment locations are in the review-quality artifact.".format(MAX_DETAILS)
+            "Only the first {} comments are shown. The review-quality download has the full list.".format(MAX_DETAILS)
         ]
-    lines += ["", "## RepoScout precedents", ""]
+    allowed = [item for item in inventory["comments"] if item["kind"] != "remove prose comment"]
+    if allowed:
+        lines += ["", "<details>", "<summary>Required comments kept ({})</summary>".format(len(allowed)), ""]
+        for comment in allowed[:MAX_DETAILS]:
+            lines += [
+                "- {}: {}".format(
+                    location_label(comment["path"], comment["line"], escape, repository, commit),
+                    escape(comment["kind"]),
+                )
+            ]
+        if len(allowed) > MAX_DETAILS:
+            lines += ["The review-quality download has the full list."]
+        lines += ["", "</details>", ""]
+    lines += ["", "## Past reviews from RepoScout", ""]
     if result["precedent_summary"]:
         lines += [escape(result["precedent_summary"]), ""]
     accepted = sum(item["position"] == "accepted" for item in result["precedents"])
     rejected = sum(item["position"] == "rejected" for item in result["precedents"])
     lines += [
-        "Quoted comparable patterns: {} accepted; {} rejected. Positions are interpretations of quoted evidence, not inferred from merge status.".format(
+        "Similar code in the quoted reviews: {} accepted; {} rejected. A merged PR alone does not count as acceptance.".format(
             accepted, rejected
         ),
         "",
     ]
     if not result["precedents"] and not result["precedent_summary"]:
-        lines += [
-            "No supported comparable maintainer acceptance/rejection was established from supplied RepoScout results."
-        ]
+        lines += ["The supplied RepoScout results did not show a clear decision on similar code."]
     for item in result["precedents"]:
         url = quote(item["url"], safe=":/#?=&%")
         actor = "{} ({})".format(
-            item.get("author") or "unknown actor", item.get("author_association") or "unknown relationship"
+            item.get("author") or "author unknown", item.get("author_association") or "role unknown"
         )
-        state = item.get("review_state") or "discussion; no formal review outcome"
+        state = item.get("review_state") or "comment only; no formal review result"
         lines += [
-            "### {} pattern — [PR #{} source]({})".format(item["position"].capitalize(), item["pr_number"], url),
+            "### {} pattern - [PR #{} source]({})".format(item["position"].capitalize(), item["pr_number"], url),
             "",
             "{}; {}.".format(escape(actor), escape(state)),
             "",
             "> " + escape(item["quote"]),
             "",
-            "Why comparable: " + escape(item["comparison"]),
+            "This applies here because: " + escape(item["comparison"]),
             "",
         ]
     if inventory["limitations"] or result["invalid"]:
-        lines += ["", "### Audit limits", ""]
+        lines += [
+            "",
+            "Some files or results were missing. This review cannot approve the PR.",
+            "",
+            "<details>",
+            "<summary>Missing files and checks</summary>",
+            "",
+        ]
         lines += ["- " + escape(note) for note in inventory["limitations"]]
         if result["invalid"]:
-            lines += ["- {} quality item(s) failed validation; this review cannot approve.".format(result["invalid"])]
+            lines += [
+                "- {} part(s) of the model response could not be checked. This review cannot approve the PR.".format(
+                    result["invalid"]
+                )
+            ]
+        lines += ["", "</details>"]
     return lines + [""]
