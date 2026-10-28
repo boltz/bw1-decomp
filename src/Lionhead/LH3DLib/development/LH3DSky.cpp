@@ -1,9 +1,14 @@
 #include "LH3DSky.h"
 
+#include <time.h>
+#include <string.h>
 #include <math.h>
 
 #include <re_common.h>
 
+#include "LH3DMath.h"
+#include "LH3DSubMesh.h"
+#include "LH3DRender.h"
 #include "LH3DAtmos.h"
 #include "LH3DColor.h"
 #include "LH3DMaterial.h"
@@ -14,7 +19,30 @@
 #include "LHMatrix.h"
 #include "LHPoint.h"
 
-#define LH3D_SKY_MOON_ATMOS_BUFFER 0
+#define LH3D_SKY_MOON_ATMOS_BUFFER    0
+#define LH3D_SKY_RGB444_CHANNEL_BITS  4
+#define LH3D_SKY_RGB444_CHANNEL_MASK  0xf
+#define LH3D_SKY_COLOUR_BLEND_SHIFT   8
+#define LH3D_SKY_COLOUR_BLEND_SCALE   (1 << LH3D_SKY_COLOUR_BLEND_SHIFT)
+#define LH3D_SKY_MOON_UPDATE_INTERVAL 2000
+#define LH3D_SKY_MOON_SECONDS_PER_DAY 86400
+#define LH3D_SKY_MOON_REFERENCE_DAY   10962
+#define LH3D_SKY_MOON_CYCLE_DAYS      29.5305992
+#define LH3D_SKY_MOON_UV_DIVISOR      400.0f
+#define LH3D_SKY_MOON_UV_OFFSET       0.25f
+#define LH3D_SKY_MOON_TILT_ANGLE      (-0.1308997f)
+#define LH3D_SKY_MOON_SHADING_SCALE   0.65f
+#define LH3D_SKY_SUNRISE_TIME         6.0f
+#define LH3D_SKY_SUNSET_TIME          18.0f
+#define LH3D_SKY_SUN_FADE_DURATION    3.0f
+#define LH3D_SKY_SUN_FADE_START       (LH3D_SKY_SUNRISE_TIME - LH3D_SKY_SUN_FADE_DURATION)
+#define LH3D_SKY_SUN_FADE_END         (LH3D_SKY_SUNSET_TIME + LH3D_SKY_SUN_FADE_DURATION)
+#define LH3D_SKY_SUN_FADE_SCALE       (LH3D_SKY_ALPHA_MAX / LH3D_SKY_SUN_FADE_DURATION)
+#define LH3D_SKY_SUN_ALTITUDE_MAX     7500.0f
+#define LH3D_SKY_SUN_ALTITUDE_SCALE   (1.0f / (LH3D_SKY_HOURS_PER_HALF_DAY - LH3D_SKY_SUNRISE_TIME))
+#define LH3D_SKY_PUBLIC_LIGHTS_DUSK   16.5f
+#define LH3D_SKY_PUBLIC_LIGHTS_DAWN   7.0f
+#define LH3D_SKY_PUBLIC_LIGHTS_FADE   1.0f
 
 int         LH3DSky::g_b_we_are_inside_citadel;
 float       LH3DSky::g_alpha_sun = LH3D_SKY_ALPHA_MAX;
@@ -57,6 +85,46 @@ LH3DMaterial* sky_material[SKY_TYPE_LAST];
 bool32_t g_jc_caca_first_init_sky = true;
 int      g_fade;
 bool     moonflip;
+
+LH3DColor LH3DSky::Interpolate444Colour(uint16_t from, uint16_t to, int amount)
+{
+	LH3DColor result;
+	if (amount <= 0)
+	{
+		int red = (from >> (LH3D_SKY_RGB444_CHANNEL_BITS * 2)) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int green = (from >> LH3D_SKY_RGB444_CHANNEL_BITS) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int blue = from & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int rgb = (((red << LH3D_COLOR_GREEN_SHIFT) + green) << LH3D_COLOR_GREEN_SHIFT) + blue;
+		result = LH3DColor(rgb << LH3D_SKY_RGB444_CHANNEL_BITS);
+	}
+	else if (amount >= LH3D_SKY_COLOUR_BLEND_SCALE)
+	{
+		int red = (to >> (LH3D_SKY_RGB444_CHANNEL_BITS * 2)) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int green = (to >> LH3D_SKY_RGB444_CHANNEL_BITS) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int blue = to & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int rgb = (((red << LH3D_COLOR_GREEN_SHIFT) + green) << LH3D_COLOR_GREEN_SHIFT) + blue;
+		result = LH3DColor(rgb << LH3D_SKY_RGB444_CHANNEL_BITS);
+	}
+	else
+	{
+		int red = (from >> (LH3D_SKY_RGB444_CHANNEL_BITS * 2)) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int green = (from >> LH3D_SKY_RGB444_CHANNEL_BITS) & LH3D_SKY_RGB444_CHANNEL_MASK;
+		int blue = from & LH3D_SKY_RGB444_CHANNEL_MASK;
+		red = ((((to >> (LH3D_SKY_RGB444_CHANNEL_BITS * 2)) & LH3D_SKY_RGB444_CHANNEL_MASK) - red) * amount +
+		       (red << LH3D_SKY_COLOUR_BLEND_SHIFT)) >>
+		      LH3D_SKY_RGB444_CHANNEL_BITS;
+		green = ((((to >> LH3D_SKY_RGB444_CHANNEL_BITS) & LH3D_SKY_RGB444_CHANNEL_MASK) - green) * amount +
+		         (green << LH3D_SKY_COLOUR_BLEND_SHIFT)) >>
+		        LH3D_SKY_RGB444_CHANNEL_BITS;
+		blue = (((to & LH3D_SKY_RGB444_CHANNEL_MASK) - blue) * amount + (blue << LH3D_SKY_COLOUR_BLEND_SHIFT)) >>
+		       LH3D_SKY_RGB444_CHANNEL_BITS;
+		result.r = red;
+		result.g = green;
+		result.b = blue;
+	}
+	result.a = LH3D_COLOR_OPAQUE;
+	return result;
+}
 
 void LH3DSky::SetDayNightTimes(float night, float dusk_start, float dusk_end, float day)
 {
@@ -211,6 +279,51 @@ void LH3DSky::Update()
 	cury += SKY_TEXTURE_UPDATE_LINES;
 }
 
+float LH3DSky::CalcMoonRot(bool32_t& changed)
+{
+	static time_t lastTime = 0;
+	static int    lastTick = 0;
+	int           tick = GetTickCount();
+	if (tick - lastTick > LH3D_SKY_MOON_UPDATE_INTERVAL)
+	{
+		lastTime = 0;
+		lastTick = tick;
+	}
+	if (lastTime == 0)
+	{
+		time(&lastTime);
+		changed = true;
+	}
+	else
+	{
+		changed = false;
+	}
+	double cycle = (lastTime / LH3D_SKY_MOON_SECONDS_PER_DAY - LH3D_SKY_MOON_REFERENCE_DAY) / LH3D_SKY_MOON_CYCLE_DAYS;
+	return (1.0 - (cycle - (int)cycle)) * TWO_PI;
+}
+
+void LH3DSky::CalcMoonPhase()
+{
+	LHMatrix rotation;
+	rotation.SetRotationY(moonphase);
+	LH3DSubMesh*    submesh = moon->submeshes[0];
+	LH3DPrimitive** primitives = submesh->primitives_;
+	int             count = submesh->NumPrimitives;
+	for (int i = 0; i < count; ++i)
+	{
+		LH3DVertex* vertex = primitives[i]->Vertices;
+		int         vertices = primitives[i]->NumVertices;
+		while (vertices--)
+		{
+			LHPoint point = vertex->position;
+			rotation.TransformPoint(point);
+			vertex->uv.Set(point.x / LH3D_SKY_MOON_UV_DIVISOR + LH3D_SKY_MOON_UV_OFFSET,
+			               point.y / LH3D_SKY_MOON_UV_DIVISOR + LH3D_SKY_MOON_UV_OFFSET);
+			++vertex;
+		}
+	}
+}
+
 void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& moon_matrix)
 {
 	enum MOON_VERTEX
@@ -275,4 +388,144 @@ void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& m
 		moonobj->SetDrawWithGlobalAlpha(true);
 		moonobj->DrawUnderWater();
 	}
+}
+
+void LH3DSky::CalcMoonMat(LHPoint& pos, LHMatrix& matrix, LHMatrix& moon_matrix)
+{
+	LHPoint cameraPos = LH3DTech::g_world_to_camera * pos;
+	LHPoint forward;
+	forward = cameraPos;
+	forward.Normalise();
+	LHPoint right;
+	LHPoint up(0.0f, 1.0f, 0.0f);
+	right.CrossProduct(up, forward);
+	right.Normalise();
+	up.CrossProduct(forward, right);
+	matrix._11 = right.x;
+	matrix._12 = right.y;
+	matrix._13 = right.z;
+	matrix._21 = up.x;
+	matrix._22 = up.y;
+	matrix._23 = up.z;
+	matrix._31 = forward.x;
+	matrix._32 = forward.y;
+	matrix._33 = forward.z;
+	matrix._41 = cameraPos.x;
+	matrix._42 = cameraPos.y;
+	matrix._43 = cameraPos.z;
+	LHMatrix inverse;
+	inverse.SetInverse(LH3DTech::g_world_to_camera);
+	matrix.PostMultiply(inverse);
+	matrix.ScaleMatrixOnly(moonsize);
+	moon_matrix.Set(matrix);
+	bool32_t changed = true;
+	moonphase = CalcMoonRot(changed);
+	if (changed)
+	{
+		CalcMoonPhase();
+	}
+	moon_matrix.RotateZ((moonflip ? -1 : 1) * LH3D_SKY_MOON_TILT_ANGLE);
+	moon_matrix.RotateY(moonphase + PI_F);
+	moon_matrix.ScaleMatrixOnly(LH3D_SKY_MOON_SHADING_SCALE);
+}
+
+void LH3DSky::DrawSky(int index, int alpha, int colour, int specular)
+{
+	sky->SetColorSpecular((colour & LH3D_COLOR_RGB_MASK) + (alpha << LH3D_COLOR_ALPHA_SHIFT), specular);
+	LH3DSubMesh*    submesh = skymesh->submeshes[0];
+	int             count = submesh->NumPrimitives;
+	LH3DPrimitive** primitives = submesh->primitives_;
+	for (int i = 0; i < count; ++i)
+	{
+		memcpy(&primitives[i]->Material, sky_material[index], sizeof(LH3DMaterial));
+	}
+	sky->SetNeedClipping(true);
+	if (alpha != LH3D_SKY_ALPHA_MAX)
+	{
+		sky->SetDrawWithGlobalAlpha(true);
+		if (g_b_any_voodoo)
+		{
+			LH3DRender::SetRenderState(D3DRENDERSTATE_TEXTUREPERSPECTIVE, false);
+		}
+		sky->Draw();
+		LH3DRender::SetRenderState(D3DRENDERSTATE_TEXTUREPERSPECTIVE, true);
+	}
+	else
+	{
+		sky->SetDrawWithGlobalAlpha(false);
+		if (g_b_any_voodoo)
+		{
+			LH3DRender::SetRenderState(D3DRENDERSTATE_TEXTUREPERSPECTIVE, false);
+		}
+		sky->Draw();
+		LH3DRender::SetRenderState(D3DRENDERSTATE_TEXTUREPERSPECTIVE, true);
+	}
+}
+
+float LH3DSky::GetSunAltitude()
+{
+	float time = Time2OldSkoolTime(curtime);
+	float foldedTime = time;
+	if (foldedTime > LH3D_SKY_SUNSET_TIME)
+	{
+		foldedTime = LH3D_SKY_SUNSET_TIME;
+	}
+	else if (foldedTime < LH3D_SKY_SUNRISE_TIME)
+	{
+		foldedTime = LH3D_SKY_SUNRISE_TIME;
+	}
+	if (foldedTime > LH3D_SKY_HOURS_PER_HALF_DAY)
+	{
+		foldedTime = LH3D_SKY_HOURS_PER_HALF_DAY - (foldedTime - LH3D_SKY_HOURS_PER_HALF_DAY);
+	}
+	float altitude = (foldedTime - LH3D_SKY_SUNRISE_TIME) * LH3D_SKY_SUN_ALTITUDE_SCALE;
+	g_alpha_sun = LH3D_SKY_ALPHA_MAX;
+	if (time < LH3D_SKY_SUNRISE_TIME)
+	{
+		if (time < LH3D_SKY_SUN_FADE_START)
+		{
+			g_alpha_sun = 0.0f;
+		}
+		else
+		{
+			g_alpha_sun = (time - LH3D_SKY_SUN_FADE_START) * LH3D_SKY_SUN_FADE_SCALE;
+		}
+	}
+	if (time > LH3D_SKY_SUNSET_TIME)
+	{
+		if (time > LH3D_SKY_SUN_FADE_END)
+		{
+			g_alpha_sun = 0.0f;
+		}
+		else
+		{
+			g_alpha_sun = LH3D_SKY_ALPHA_MAX - (time - LH3D_SKY_SUNSET_TIME) * LH3D_SKY_SUN_FADE_SCALE;
+		}
+	}
+	return altitude * LH3D_SKY_SUN_ALTITUDE_MAX;
+}
+
+float LH3DSky::ComputeAlphaEclairagePublique()
+{
+	static float eveningStart = LH3D_SKY_PUBLIC_LIGHTS_DUSK;
+	static float morningEnd = LH3D_SKY_PUBLIC_LIGHTS_DAWN;
+	static float fadeDuration = LH3D_SKY_PUBLIC_LIGHTS_FADE;
+	float        time = Time2OldSkoolTime(curtime);
+	if (time > eveningStart)
+	{
+		if (time > eveningStart + fadeDuration)
+		{
+			return LH3D_SKY_ALPHA_MAX;
+		}
+		return (time - eveningStart) * LH3D_SKY_ALPHA_MAX / fadeDuration;
+	}
+	if (time > morningEnd)
+	{
+		return 0.0f;
+	}
+	if (time < morningEnd - fadeDuration)
+	{
+		return LH3D_SKY_ALPHA_MAX;
+	}
+	return (morningEnd - time) * LH3D_SKY_ALPHA_MAX / fadeDuration;
 }
