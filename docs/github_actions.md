@@ -41,28 +41,36 @@ The upstream decomp.dev page and bot are separate from this fork's Actions setup
 
 ## Automatic PR review
 
-`automatic-review.yml` runs after the Build workflow completes and reviews ready PRs with the upstream `AGENTS.md` as its
-source guide. It reads patches through the GitHub API and checks out only the
-trusted revision that supplied the workflow; it never checks out or runs PR
-code. Review text is sent to the configured OpenAI-compatible API, so enable it
-only if that provider may receive repository diffs.
+`automatic-review.yml` starts a readability review when a same-repository PR is
+opened, updated, reopened, or marked ready. It runs alongside Build, without a
+build dependency. It uses `pull_request_target` only to run trusted default-branch
+reviewer code; PR source is read through the GitHub API and is never checked out
+or executed with review credentials. The upstream `AGENTS.md` remains the source
+guide. Review text is sent to the configured model provider, so enable it only
+if that provider may receive repository diffs.
 
-The reviewer instructions are in `tools/automatic_pr_review_instructions.md`.
-The job supplies changed source files, matching configure entries, base-source
-method-name matches as caller candidates, and the check-run states available
-when review starts. Each version build also uploads a `binary-evidence-*`
-artifact with strict object comparison summaries and bounded disassembly for
-changed source units. Header changes select all units, with an explicit eight-unit
-limit. Output truncation and failed comparisons are recorded. Artifacts identify
-the PR base, head, and actual compiled checkout (normally the PR merge commit).
-The review reads these artifacts as untrusted data and validates their PR revision
-identities. Missing versions, stale artifacts, or truncated evidence prevent an
-automatic approval. No game executables or object files are uploaded.
+The readability phase supplies source, matching configure entries, caller
+candidates, and RepoScout excerpts. Build checks and binary artifacts are outside
+this phase, so their absence does not count as missing readability evidence.
+Supported blocking source findings can request changes. Otherwise the bot posts a
+comment review; it never issues a formal approval or claims the PR is ready to
+merge. The existing numeric, comment, and readability scorecard still applies.
 
-The review workflow uses trusted default-branch code and never executes artifact
-contents or PR code with the review credentials. Closed, draft, and superseded
-PRs are skipped. These workflow changes must be present on the fork's default
-branch before they can handle Build completion events.
+`build-evidence-report.yml` runs separately after Build completes, including failed
+builds. It posts a deterministic PR comment with the Build job results and the
+exact binary evidence limitations for each version. It uses no model credentials,
+does not change the readability score, and cannot approve or merge a PR. Rerunning
+the same Build run updates that run's report instead of adding another comment.
+Reports for a closed, draft, or superseded PR are skipped.
+
+Each version uploads a `binary-evidence-*` artifact containing strict object
+comparison summaries and bounded disassembly. Header changes select all units,
+subject to an eight-unit evidence limit. Reports name unit caps, truncated listings,
+missing/stale artifacts, and units with no function listing. Artifacts are checked
+against both PR revisions and remain untrusted data. Limited binary coverage is
+reported separately from failed builds or incomplete source reviews. No game
+executables or object files are uploaded. Both reporting workflows must be merged
+to the default branch to become active.
 
 RepoScout uses `tools/reposcout.py`, the existing standalone Python/SQLite
 retriever also used by the local OpenCode workflow. The RepoScout index workflow
@@ -92,14 +100,10 @@ override it with the `PR_REVIEW_MODEL` variable if needed. `PR_REVIEW_API_BASE`
 defaults to `https://api.openai.com/v1`; a custom endpoint must support the
 OpenAI Responses API.
 
-The workflow submits a formal review as `github-actions[bot]`. It requests
-changes for high- or medium-severity correctness defects, approves only a
-complete review with no findings, and leaves limited reviews or non-blocking
-findings as comments. GitHub cannot assign the Actions bot as a requested
-reviewer. Approvals require **Allow GitHub Actions to create and approve pull
-requests** under Settings > Actions > General. This setting applies to all
-workflows in the repository. Review text goes to the configured model provider,
-and maintainers still own the merge decision.
+The readability workflow submits a formal comment or request-changes review as
+`github-actions[bot]`. GitHub cannot assign the Actions bot as a requested reviewer.
+Build evidence is posted separately as an ordinary PR comment. Neither workflow
+merges code or posts an approval; maintainers own the merge decision.
 
 
 Every personal-fork review begins with a human-readability scorecard: confirmed

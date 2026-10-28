@@ -971,6 +971,7 @@ def load_binary_evidence(pull_request):
 
 
 def main():
+    readability_only = os.environ.get("PR_REVIEW_PHASE") == "readability"
     repository = os.environ.get("GITHUB_REPOSITORY", "")
     token = os.environ.get("GITHUB_TOKEN", "")
     number = os.environ.get("PR_NUMBER", "")
@@ -1001,7 +1002,7 @@ def main():
     ):
         print("Skipping closed, draft, or superseded pull request")
         return
-    binary_evidence, evidence_limited = load_binary_evidence(pull_request)
+    binary_evidence, evidence_limited = ([], False) if readability_only else load_binary_evidence(pull_request)
     evidence_status = (
         "Reviewed extracted binary comparison evidence for: {}. No interactive binary access.".format(
             ", ".join(item["version"] for item in binary_evidence)
@@ -1011,11 +1012,15 @@ def main():
     )
     if evidence_limited:
         evidence_status += " Binary evidence coverage is limited."
+    if readability_only:
+        evidence_status = "Build and binary evidence are reported separately after Build finishes. They are outside this readability review."
 
     guide = guide_path.read_text(encoding="utf-8")
     if len(guide) > 100_000:
         raise ReviewError("Upstream AGENTS.md exceeded the size limit")
     instructions = instructions_path.read_text(encoding="utf-8")
+    if readability_only:
+        instructions += "\nThis is the immediate readability phase, running independently of builds. Assess source readability and supported source findings only. Build results and binary artifacts will be reported separately. Their absence is expected, not a missing review input or a reason to invent a finding. Do not claim compilation, byte matching, runtime behavior, or merge readiness."
     if len(instructions) > 30_000:
         raise ReviewError("Automatic review instructions exceeded the size limit")
 
@@ -1042,10 +1047,13 @@ def main():
         }
         configure_status = collect_configure_status(github, files, pull_request["head"]["sha"])
         caller_context = collect_caller_context(source_context)
-        try:
-            check_runs, check_runs_truncated = github.list_check_runs(pull_request["head"]["sha"])
-        except ReviewError:
-            check_runs, check_runs_truncated = [], True
+        if readability_only:
+            check_runs, check_runs_truncated = [], False
+        else:
+            try:
+                check_runs, check_runs_truncated = github.list_check_runs(pull_request["head"]["sha"])
+            except ReviewError:
+                check_runs, check_runs_truncated = [], True
         unknown_config_entries = sum(entry["status"] != "observed" for entry in configure_status)
         limited_context_files = limited_source_files + unknown_config_entries + int(evidence_limited)
         model_result = call_model(
@@ -1091,6 +1099,8 @@ def main():
             limited_context_files + int(quality_incomplete),
         )
         event = readability_review.apply_quality_event(event, quality)
+        if readability_only and event == "APPROVE":
+            event = "COMMENT"
         body = make_review_body(
             findings,
             pull_request["head"]["sha"],
@@ -1104,6 +1114,8 @@ def main():
             repository=repository,
         )
         body = body.replace("Original game binaries were not available to this review.", evidence_status)
+        if readability_only:
+            body = body.replace("## Changes requested", "## Readability review\n\nBuilds run independently. This review does not approve merging or verify binary matching.\n\n## Changes requested", 1)
         body = body.replace(
             "RepoScout was unavailable in this Actions run; upstream AGENTS.md was used.",
             reposcout_review_status(reposcout_evidence),
