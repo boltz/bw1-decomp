@@ -101,28 +101,6 @@ requests** under Settings > Actions > General. This setting applies to all
 workflows in the repository. Review text goes to the configured model provider,
 and maintainers still own the merge decision.
 
-## Executable hash diagnostics
-
-Each version build writes a diagnostic job summary and an
-`executable-diagnostics-<VERSION>` artifact containing `report.md` and `report.json`.
-This step runs after build failures unless cancelled. A missing executable is
-reported as unavailable rather than as a matching build. The report compares the
-final patched `runblack.exe` against the original executable selected from that
-version's `build.sha1`, including Creature Isle's original filename.
-
-The report includes expected and actual SHA-1 hashes, file sizes, exact differing
-byte counts, PE header differences, and per-section content and layout differences.
-Section bytes are compared relative to each section, so a raw-file offset change
-is distinguished from changed code or data. Each comparison retains its first 20
-contiguous mismatch ranges, with original and built virtual addresses where file
-bytes exist and containing/preceding symbols from the original symbol map. Header,
-padding, or overlay differences also appear in the whole-file comparison.
-
-Symbols provide investigation context, not proof of the cause. Virtual/BSS bytes
-are not invented. Neither executable nor executable byte samples are uploaded.
-Diagnostics never rewrite the expected hashes or turn a failed build into a pass.
-
-## Readability reviews
 
 Every personal-fork review begins with a human-readability scorecard: confirmed
 magic-number occurrences, unresolved numeric candidates, added/edited comment
