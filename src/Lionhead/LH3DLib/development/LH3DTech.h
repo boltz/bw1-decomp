@@ -15,6 +15,7 @@
 struct LH3DColor;
 struct LH3DMaterial;
 class LH3DObject;
+struct LH3DTexture;
 struct LHMatrix;
 struct LHPoint;
 struct LHTimer;
@@ -73,6 +74,13 @@ static_assert(sizeof(InfoTransform) == 0x40, "Data type is of wrong size");
 class LH3DTech
 {
 public:
+	enum PROJECT_POINT_RESULT
+	{
+		PROJECT_POINT_BEHIND_NEAR_CLIP,
+		PROJECT_POINT_OUTSIDE_VIEWPORT,
+		PROJECT_POINT_INSIDE_VIEWPORT,
+	};
+
 	// One bit per frustum plane in the cached clip flags. ClipTriangle clips against the plane it is given and
 	// carries on with the next ones.
 	enum ClipCode
@@ -308,6 +316,10 @@ enum GROSSE_MERDE
 // BW1W120 00ea1c88 BW1M119 012dbfbc (LHCombined Release)
 extern LHPoint DEFAULT_SUN;
 
+// BW1W120 00eb9958 BW1M119 011f24b0 (LHCombined Release)
+extern LH3DTexture* g_sun_texture;
+// BW1W120 00eb9954 BW1M119 011f24b4 (LHCombined Release)
+extern LH3DTexture* g_weather_texture;
 // Set by LHScreen when one of the display devices is a 3dfx Voodoo.
 // BW1W120 00ea9e9c BW1M119 012dc174 (LHCombined Release)
 extern bool32_t g_b_any_voodoo;
