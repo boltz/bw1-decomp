@@ -102,31 +102,30 @@ float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, 
 		fraction = (time - from_day) / (LH3D_SKY_HOURS_PER_HALF_DAY - from_day);
 	}
 
-	float result;
 	switch (interval)
 	{
 	case SKY_TIME_INTERVAL_NIGHT:
-		result = fraction * to_night;
+		time = fraction * to_night;
 		break;
 	case SKY_TIME_INTERVAL_NIGHT_TO_DUSK:
-		result = to_night + fraction * (to_dusk_start - to_night);
+		time = to_night + fraction * (to_dusk_start - to_night);
 		break;
 	case SKY_TIME_INTERVAL_DUSK:
-		result = to_dusk_start + fraction * (to_dusk_end - to_dusk_start);
+		time = to_dusk_start + fraction * (to_dusk_end - to_dusk_start);
 		break;
 	case SKY_TIME_INTERVAL_DUSK_TO_DAY:
-		result = to_dusk_end + fraction * (to_day - to_dusk_end);
+		time = to_dusk_end + fraction * (to_day - to_dusk_end);
 		break;
 	case SKY_TIME_INTERVAL_DAY:
-		result = to_day + fraction * (LH3D_SKY_HOURS_PER_HALF_DAY - to_day);
+		time = to_day + fraction * (LH3D_SKY_HOURS_PER_HALF_DAY - to_day);
 		break;
 	}
 
 	if (isAfternoon)
 	{
-		result = LH3D_SKY_HOURS_PER_DAY - result;
+		time = LH3D_SKY_HOURS_PER_DAY - time;
 	}
-	return result;
+	return time;
 }
 
 float LH3DSky::OldSkoolTime2Time(float time)
@@ -238,36 +237,46 @@ void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& m
 	LH3DAtmos::v_col[0][2] = glowColour;
 	LH3DAtmos::v_col[0][3] = glowColour;
 
-	LH3DAtmos::v_pnt[0][0].x =
+	LHPoint& lowerLeft = LH3DAtmos::v_pnt[0][0];
+	lowerLeft.x =
 		quad_matrix.GetPos().x - (quad_matrix.GetVectorY().x + quad_matrix.GetVectorX().x) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][0].y =
+	lowerLeft.y =
 		quad_matrix.GetPos().y - (quad_matrix.GetVectorY().y + quad_matrix.GetVectorX().y) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][0].z =
+	lowerLeft.z =
 		quad_matrix.GetPos().z - (quad_matrix.GetVectorY().z + quad_matrix.GetVectorX().z) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].x =
-		quad_matrix.GetPos().x + (quad_matrix.GetVectorX().x - quad_matrix.GetVectorY().x) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].y =
-		quad_matrix.GetPos().y + (quad_matrix.GetVectorX().y - quad_matrix.GetVectorY().y) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].z =
-		quad_matrix.GetPos().z + (quad_matrix.GetVectorX().z - quad_matrix.GetVectorY().z) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].x =
-		quad_matrix.GetPos().x + (quad_matrix.GetVectorY().x - quad_matrix.GetVectorX().x) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].y =
-		quad_matrix.GetPos().y + (quad_matrix.GetVectorY().y - quad_matrix.GetVectorX().y) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].z =
-		quad_matrix.GetPos().z + (quad_matrix.GetVectorY().z - quad_matrix.GetVectorX().z) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].x =
+	LHPoint& lowerRight = LH3DAtmos::v_pnt[0][1];
+	lowerRight.x =
+		(quad_matrix.GetVectorX().x * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorY().x * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().x;
+	lowerRight.y =
+		(quad_matrix.GetVectorX().y * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorY().y * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().y;
+	lowerRight.z =
+		(quad_matrix.GetVectorX().z * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorY().z * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().z;
+	LHPoint& upperLeft = LH3DAtmos::v_pnt[0][2];
+	upperLeft.x =
+		(quad_matrix.GetVectorY().x * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorX().x * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().x;
+	upperLeft.y =
+		(quad_matrix.GetVectorY().y * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorX().y * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().y;
+	upperLeft.z =
+		(quad_matrix.GetVectorY().z * LH3D_SKY_MOON_QUAD_SIZE - quad_matrix.GetVectorX().z * LH3D_SKY_MOON_QUAD_SIZE) +
+		quad_matrix.GetPos().z;
+	LHPoint& upperRight = LH3DAtmos::v_pnt[0][3];
+	upperRight.x =
 		quad_matrix.GetPos().x + (quad_matrix.GetVectorY().x + quad_matrix.GetVectorX().x) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].y =
+	upperRight.y =
 		quad_matrix.GetPos().y + (quad_matrix.GetVectorY().y + quad_matrix.GetVectorX().y) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].z =
+	upperRight.z =
 		quad_matrix.GetPos().z + (quad_matrix.GetVectorY().z + quad_matrix.GetVectorX().z) * LH3D_SKY_MOON_QUAD_SIZE;
 
 	LH3DTech::Draw3DWorldTriangle(LH3D_SKY_MOON_VERTEX_COUNT, LH3DAtmos::v_pnt[0], LH3DAtmos::v_col[0],
 	                              LH3DAtmos::v_uv[0], LH3D_SKY_MOON_TRIANGLE_COUNT, LH3DAtmos::v_idx[0],
 	                              LH3DAtmos::AdditiveMaterial, false);
 
-	moonobj->matrix = moon_matrix;
+	moonobj->matrix.Set(moon_matrix);
 	moonobj->SetColorSpecular(colour.GetColor(), 0);
 	moonobj->SetDrawWithGlobalAlpha(true);
 	if (!moonflip)
