@@ -158,3 +158,21 @@ check rather than guessing. New prose comments and confirmed actionable readabil
 issues request changes even when binary evidence is incomplete. Complete
 inventories and the validated scorecard are uploaded as workflow artifacts.
 The trusted automatic-review workflow uses these changes after they merge to main.
+
+
+Review prose follows the TimVoice rules in
+`tools/automatic_pr_review_voice.md`. The model receives this file as trusted
+writing instructions on every run. A missing guide stops the review. The guide
+requires a high-school reading level (grades 9-10), a direct request followed by
+its reason, and plain explanations of compiler terms. It applies to every prose
+field and requires a separate writing pass before returning the structured
+review. Exact code names, quoted reviewer text, scores and evidence stay intact.
+The bot still identifies itself as automated. This is a writing requirement;
+there is no automatic certification of the generated prose's reading level.
+
+The writing guide is included in the repo so GitHub Actions can use it without
+access to Tim's local OpenCode skills. It contains the applicable writing rules,
+not his personal correspondence. The report template uses plain labels and keeps
+score details, required-comment locations, and long lists of missing files in
+expandable sections. The score, counts, review limits, and requested fixes remain
+visible. Changing the process does not edit previously posted reviews.
