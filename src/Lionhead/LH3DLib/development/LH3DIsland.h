@@ -336,7 +336,7 @@ class LH3DIsland
 {
 public:
 	// BW1W120 00c37204 BW1M119 null (LHCombined Release)
-	static int g_b_use_fog;
+	static bool32_t g_b_use_fog;
 	// BW1W120 00c3720c BW1M119 011ceb28 (LHCombined Release)
 	static float g_height_unit;
 	// BW1W120 00c37214 BW1M119 011ceb30 (LHCombined Release)

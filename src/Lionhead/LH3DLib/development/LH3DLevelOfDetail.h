@@ -3,6 +3,7 @@
 
 #include <assert.h> /* For static_assert */
 #include <stdint.h> /* For uint8_t */
+#include <re_common.h>
 
 struct LH3DCitadelLevelOfDetail
 {
@@ -20,7 +21,7 @@ struct LH3DLevelOfDetail
 	// BW1W120 00c381e0 BW1M119 011ce84c (LHCombined Release)
 	static LH3DCitadelLevelOfDetail g_citadellod;
 	// BW1W120 00c38200 BW1M119 null (LHCombined Release)
-	static int g_b_inside_citadel;
+	static bool32_t g_b_inside_citadel;
 };
 
 #endif /* BW1_DECOMP_LH3D_LEVEL_OF_DETAIL_INCLUDED_H */
