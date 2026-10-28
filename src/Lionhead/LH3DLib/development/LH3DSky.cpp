@@ -24,7 +24,7 @@
 #include <Lionhead/LHFile/ver3.0/LHOSFile.h>
 
 int         LH3DSky::g_b_we_are_inside_citadel;
-float       LH3DSky::g_alpha_sun = 255.0f;
+float       LH3DSky::g_alpha_sun = LH3D_SKY_ALPHA_MAX;
 float       LH3DSky::ONIGHT_FULL_TIME = 3.5f;
 float       LH3DSky::ODUSK_START_TIME = 7.5f;
 float       LH3DSky::ODUSK_END_TIME = 8.0f;
@@ -81,43 +81,43 @@ void LH3DSky::SetDayNightTimes(float night, float dusk_start, float dusk_end, fl
 float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, float from_dusk_end, float from_day,
                            float to_night, float to_dusk_start, float to_dusk_end, float to_day)
 {
-	bool folded = false;
+	bool isAfternoon = false;
 	if (time > HOURS_PER_HALF_DAY)
 	{
 		time = HOURS_PER_DAY - time;
-		folded = true;
+		isAfternoon = true;
 	}
 
-	int   index;
+	int   interval;
 	float fraction;
 	if (time < from_night)
 	{
-		index = 0;
+		interval = 0;
 		fraction = time / from_night;
 	}
 	else if (time < from_dusk_start)
 	{
-		index = 1;
+		interval = 1;
 		fraction = (time - from_night) / (from_dusk_start - from_night);
 	}
 	else if (time < from_dusk_end)
 	{
-		index = 2;
+		interval = 2;
 		fraction = (time - from_dusk_start) / (from_dusk_end - from_dusk_start);
 	}
 	else if (time < from_day)
 	{
-		index = 3;
+		interval = 3;
 		fraction = (time - from_dusk_end) / (from_day - from_dusk_end);
 	}
 	else
 	{
-		index = 4;
+		interval = 4;
 		fraction = (time - from_day) / (HOURS_PER_HALF_DAY - from_day);
 	}
 
 	float result;
-	switch (index)
+	switch (interval)
 	{
 	case 0:
 		result = fraction * to_night;
@@ -136,7 +136,7 @@ float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, 
 		break;
 	}
 
-	if (folded)
+	if (isAfternoon)
 	{
 		result = HOURS_PER_DAY - result;
 	}
@@ -157,28 +157,28 @@ float LH3DSky::Time2OldSkoolTime(float time)
 
 float LH3DSky::Time2SkyType(float time)
 {
-	float sky_type = SKY_TYPE_DAY;
+	float skyType = SKY_TYPE_DAY;
 	if (time > HOURS_PER_HALF_DAY)
 	{
 		time = HOURS_PER_DAY - time;
 	}
 	if (time < NIGHT_FULL_TIME)
 	{
-		sky_type = SKY_TYPE_NIGHT;
+		skyType = SKY_TYPE_NIGHT;
 	}
 	else if (time < DUSK_START_TIME)
 	{
-		sky_type = SKY_TYPE_NIGHT - (time - NIGHT_FULL_TIME) / (DUSK_START_TIME - NIGHT_FULL_TIME);
+		skyType = SKY_TYPE_NIGHT - (time - NIGHT_FULL_TIME) / (DUSK_START_TIME - NIGHT_FULL_TIME);
 	}
 	else if (time < DUSK_END_TIME)
 	{
-		sky_type = SKY_TYPE_DUSK;
+		skyType = SKY_TYPE_DUSK;
 	}
 	else if (time < DAY_FULL_TIME)
 	{
-		sky_type = SKY_TYPE_DUSK - (time - DUSK_END_TIME) / (DAY_FULL_TIME - DUSK_END_TIME);
+		skyType = SKY_TYPE_DUSK - (time - DUSK_END_TIME) / (DAY_FULL_TIME - DUSK_END_TIME);
 	}
-	return sky_type;
+	return skyType;
 }
 
 void LH3DSky::ForceTime(float time)
@@ -207,15 +207,15 @@ void LH3DSky::SetTime(float time)
 void LH3DSky::Update()
 {
 	CalculateColours();
-	int height = LH3DTexture::g_b_use_low_res ? SKY_TEXTURE_HEIGHT_LOW : SKY_TEXTURE_HEIGHT;
-	if (cury >= height)
+	int textureHeight = LH3DTexture::g_b_use_low_res ? SKY_TEXTURE_HEIGHT_LOW : SKY_TEXTURE_HEIGHT;
+	if (cury >= textureHeight)
 	{
 		if (fabs(newst - curst) > SKY_TYPE_CHANGE_THRESHOLD)
 		{
 			curst = newst;
 			cury = 0;
 		}
-		if (cury >= height)
+		if (cury >= textureHeight)
 		{
 			return;
 		}
@@ -235,36 +235,36 @@ static bool IsInsideCitadel()
 
 void LH3DSky::Draw()
 {
-	LHPoint moon_position = LH3DAtmos::moonpos;
+	LHPoint moonPosition = LH3DAtmos::moonpos;
 
-	int moon_fog = (int)(moon_position.y * LH3D_SKY_MOON_FOG_SCALE - LH3D_SKY_MOON_FOG_OFFSET);
-	if (moon_fog > LH3D_SKY_MOON_FOG_MAX)
+	int moonAlpha = (int)(moonPosition.y * LH3D_SKY_MOON_FOG_SCALE - LH3D_SKY_MOON_FOG_OFFSET);
+	if (moonAlpha > LH3D_SKY_MOON_FOG_MAX)
 	{
-		moon_fog = LH3D_SKY_MOON_FOG_MAX;
+		moonAlpha = LH3D_SKY_MOON_FOG_MAX;
 	}
 	if (overcast > 0.0f && LH3DIsland::g_b_use_fog)
 	{
-		moon_fog = (int)((float)moon_fog / (overcast * LH3D_SKY_FOG_SCALE + 1.0f));
+		moonAlpha = (int)((float)moonAlpha / (overcast * LH3D_SKY_FOG_SCALE + 1.0f));
 	}
 
 	uint32_t specular = 0;
-	if (moon_fog > 0)
+	if (moonAlpha > 0)
 	{
-		moon_position.x += LH3DTech::g_camera.pos.x;
-		moon_position.y += LH3DTech::g_camera.pos.y;
-		moon_position.z += LH3DTech::g_camera.pos.z;
+		moonPosition.x += LH3DTech::g_camera.pos.x;
+		moonPosition.y += LH3DTech::g_camera.pos.y;
+		moonPosition.z += LH3DTech::g_camera.pos.z;
 		moonobj->SetNeedClipping(1);
 	}
 
-	int fog_alpha;
-	int sky_index;
-	int sky_index_second;
+	int alignmentAlpha;
+	int alignmentIndex;
+	int nextAlignmentIndex;
 	if (evil < 0.0f)
 	{
 		evil = 0.0f;
-		fog_alpha = (int)(evil * 255.0f);
-		sky_index = 0;
-		sky_index_second = 1;
+		alignmentAlpha = (int)(evil * LH3D_SKY_ALPHA_MAX);
+		alignmentIndex = 0;
+		nextAlignmentIndex = 1;
 	}
 	else
 	{
@@ -272,76 +272,76 @@ void LH3DSky::Draw()
 		{
 			evil = 2.0f;
 		}
-		fog_alpha = (int)((evil - 1.0f) * 255.0f);
-		sky_index = 1;
-		sky_index_second = 2;
+		alignmentAlpha = (int)((evil - 1.0f) * LH3D_SKY_ALPHA_MAX);
+		alignmentIndex = 1;
+		nextAlignmentIndex = 2;
 	}
 
-	int inv_fog = 0xff - fog_alpha;
+	int inverseAlignmentAlpha = 0xff - alignmentAlpha;
 
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
 
-	int      fog = (int)(overcast * 255.0f);
-	uint32_t top_colour = 0xffffffff;
+	int      fogAlpha = (int)(overcast * LH3D_SKY_ALPHA_MAX);
+	uint32_t topColour = 0xffffffff;
 	if (!IsInsideCitadel())
 	{
-		float sky_scale = (2.0f - newst) * LH3D_SKY_TOP_SCALE;
-		float red_scale = sky_scale + sky_scale + LH3D_SKY_TOP_OFFSET;
-		float green_scale = sky_scale * LH3D_SKY_TOP_GREEN_SCALE + LH3D_SKY_TOP_OFFSET;
-		float blue_scale = sky_scale * LH3D_SKY_TOP_BLUE_SCALE + LH3D_SKY_TOP_OFFSET;
-		if (red_scale > 1.0f)
+		float skyBrightness = (2.0f - newst) * LH3D_SKY_TOP_SCALE;
+		float redScale = skyBrightness + skyBrightness + LH3D_SKY_TOP_OFFSET;
+		float greenScale = skyBrightness * LH3D_SKY_TOP_GREEN_SCALE + LH3D_SKY_TOP_OFFSET;
+		float blueScale = skyBrightness * LH3D_SKY_TOP_BLUE_SCALE + LH3D_SKY_TOP_OFFSET;
+		if (redScale > 1.0f)
 		{
-			red_scale = 1.0f;
+			redScale = 1.0f;
 		}
-		if (green_scale > 1.0f)
+		if (greenScale > 1.0f)
 		{
-			green_scale = 1.0f;
+			greenScale = 1.0f;
 		}
-		if (blue_scale > 1.0f)
+		if (blueScale > 1.0f)
 		{
-			blue_scale = 1.0f;
+			blueScale = 1.0f;
 		}
 
 		LH3DColor colour = topcol;
-		colour.r = (uint8_t)((float)colour.r * red_scale);
-		colour.g = (uint8_t)((float)colour.g * green_scale);
-		colour.b = (uint8_t)((float)colour.b * blue_scale);
+		colour.r = (uint8_t)((float)colour.r * redScale);
+		colour.g = (uint8_t)((float)colour.g * greenScale);
+		colour.b = (uint8_t)((float)colour.b * blueScale);
 		colour.a = 0xff;
-		top_colour = colour.GetColor();
+		topColour = colour.GetColor();
 	}
 
-	uint32_t fog_colour =
+	uint32_t fogColour =
 		((uint32_t)(uint8_t)fog_red << 16) | ((uint32_t)(uint8_t)fog_green << 8) | (uint8_t)fog_blue | 0xff000000;
 
 	if (LH3DIsland::g_b_use_fog)
 	{
-		top_colour = LH3D_BLEND_COLOR(top_colour, fog_colour, fog);
-		specular = LH3D_BLEND_COLOR(0, fog_colour, fog);
+		topColour = LH3D_BLEND_COLOR(topColour, fogColour, fogAlpha);
+		specular = LH3D_BLEND_COLOR(0, fogColour, fogAlpha);
 	}
 
 	if (LH3DAtmos::alignment & 1)
 	{
-		int fade = (LH3DAtmos::fade * LH3DAtmos::fade) / LH3D_ATMOS_ALIGNMENT_FADE;
-		top_colour = LH3D_BLEND_COLOR(0, top_colour, 0xff - fade);
-		specular = LH3D_BLEND_COLOR(0, specular, 0xff - fade);
+		int alignmentFade = (LH3DAtmos::fade * LH3DAtmos::fade) / LH3D_ATMOS_ALIGNMENT_FADE;
+		topColour = LH3D_BLEND_COLOR(0, topColour, 0xff - alignmentFade);
+		specular = LH3D_BLEND_COLOR(0, specular, 0xff - alignmentFade);
 	}
 
 	if (g_fade != 0)
 	{
-		top_colour = LH3D_BLEND_COLOR(top_colour, 0xffffffff, g_fade);
+		topColour = LH3D_BLEND_COLOR(topColour, 0xffffffff, g_fade);
 		specular = LH3D_BLEND_COLOR(specular, 0xffffffff, g_fade / 2);
 	}
 
-	if (inv_fog < 1)
+	if (inverseAlignmentAlpha < 1)
 	{
-		DrawSky(sky_index_second, 0xff, top_colour, specular);
+		DrawSky(nextAlignmentIndex, 0xff, topColour, specular);
 	}
 	else
 	{
-		DrawSky(sky_index, 0xff, top_colour, specular);
-		if (fog_alpha > 0)
+		DrawSky(alignmentIndex, 0xff, topColour, specular);
+		if (alignmentAlpha > 0)
 		{
-			DrawSky(sky_index_second, fog_alpha, top_colour, specular);
+			DrawSky(nextAlignmentIndex, alignmentAlpha, topColour, specular);
 		}
 	}
 
@@ -349,23 +349,23 @@ void LH3DSky::Draw()
 
 	DrawSun();
 
-	if (moon_fog > 0)
+	if (moonAlpha > 0)
 	{
-		LH3DColor moon_colour = lightcols[5];
-		moon_colour.a = (uint8_t)moon_fog;
+		LH3DColor moonColour = lightcols[5];
+		moonColour.a = (uint8_t)moonAlpha;
 		moonflip = false;
-		LHMatrix moon_matrix;
-		LHMatrix sun_matrix;
-		CalcMoonMat(moon_position, moon_matrix, sun_matrix);
-		DrawMoonPost(moon_colour, moon_matrix, sun_matrix);
-		moon_position.y = -moon_position.y;
+		LHMatrix quadMatrix;
+		LHMatrix moonMatrix;
+		CalcMoonMat(moonPosition, quadMatrix, moonMatrix);
+		DrawMoonPost(moonColour, quadMatrix, moonMatrix);
+		moonPosition.y = -moonPosition.y;
 		moonflip = true;
-		CalcMoonMat(moon_position, moon_matrix, sun_matrix);
-		DrawMoonPost(moon_colour, moon_matrix, sun_matrix);
+		CalcMoonMat(moonPosition, quadMatrix, moonMatrix);
+		DrawMoonPost(moonColour, quadMatrix, moonMatrix);
 	}
 }
 
-void LH3DSky::Init(float time, float overcast)
+void LH3DSky::Init(float alignment, float time)
 {
 	SetDayNightTimes(LH3D_SKY_DEFAULT_NIGHT, LH3D_SKY_DEFAULT_DUSK, LH3D_SKY_DEFAULT_DUSK_END, LH3D_SKY_DEFAULT_DAY);
 	g_jc_caca_first_init_sky = true;
@@ -373,17 +373,17 @@ void LH3DSky::Init(float time, float overcast)
 	moonsize = LH3D_SKY_MOON_SIZE;
 	memset(bitmaps, 0, sizeof(bitmaps));
 
-	int count = IsInsideCitadel() ? SKY_DETAIL_COUNT : SKY_DETAIL_COUNT_DAY;
-	for (int detail = 0; detail < count; detail++)
+	int skyTypeCount = IsInsideCitadel() ? SKY_DETAIL_COUNT : SKY_DETAIL_COUNT_DAY;
+	for (int skyType = 0; skyType < skyTypeCount; skyType++)
 	{
-		for (int sky_type = 0; sky_type < SKY_TYPE_COUNT; sky_type++)
+		for (int alignmentIndex = 0; alignmentIndex < SKY_TYPE_COUNT; alignmentIndex++)
 		{
 			strcpy(g_sky_texture_name, "Data\\WeatherSystem\\sky_");
-			if (sky_type == 0)
+			if (alignmentIndex == 0)
 			{
 				strcat(g_sky_texture_name, "good");
 			}
-			else if (sky_type == 1)
+			else if (alignmentIndex == 1)
 			{
 				strcat(g_sky_texture_name, "ntrl");
 			}
@@ -391,11 +391,11 @@ void LH3DSky::Init(float time, float overcast)
 			{
 				strcat(g_sky_texture_name, "evil");
 			}
-			if (detail == 0)
+			if (skyType == SKY_TYPE_DAY)
 			{
 				strcat(g_sky_texture_name, "_day.555");
 			}
-			else if (detail == 1)
+			else if (skyType == SKY_TYPE_DUSK)
 			{
 				strcat(g_sky_texture_name, "_dusk.555");
 			}
@@ -403,67 +403,68 @@ void LH3DSky::Init(float time, float overcast)
 			{
 				strcat(g_sky_texture_name, "_night.555");
 			}
-			bitmaps[detail][sky_type] = LoadTextureCitadel(g_sky_texture_name, NULL);
+			bitmaps[skyType][alignmentIndex] = LoadTextureCitadel(g_sky_texture_name, NULL);
 		}
-		if (bitmaps[detail][0] == NULL)
+		if (bitmaps[skyType][0] == NULL)
 		{
-			bitmaps[detail][0] = bitmaps[detail][1];
+			bitmaps[skyType][0] = bitmaps[skyType][1];
 		}
-		if (bitmaps[detail][2] == NULL)
+		if (bitmaps[skyType][2] == NULL)
 		{
-			bitmaps[detail][2] = bitmaps[detail][1];
+			bitmaps[skyType][2] = bitmaps[skyType][1];
 		}
 	}
 
-	int i;
-	for (i = 0; i < SKY_DETAIL_COUNT; i++)
+	int index;
+	for (index = 0; index < SKY_DETAIL_COUNT; index++)
 	{
 		TextureFormat format;
-		sky_texture[i] = LH3DTexture::Create(NULL, LH3D_SKY_TEXTURE_SIZE, 0, &format);
-		sky_material[i] = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_TEXTURED, sky_texture[i]);
+		sky_texture[index] = LH3DTexture::Create(NULL, LH3D_SKY_TEXTURE_SIZE, 0, &format);
+		sky_material[index] =
+			LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_TEXTURED, sky_texture[index]);
 	}
 
-	int height = LH3DTexture::g_b_use_low_res ? SKY_TEXTURE_HEIGHT_LOW : SKY_TEXTURE_HEIGHT;
-	CalculateTextures(Time2SkyType(overcast), 0, height);
-	cury = height;
+	int textureHeight = LH3DTexture::g_b_use_low_res ? SKY_TEXTURE_HEIGHT_LOW : SKY_TEXTURE_HEIGHT;
+	CalculateTextures(Time2SkyType(time), 0, textureHeight);
+	cury = textureHeight;
 	newst = 0.0f;
-	evil = time * LH3D_SKY_EVIL_SCALE;
+	evil = alignment * LH3D_SKY_EVIL_SCALE;
 	curst = 0.0f;
-	SetTime(overcast);
+	SetTime(time);
 	LH3DSky::overcast = 0.0f;
 	CalculateColours();
 
-	uint32_t file_length;
-	LHFileLength("data\\weathersystem\\sky.l3d", &file_length);
-	void* data = LH3DMem::Alloc(file_length);
-	LHLoadData("data\\weathersystem\\sky.l3d", data, file_length, NULL);
-	skymesh = LH3DMesh::Create(data, false);
-	LH3DMem::Free(data);
+	uint32_t fileLength;
+	LHFileLength("data\\weathersystem\\sky.l3d", &fileLength);
+	void* meshData = LH3DMem::Alloc(fileLength);
+	LHLoadData("data\\weathersystem\\sky.l3d", meshData, fileLength, NULL);
+	skymesh = LH3DMesh::Create(meshData, false);
+	LH3DMem::Free(meshData);
 
 	sky = LH3DObject::Create(LH3DObject::STATIC);
 	sky->SetMesh(skymesh, NULL, NULL);
 	sky->SetDynamicLighting(false);
 	sky->SetPosition(LHPoint(LH3D_SKY_POSITION, 0.0f, LH3D_SKY_POSITION), 0.0f, LH3D_SKY_SCALE);
 
-	int j;
+	int primitiveIndex;
 	moon = LH3DMesh::CreateFromHD("Data\\WeatherSystem\\moon.l3d", 1);
-	for (i = 0; i < moon->SubmeshCount; i++)
+	for (index = 0; index < moon->SubmeshCount; index++)
 	{
-		LH3DSubMesh* submesh = moon->submeshes[i];
-		for (j = 0; j < submesh->NumPrimitives; j++)
+		LH3DSubMesh* submesh = moon->submeshes[index];
+		for (primitiveIndex = 0; primitiveIndex < submesh->NumPrimitives; primitiveIndex++)
 		{
-			LH3DPrimitive* primitive = submesh->primitives_[j];
+			LH3DPrimitive* primitive = submesh->primitives_[primitiveIndex];
 			primitive->Material.texture = g_weather_texture;
 		}
 	}
 
 	sun = LH3DMesh::CreateFromHD("Data\\WeatherSystem\\sun.l3d", 1);
-	for (i = 0; i < sun->SubmeshCount; i++)
+	for (index = 0; index < sun->SubmeshCount; index++)
 	{
-		LH3DSubMesh* submesh = sun->submeshes[i];
-		for (j = 0; j < submesh->NumPrimitives; j++)
+		LH3DSubMesh* submesh = sun->submeshes[index];
+		for (primitiveIndex = 0; primitiveIndex < submesh->NumPrimitives; primitiveIndex++)
 		{
-			LH3DPrimitive* primitive = submesh->primitives_[j];
+			LH3DPrimitive* primitive = submesh->primitives_[primitiveIndex];
 			primitive->Material.render_mode = LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_ALPHA_TEXTURED_ALPHA_ADDITIF_NZ;
 			primitive->Material.Flags = primitive->Material.Flags | LH3DMaterial::FLAG_DOUBLE_SIDED;
 			primitive->Material.texture = g_sun_texture;
@@ -478,7 +479,7 @@ void LH3DSky::Init(float time, float overcast)
 	sunobj->SetMesh(sun, NULL, NULL);
 }
 
-void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& matrix, LHMatrix& moon_matrix)
+void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& moon_matrix)
 {
 	LH3DAtmos::v_idx[0][0] = 0;
 	LH3DAtmos::v_idx[0][1] = 1;
@@ -496,28 +497,28 @@ void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& matrix, LHMatrix& moon_m
 	LH3DAtmos::v_uv[0][6] = LH3D_SKY_MOON_UV_MAX;
 	LH3DAtmos::v_uv[0][7] = LH3D_SKY_MOON_UV_MAX;
 
-	LH3DColor moon_colour = colour;
-	moon_colour.r = (uint8_t)((int)moon_colour.r / LH3D_SKY_MOON_RED_DIVISOR);
-	moon_colour.g = (uint8_t)((int)moon_colour.g / LH3D_SKY_MOON_GREEN_DIVISOR);
-	moon_colour.b >>= LH3D_SKY_MOON_BLUE_SHIFT;
+	LH3DColor glowColour = colour;
+	glowColour.r = (uint8_t)((int)glowColour.r / LH3D_SKY_MOON_RED_DIVISOR);
+	glowColour.g = (uint8_t)((int)glowColour.g / LH3D_SKY_MOON_GREEN_DIVISOR);
+	glowColour.b >>= LH3D_SKY_MOON_BLUE_SHIFT;
 
-	LH3DAtmos::v_col[0][0] = moon_colour;
-	LH3DAtmos::v_col[0][1] = moon_colour;
-	LH3DAtmos::v_col[0][2] = moon_colour;
-	LH3DAtmos::v_col[0][3] = moon_colour;
+	LH3DAtmos::v_col[0][0] = glowColour;
+	LH3DAtmos::v_col[0][1] = glowColour;
+	LH3DAtmos::v_col[0][2] = glowColour;
+	LH3DAtmos::v_col[0][3] = glowColour;
 
-	LH3DAtmos::v_pnt[0][0].x = matrix.m[9] - (matrix.m[3] + matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][0].y = matrix.m[10] - (matrix.m[4] + matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][0].z = matrix.m[11] - (matrix.m[5] + matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].x = matrix.m[9] + (matrix.m[0] - matrix.m[3]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].y = matrix.m[10] + (matrix.m[1] - matrix.m[4]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][1].z = matrix.m[11] + (matrix.m[2] - matrix.m[5]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].x = matrix.m[9] + (matrix.m[3] - matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].y = matrix.m[10] + (matrix.m[4] - matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][2].z = matrix.m[11] + (matrix.m[5] - matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].x = matrix.m[9] + (matrix.m[3] + matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].y = matrix.m[10] + (matrix.m[4] + matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
-	LH3DAtmos::v_pnt[0][3].z = matrix.m[11] + (matrix.m[5] + matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][0].x = quad_matrix.m[9] - (quad_matrix.m[3] + quad_matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][0].y = quad_matrix.m[10] - (quad_matrix.m[4] + quad_matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][0].z = quad_matrix.m[11] - (quad_matrix.m[5] + quad_matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][1].x = quad_matrix.m[9] + (quad_matrix.m[0] - quad_matrix.m[3]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][1].y = quad_matrix.m[10] + (quad_matrix.m[1] - quad_matrix.m[4]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][1].z = quad_matrix.m[11] + (quad_matrix.m[2] - quad_matrix.m[5]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][2].x = quad_matrix.m[9] + (quad_matrix.m[3] - quad_matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][2].y = quad_matrix.m[10] + (quad_matrix.m[4] - quad_matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][2].z = quad_matrix.m[11] + (quad_matrix.m[5] - quad_matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][3].x = quad_matrix.m[9] + (quad_matrix.m[3] + quad_matrix.m[0]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][3].y = quad_matrix.m[10] + (quad_matrix.m[4] + quad_matrix.m[1]) * LH3D_SKY_MOON_QUAD_SIZE;
+	LH3DAtmos::v_pnt[0][3].z = quad_matrix.m[11] + (quad_matrix.m[5] + quad_matrix.m[2]) * LH3D_SKY_MOON_QUAD_SIZE;
 
 	LH3DTech::Draw3DWorldTriangle(LH3D_SKY_MOON_VERTEX_COUNT, LH3DAtmos::v_pnt[0], LH3DAtmos::v_col[0],
 	                              LH3DAtmos::v_uv[0], LH3D_SKY_MOON_TRIANGLE_COUNT, LH3DAtmos::v_idx[0],
@@ -538,7 +539,7 @@ void LH3DSky::DrawMoonPost(LH3DColor& colour, LHMatrix& matrix, LHMatrix& moon_m
 float LH3DSky::GetSunVisibility()
 {
 	static float sampleOffset = LH3D_SKY_SUN_SAMPLE_OFFSET;
-	LHPoint      samples[] = {
+	LHPoint      samplePositions[] = {
 		LHPoint(0.0f, 0.0f, 0.0f),                   //
 		LHPoint(-sampleOffset, -sampleOffset, 0.0f), //
 		LHPoint(-sampleOffset, sampleOffset, 0.0f),  //
@@ -551,7 +552,7 @@ float LH3DSky::GetSunVisibility()
 
 	HRESULT        lockResult = S_FALSE;
 	bool32_t       readDepth = g_b_zbuffer_16b;
-	DDSURFACEDESC2 surface;
+	DDSURFACEDESC2 depthSurface;
 	if (LH3DLevelOfDetail::g_detail_idx != LH3DLevelOfDetail::DETAIL_PRESET_3 &&
 	    LH3DLevelOfDetail::g_detail_idx != LH3DLevelOfDetail::DETAIL_PRESET_4 &&
 	    LH3DLevelOfDetail::g_detail_idx != LH3DLevelOfDetail::DETAIL_PRESET_6)
@@ -560,46 +561,48 @@ float LH3DSky::GetSunVisibility()
 	}
 	if (readDepth)
 	{
-		memset(&surface, 0, sizeof(surface));
-		surface.dwSize = sizeof(surface);
-		lockResult =
-			LH3DRender::ZBufferSurface->Lock(NULL, &surface, DDLOCK_WAIT | DDLOCK_READONLY | DDLOCK_NOSYSLOCK, NULL);
+		memset(&depthSurface, 0, sizeof(depthSurface));
+		depthSurface.dwSize = sizeof(depthSurface);
+		lockResult = LH3DRender::ZBufferSurface->Lock(NULL, &depthSurface,
+		                                              DDLOCK_WAIT | DDLOCK_READONLY | DDLOCK_NOSYSLOCK, NULL);
 	}
 
 	float occludedSamples = 0.0f;
-	for (int i = 0; i < ARRAY_SIZE(samples); ++i)
+	for (int sampleIndex = 0; sampleIndex < ARRAY_SIZE(samplePositions); ++sampleIndex)
 	{
-		samples[i] += g_sun_pos;
-		samples[i] += direction;
-		if (samples[i].y < LH3D_SKY_SUN_MIN_HEIGHT)
+		samplePositions[sampleIndex] += g_sun_pos;
+		samplePositions[sampleIndex] += direction;
+		if (samplePositions[sampleIndex].y < LH3D_SKY_SUN_MIN_HEIGHT)
 		{
-			samples[i].y = LH3D_SKY_SUN_MIN_HEIGHT;
+			samplePositions[sampleIndex].y = LH3D_SKY_SUN_MIN_HEIGHT;
 		}
 		float    hitX, hitZ;
-		bool32_t occluded = LH3DIsland::RayCast(LH3DTech::g_camera.pos, samples[i], &hitX, &hitZ);
+		bool32_t occluded = LH3DIsland::RayCast(LH3DTech::g_camera.pos, samplePositions[sampleIndex], &hitX, &hitZ);
 		if (!occluded && lockResult == DD_OK && readDepth)
 		{
-			int x, y;
-			if (LH3DTech::ProjectPoint(&samples[i], &x, &y) == LH3DTech::PROJECT_POINT_INSIDE_VIEWPORT)
+			int screenX, screenY;
+			if (LH3DTech::ProjectPoint(&samplePositions[sampleIndex], &screenX, &screenY) ==
+			    LH3DTech::PROJECT_POINT_INSIDE_VIEWPORT)
 			{
-				if (x < 0)
+				if (screenX < 0)
 				{
-					x = 0;
+					screenX = 0;
 				}
-				if (y < 0)
+				if (screenY < 0)
 				{
-					y = 0;
+					screenY = 0;
 				}
-				if (x >= surface.dwWidth)
+				if (screenX >= depthSurface.dwWidth)
 				{
-					x = surface.dwWidth - 1;
+					screenX = depthSurface.dwWidth - 1;
 				}
-				if (y >= surface.dwHeight)
+				if (screenY >= depthSurface.dwHeight)
 				{
-					y = surface.dwHeight - 1;
+					screenY = depthSurface.dwHeight - 1;
 				}
-				uint16_t* depth = (uint16_t*)surface.lpSurface;
-				if (depth[x + surface.lPitch * y / (int)sizeof(*depth)] < LH3D_SKY_SUN_DEPTH_THRESHOLD)
+				uint16_t* depthPixels = (uint16_t*)depthSurface.lpSurface;
+				if (depthPixels[screenX + depthSurface.lPitch * screenY / (int)sizeof(*depthPixels)] <
+				    LH3D_SKY_SUN_DEPTH_THRESHOLD)
 				{
 					occluded = true;
 				}

@@ -147,7 +147,7 @@ public:
 	// BW1W120 0086a330 BW1M119 01038150 (LHCombined Release)
 	static void Update();
 	// BW1W120 0086a3b0 BW1M119 010b12a0 (LHCombined Release)
-	static void Init(float time, float overcast);
+	static void Init(float alignment, float time);
 	// BW1W120 0086a770 BW1M119 010b11a0 (LHCombined Release)
 	static void Close();
 	// BW1W120 0086a7f0 BW1M119 010b1030 (LHCombined Release)
@@ -155,7 +155,7 @@ public:
 	// BW1W120 0086a890 BW1M119 010b0e00 (LHCombined Release)
 	static void CalcMoonPhase();
 	// BW1W120 0086a930 BW1M119 010b0910 (LHCombined Release)
-	static void DrawMoonPost(LH3DColor& colour, LHMatrix& matrix, LHMatrix& moon_matrix);
+	static void DrawMoonPost(LH3DColor& colour, LHMatrix& quad_matrix, LHMatrix& moon_matrix);
 	// BW1W120 0086ac60 BW1M119 010b02d0 (LHCombined Release)
 	static void CalcMoonMat(LHPoint& pos, LHMatrix& matrix, LHMatrix& moon_matrix);
 	// BW1W120 0086b010 BW1M119 01014310 (LHCombined Release)
