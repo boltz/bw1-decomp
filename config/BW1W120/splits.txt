@@ -478,8 +478,15 @@ Black/CreatureAction.cpp:
 	.text       start:0x004916C0 end:0x004C4920
 	.rdata      start:0x008CF1C4 end:0x008CF354
 	.CRT$XCU    start:0x009C6380 end:0x009C63C0 align:4
-	.data       start:0x009D1678 end:0x009D9770
-	.bss        start:0x00C64230 end:0x00C82644
+	.data       start:0x009D1678 end:0x009D976C
+	.bss        start:0x00C64230 end:0x00C82640
+
+Black/CreatureAnimInfo.cpp:
+	.text       start:0x004C4920 end:0x004C4C10
+	.rdata      start:0x008CF354 end:0x008CF35C
+	.CRT$XCU    start:0x009C63C0 end:0x009C63CC align:4
+	.data       start:0x009D976C end:0x009D9770
+	.bss        start:0x00C82640 end:0x00C82648
 
 Black/CreatureAttitudeToCreature.cpp:
 	.text       start:0x004C4C10 end:0x004C4FE0
@@ -684,14 +691,14 @@ Black/CreatureMentalObjectTests.cpp:
 	.text       start:0x004E3670 end:0x004E4E20
 	.rdata      start:0x008D0570 end:0x008D0590
 	.CRT$XCU    start:0x009C6568 end:0x009C6574 align:4
-	.bss        start:0x00CAB158 end:0x00CAB164
+	.bss        start:0x00CAB158 end:0x00CAB160
 
 Black/CreatureMentalSaveAndLoad.cpp:
 	.text       start:0x004E4E20 end:0x004E98B0
 	.rdata      start:0x008D0590 end:0x008D059C
 	.CRT$XCU    start:0x009C6574 end:0x009C6584 align:4
 	.data       start:0x00BDFEE0 end:0x00BE0008
-	.bss        start:0x00CAB164 end:0x00CAB178
+	.bss        start:0x00CAB160 end:0x00CAB178
 
 Black/CreatureMentalUsefulness.cpp:
 	.text       start:0x004E98B0 end:0x004E9BF0
@@ -2366,13 +2373,15 @@ Black/ScriptTimer.cpp:
 	.text       start:0x00711570 end:0x00711890
 	.rdata      start:0x00957240 end:0x00957248
 	.CRT$XCU    start:0x009C76EC end:0x009C76F4 align:4
-	.data       start:0x00C20B98 end:0x00C20C20
-	.bss        start:0x00D99030 end:0x00D99048
+	.data       start:0x00C20B98 end:0x00C20BB8
+	.bss        start:0x00D99030 end:0x00D99034
 
 Black/SecretCreature.cpp:
 	.text       start:0x00711890 end:0x00711DC0
 	.rdata      start:0x00957248 end:0x00957270
 	.CRT$XCU    start:0x009C76F4 end:0x009C76F8 align:4
+	.data       start:0x00C20BB8 end:0x00C20C20
+	.bss        start:0x00D99034 end:0x00D99048
 
 Black/Serialise.cpp:
 	.text       start:0x00711DC0 end:0x00712840
