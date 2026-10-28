@@ -71,9 +71,9 @@ float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, 
                            float to_night, float to_dusk_start, float to_dusk_end, float to_day)
 {
 	bool isAfternoon = false;
-	if (time > HOURS_PER_HALF_DAY)
+	if (time > LH3D_SKY_HOURS_PER_HALF_DAY)
 	{
-		time = HOURS_PER_DAY - time;
+		time = LH3D_SKY_HOURS_PER_DAY - time;
 		isAfternoon = true;
 	}
 
@@ -102,7 +102,7 @@ float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, 
 	else
 	{
 		interval = SKY_TIME_INTERVAL_DAY;
-		fraction = (time - from_day) / (HOURS_PER_HALF_DAY - from_day);
+		fraction = (time - from_day) / (LH3D_SKY_HOURS_PER_HALF_DAY - from_day);
 	}
 
 	float result;
@@ -121,13 +121,13 @@ float LH3DSky::ConvertTime(float time, float from_night, float from_dusk_start, 
 		result = to_dusk_end + fraction * (to_day - to_dusk_end);
 		break;
 	case SKY_TIME_INTERVAL_DAY:
-		result = to_day + fraction * (HOURS_PER_HALF_DAY - to_day);
+		result = to_day + fraction * (LH3D_SKY_HOURS_PER_HALF_DAY - to_day);
 		break;
 	}
 
 	if (isAfternoon)
 	{
-		result = HOURS_PER_DAY - result;
+		result = LH3D_SKY_HOURS_PER_DAY - result;
 	}
 	return result;
 }
@@ -147,9 +147,9 @@ float LH3DSky::Time2OldSkoolTime(float time)
 float LH3DSky::Time2SkyType(float time)
 {
 	float skyType = SKY_TYPE_DAY;
-	if (time > HOURS_PER_HALF_DAY)
+	if (time > LH3D_SKY_HOURS_PER_HALF_DAY)
 	{
-		time = HOURS_PER_DAY - time;
+		time = LH3D_SKY_HOURS_PER_DAY - time;
 	}
 	if (time < NIGHT_FULL_TIME)
 	{
@@ -183,11 +183,11 @@ void LH3DSky::SetTime(float time)
 {
 	while (time < 0.0f)
 	{
-		time += HOURS_PER_DAY;
+		time += LH3D_SKY_HOURS_PER_DAY;
 	}
-	while (time >= HOURS_PER_DAY)
+	while (time >= LH3D_SKY_HOURS_PER_DAY)
 	{
-		time -= HOURS_PER_DAY;
+		time -= LH3D_SKY_HOURS_PER_DAY;
 	}
 	curtime = time;
 	newst = Time2SkyType(time);

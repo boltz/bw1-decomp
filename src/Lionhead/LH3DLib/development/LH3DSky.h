@@ -12,8 +12,8 @@ struct LH3DMesh;
 struct LHMatrix;
 struct LHPoint;
 
-#define HOURS_PER_DAY                24.0f
-#define HOURS_PER_HALF_DAY           (HOURS_PER_DAY / 2.0f)
+#define LH3D_SKY_HOURS_PER_DAY       24.0f
+#define LH3D_SKY_HOURS_PER_HALF_DAY  (LH3D_SKY_HOURS_PER_DAY / 2.0f)
 #define SKY_TEXTURE_HEIGHT_LOW       0x80
 #define SKY_TEXTURE_HEIGHT           0x100
 #define SKY_TEXTURE_UPDATE_LINES     0x20
