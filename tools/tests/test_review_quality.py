@@ -372,6 +372,39 @@ class PlainReviewWritingTests(unittest.TestCase):
         self.assertIn(finding["evidence"], body)
 
 
+class OwnerReviewScopeTests(unittest.TestCase):
+    def test_scope_is_specific_to_owner_exclusions(self):
+        for path in (
+            "configure.py",
+            "tools/thing.py",
+            "tools/tests/test_thing.py",
+            ".claude/skills/task/run.py",
+            "tools/types.pyi",
+        ):
+            self.assertFalse(audit.reviewable_path(path), path)
+        for path in (
+            "src/example.cpp",
+            "src/example.h",
+            "config/BW1W120/symbols.txt",
+            "tools/README.md",
+            "scripts/other.py",
+        ):
+            self.assertTrue(audit.reviewable_path(path), path)
+
+    def test_git_comment_lint_skips_excluded_python(self):
+        from unittest import mock
+
+        fake_paths = b"configure.py\0tools/helper.py\0.claude/skills/task/run.py\0"
+        with (
+            mock.patch.object(audit.subprocess, "check_output", side_effect=["base", "head", fake_paths, fake_paths]),
+            mock.patch.object(audit.subprocess, "run") as show,
+        ):
+            result = audit.git_inventory("base", "head")
+        self.assertEqual(result["eligible_files"], 0)
+        self.assertEqual(result["comment_count"], 0)
+        show.assert_not_called()
+
+
 class BaseCommentTests(unittest.TestCase):
     def audit_change(self, before, after):
         path = "src/example.cpp"

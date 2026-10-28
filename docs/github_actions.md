@@ -165,3 +165,12 @@ The numeric inventory holds up to 1,024 occurrences, and model output has a
 20,000-token allowance for their classifications and findings. These limits cover
 PR #19's 11 source files and 349 numeric occurrences. Larger changes still report
 incomplete coverage instead of claiming that an unfinished audit passed.
+
+
+The owner excludes configure.py and Python files under tools/ and .claude/skills/
+from PR review, including Python tests. The automatic reviewer filters these paths
+before fetching source, forming diffs, counting tokens or selecting finding
+locations. The added-comment PR lint uses the same exclusion. Python-only PRs in
+these excluded paths skip the review; they do not receive an empty approval.
+Existing configure entries can still supply linkage facts for changed C++ files.
+The exclusion does not prevent necessary edits or tests of the Python tooling.

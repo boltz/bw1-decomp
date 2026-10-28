@@ -159,7 +159,7 @@ class GitHub:
             rows = self.request("GET", "/repos/{}/pulls/{}/files?{}".format(self.repository, number, query))
             if not isinstance(rows, list):
                 raise ReviewError("GitHub returned an invalid changed-files response")
-            files.extend(rows)
+            files.extend(item for item in rows if review_quality.reviewable_path(item.get("filename")))
             if len(rows) < 100 or len(files) > MAX_FILES:
                 break
             page += 1
@@ -303,7 +303,7 @@ def build_diff_context(files):
 
     for item in sorted(files, key=review_file_priority):
         path = item.get("filename")
-        if not isinstance(path, str):
+        if not review_quality.reviewable_path(path):
             continue
         patch = item.get("patch")
         patch_available = isinstance(patch, str)
@@ -343,7 +343,7 @@ def collect_source_context(github, files, head_sha, base_sha=None):
     code_extensions = (".c", ".cc", ".cpp", ".h", ".hpp", ".inl", ".py", ".yml", ".yaml")
     for item in sorted(files, key=review_file_priority):
         path = item.get("filename")
-        if not isinstance(path, str) or not (
+        if not review_quality.reviewable_path(path) or not (
             path.startswith(("src/", "include/", "tools/", ".github/")) or path == "configure.py"
         ):
             continue
@@ -953,8 +953,10 @@ def main():
 
     github = GitHub(repository, token)
     files, file_list_truncated = github.list_changed_files(int(number))
+    files = [item for item in files if review_quality.reviewable_path(item.get("filename"))]
     if not files:
-        raise ReviewError("Pull request has no changed files to review")
+        print("Skipping PR with no files in the owner-approved review scope")
+        return
     else:
         reposcout_evidence = collect_reposcout_evidence(files)
         diff_context, changed_lines, limited_files = build_diff_context(files)

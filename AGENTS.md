@@ -8,6 +8,14 @@ The goal is to reconstruct the original C++ source code such that compiling it w
 
 The main version to work from is `BW1W120`.
 
+### Boltz owner review scope
+
+Do not PR-review `configure.py` or Python files under `tools/` or `.claude/skills/`,
+including their tests. Do not raise readability, magic-number or comment-removal
+findings for those files. This is a review exclusion, not an editing ban: necessary
+changes to these files are allowed. Build entries may be read as evidence of which
+C++ units are linked, without reviewing the Python implementation.
+
 ### Mindset
 
 The work is fundamentally about getting into the heads of the original developers using only the evidence available — the binary, the linker map, debug strings, and the compiler's behavior. Every assumption must be doubted and verified. Be skeptical of everything: naming guesses, code structure, control flow choices, even whether a function "looks right." Only commit to a decision when the evidence is overwhelming.

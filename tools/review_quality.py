@@ -34,6 +34,14 @@ TOKEN = re.compile(
 )
 
 
+def reviewable_path(path):
+    if not isinstance(path, str):
+        return False
+    return path != "configure.py" and not (
+        path.startswith(("tools/", ".claude/skills/")) and path.lower().endswith((".py", ".pyi", ".pyw"))
+    )
+
+
 def owned_cpp(path):
     return (
         path.startswith(("src/", "tools/"))
@@ -323,7 +331,7 @@ def git_inventory(base, head):
     )
     files, sources = [], []
     for path in paths:
-        if not owned_source(path):
+        if not owned_source(path) or not reviewable_path(path):
             continue
         patch = subprocess.check_output(
             [

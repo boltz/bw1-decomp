@@ -173,14 +173,14 @@ class AutomaticReviewTests(unittest.TestCase):
         with mock.patch.object(github, "get_text_file", side_effect=source):
             contexts, limited = collect_source_context(github, files, "head", "base")
         self.assertEqual(limited, 0)
-        self.assertEqual([c["path"] for c in contexts], ["src/sky.cpp", "configure.py"])
+        self.assertEqual([c["path"] for c in contexts], ["src/sky.cpp"])
         self.assertTrue(all(c["status"] == "complete" for c in contexts))
         self.assertTrue(contexts[0]["base_comments_complete"])
         self.assertEqual(contexts[0]["base_comment_signatures"], [])
 
     def test_cpp_is_retained_first_when_source_budget_is_exhausted(self):
         github = GitHub("owner/repository", "token")
-        files = [{"filename": "configure.py", "status": "modified"}, {"filename": "src/sky.cpp", "status": "added"}]
+        files = [{"filename": "tools/extra.yml", "status": "modified"}, {"filename": "src/sky.cpp", "status": "added"}]
         with (
             mock.patch.object(github, "get_text_file", return_value="int x;\n"),
             mock.patch.object(automatic_pr_review, "MAX_SOURCE_CONTEXT_CHARS", 7),
@@ -211,6 +211,60 @@ class AutomaticReviewTests(unittest.TestCase):
         _, lines, limited = build_diff_context(files)
         self.assertEqual(limited, 0)
         self.assertTrue(all(value == {1} for value in lines.values()))
+
+    def test_excluded_python_does_not_consume_file_budget_or_reach_diff(self):
+        github = GitHub("owner/repository", "token")
+        excluded = [{"filename": "tools/file{}.py".format(i), "patch": "@@ -0,0 +1 @@\n+# comment"} for i in range(100)]
+        cpp = {"filename": "src/sky.cpp", "patch": "@@ -0,0 +1 @@\n+int value;"}
+        with mock.patch.object(github, "request", side_effect=[excluded, [cpp]]):
+            files, limited = github.list_changed_files(1)
+        self.assertEqual(files, [cpp])
+        self.assertFalse(limited)
+        context, lines, limited = build_diff_context(excluded + [cpp, {"filename": "configure.py", "patch": "hidden"}])
+        self.assertEqual(lines, {"src/sky.cpp": {1}})
+        self.assertNotIn("tools/file", context)
+        self.assertNotIn("configure.py", context)
+
+    def test_excluded_python_is_not_fetched_for_source_context(self):
+        github = GitHub("owner/repository", "token")
+        files = [{"filename": path} for path in ("configure.py", "tools/test.py", ".claude/skills/demo/run.py")]
+        with mock.patch.object(github, "get_text_file") as fetch:
+            contexts, limited = collect_source_context(github, files, "head", "base")
+        self.assertEqual((contexts, limited), ([], 0))
+        fetch.assert_not_called()
+
+    def test_excluded_only_pr_skips_model_and_review_submission(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for name in ("guide", "instructions", "event"):
+                (root / name).write_text("{}")
+            github = mock.MagicMock()
+            github.request.return_value = {
+                "state": "open",
+                "draft": False,
+                "head": {"sha": "head"},
+                "base": {"sha": "base"},
+            }
+            github.list_changed_files.return_value = ([{"filename": "tools/helper.py"}], False)
+            env = {
+                "GITHUB_REPOSITORY": "boltz/bw1-decomp",
+                "GITHUB_TOKEN": "test",
+                "PR_NUMBER": "1",
+                "PR_REVIEW_API_KEY": "test",
+                "PR_REVIEW_MODEL": "test",
+                "PR_REVIEW_GUIDE": str(root / "guide"),
+                "PR_REVIEW_INSTRUCTIONS": str(root / "instructions"),
+                "GITHUB_EVENT_PATH": str(root / "event"),
+            }
+            with (
+                mock.patch.dict(automatic_pr_review.os.environ, env),
+                mock.patch.object(automatic_pr_review, "GitHub", return_value=github),
+                mock.patch.object(automatic_pr_review, "load_binary_evidence", return_value=([], True)),
+                mock.patch.object(automatic_pr_review, "call_model") as model,
+            ):
+                automatic_pr_review.main()
+            model.assert_not_called()
+            github.submit_review.assert_not_called()
 
     def test_missing_configure_status_is_unknown(self):
         github = GitHub("owner/repository", "token")
