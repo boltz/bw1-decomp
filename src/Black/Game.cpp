@@ -708,7 +708,7 @@ void AddSpecialRPObjects(RPHolder* holder)
 {
 	if (holder->field_0x50024 != NULL)
 	{
-		Creature* creature = (Creature*)holder->field_0x50024->field_0x64060;
+		Creature* creature = (Creature*)holder->field_0x50024->Context;
 		for (MapShield* shield = GGame::g_game->GameLists.MapShields.head; shield != NULL; shield = shield->next)
 		{
 			if (shield->CreatureMustAvoid(creature))
@@ -750,7 +750,7 @@ void CheckSquareFunction(int x, int z, RPHolder* holder)
 				}
 			}
 			MapCell*        cell = mapPos.ToMap();
-			Creature*       creature = avoidWater ? NULL : (Creature*)holder->field_0x50024->field_0x64060;
+			Creature*       creature = avoidWater ? NULL : (Creature*)holder->field_0x50024->Context;
 			MapCellIterator iter = cell->GetFirstIterator();
 			while (iter.object != NULL)
 			{
@@ -1325,7 +1325,7 @@ void GGame::ClearMap()
 	startCoords.z = 0;
 	startCoords.altitude = 0.0f;
 	if (players[PlayerIndex].creature.Get() != NULL && players[PlayerIndex].GetLeaderInterfaceStatus() != NULL &&
-	    players[PlayerIndex].creature->field_0x1058 == 0)
+	    players[PlayerIndex].creature->RemoteCreature == false)
 	{
 		char mindPath[256];
 		char physiquePath[256];

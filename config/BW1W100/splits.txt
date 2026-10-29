@@ -383,8 +383,15 @@ Black/CreatureAction.cpp:
 	.text       start:0x004797F0 end:0x004ABBE0
 	.rdata      start:0x0080DF64 end:0x0080E20C
 	.CRT$XCU    start:0x008F6230 end:0x008F6264 align:4
-	.data       start:0x008FFCB8 end:0x00907E18
+	.data       start:0x008FFCB8 end:0x00907E14
 	.bss        start:0x00B85AB0 end:0x00BA39A0
+
+Black/CreatureAnimInfo.cpp:
+	.text       start:0x004ABBE0 end:0x004ABEA0
+	.rdata      start:0x0080E20C end:0x0080E214
+	.CRT$XCU    start:0x008F6264 end:0x008F626C align:4
+	.data       start:0x00907E14 end:0x00907E18
+	.bss        start:0x00BA39A0 end:0x00BA39A8
 
 Black/CreatureAttitudeToCreature.cpp:
 	.text       start:0x004ABEA0 end:0x004AC240
@@ -575,14 +582,14 @@ Black/CreatureMentalObjectTests.cpp:
 	.text       start:0x004C4B10 end:0x004C6090
 	.rdata      start:0x0080F3A8 end:0x0080F3C4
 	.CRT$XCU    start:0x008F6394 end:0x008F639C align:4
-	.bss        start:0x00BCC4B8 end:0x00BCC4C4
+	.bss        start:0x00BCC4B8 end:0x00BCC4C0
 
 Black/CreatureMentalSaveAndLoad.cpp:
 	.text       start:0x004C60F0 end:0x004CA4E0
-	.rdata      start:0x0080F3C4 end:0x0080F3D4
+	.rdata      start:0x0080F3C8 end:0x0080F3D4
 	.CRT$XCU    start:0x008F639C end:0x008F63A8 align:4
-	.data       start:0x00B0E070 end:0x00B0E0E8
-	.bss        start:0x00BCC4C4 end:0x00BCC4D8
+	.data       start:0x00B0E070 end:0x00B0E100
+	.bss        start:0x00BCC4C0 end:0x00BCC4D8
 
 Black/CreatureMentalUsefulness.cpp:
 	.text       start:0x004CA4E0 end:0x004CA7E0
@@ -1866,13 +1873,16 @@ Black/ScriptMarker.cpp:
 Black/ScriptTimer.cpp:
 	.text       start:0x006AA990 end:0x006AAC70
 	.rdata      start:0x0088E3B8 end:0x0088E3C0
-	.data       start:0x00B43D10 end:0x00B43D98
-	.bss        start:0x00CB9DC8 end:0x00CB9DE0
+	.CRT$XCU    start:0x008F7034 end:0x008F7038 align:4
+	.data       start:0x00B43D0C end:0x00B43D30
+	.bss        start:0x00CB9DC8 end:0x00CB9DCC
 
 Black/SecretCreature.cpp:
 	.text       start:0x006AAC70 end:0x006AB1A0
 	.rdata      start:0x0088E3C0 end:0x0088E3E8
 	.CRT$XCU    start:0x008F7038 end:0x008F703C align:4
+	.data       start:0x00B43D30 end:0x00B43D98
+	.bss        start:0x00CB9DCC end:0x00CB9DE0
 
 Black/ExtraFeatures.cpp:
 	.data       start:0x00B43D98 end:0x00B43D9C
@@ -3412,6 +3422,20 @@ Lionhead/LH3DLib/development/CAnim.cpp:
 	.text       start:0x007B3A30 end:0x007B70A0
 	.bss        start:0x00E24080 end:0x00E24484
 
+Lionhead/LHLib/ver5.0/RPFollow.cpp:
+	.text       start:0x007B70A0 end:0x007B95B0
+	.text$x     start:0x007EA020 end:0x007EA1CD align:4
+	.rdata      start:0x008D9924 end:0x008D9938
+	.CRT$XCU    start:0x008F751C end:0x008F7524 align:4
+	.bss        start:0x00E24484 end:0x00E25220
+
+Lionhead/LH3DLib/development/LH3DMeshIntersect.cpp:
+	.text       start:0x007B95B0 end:0x007BB6E0
+	.rdata      start:0x008D9938 end:0x008D993C
+	.CRT$XCU    start:0x008F7524 end:0x008F7534 align:4
+	.data       start:0x00B5B520 end:0x00B5B580
+	.bss        start:0x00E25220 end:0x00EC1240
+
 lib/libcmt/wcsdup.obj:
 	.text       start:0x007E894E end:0x007E897C align:1
 
@@ -3459,6 +3483,3 @@ lib/libcmt/w_map.obj:
 	.text       start:0x007E90C8 end:0x007E9301 align:1
 	.rdata      start:0x008DA580 end:0x008DA598
 	.bss        start:0x00ECC6A0 end:0x00ECC6A4
-
-Lionhead/LHLib/ver5.0/RPFollow.cpp:
-	.text$x     start:0x007EA020 end:0x007EA1CD align:4

@@ -473,8 +473,15 @@ Black/CreatureAction.cpp:
 	.text       start:0x00493A50 end:0x004C6CB0
 	.rdata      start:0x008D41CC end:0x008D435C
 	.CRT$XCU    start:0x00A46388 end:0x00A463C8 align:4
-	.data       start:0x00A51C30 end:0x00A59D30
-	.bss        start:0x00CE51F0 end:0x00D03604
+	.data       start:0x00A51C30 end:0x00A59D2C
+	.bss        start:0x00CE51F0 end:0x00D03600
+
+Black/CreatureAnimInfo.cpp:
+	.text       start:0x004C6CB0 end:0x004C6FA0
+	.rdata      start:0x008D435C end:0x008D4364
+	.CRT$XCU    start:0x00A463C8 end:0x00A463D4 align:4
+	.data       start:0x00A59D2C end:0x00A59D30
+	.bss        start:0x00D03600 end:0x00D03608
 
 Black/CreatureAttitudeToCreature.cpp:
 	.text       start:0x004C6FA0 end:0x004C7370
@@ -680,14 +687,14 @@ Black/CreatureMentalObjectTests.cpp:
 	.text       start:0x004E5A00 end:0x004E71B0
 	.rdata      start:0x008D5578 end:0x008D5598
 	.CRT$XCU    start:0x00A46570 end:0x00A4657C align:4
-	.bss        start:0x00D2C118 end:0x00D2C124
+	.bss        start:0x00D2C118 end:0x00D2C120
 
 Black/CreatureMentalSaveAndLoad.cpp:
 	.text       start:0x004E71B0 end:0x004EBC40
 	.rdata      start:0x008D5598 end:0x008D55A4
 	.CRT$XCU    start:0x00A4657C end:0x00A4658C align:4
 	.data       start:0x00C60510 end:0x00C60640
-	.bss        start:0x00D2C124 end:0x00D2C138
+	.bss        start:0x00D2C120 end:0x00D2C138
 
 Black/CreatureMentalUsefulness.cpp:
 	.text       start:0x004EBC40 end:0x004EBF80
@@ -2280,13 +2287,15 @@ Black/ScriptTimer.cpp:
 	.text       start:0x00715EC0 end:0x007161E0
 	.rdata      start:0x00999748 end:0x00999750
 	.CRT$XCU    start:0x00A47708 end:0x00A47710 align:4
-	.data       start:0x00CA184C end:0x00CA18E0
-	.bss        start:0x00E1A1E0 end:0x00E1A1F8
+	.data       start:0x00CA184C end:0x00CA1878
+	.bss        start:0x00E1A1E0 end:0x00E1A1E4
 
 Black/SecretCreature.cpp:
 	.text       start:0x007161E0 end:0x00716710
 	.rdata      start:0x00999750 end:0x00999778
 	.CRT$XCU    start:0x00A47710 end:0x00A47714 align:4
+	.data       start:0x00CA1878 end:0x00CA18E0
+	.bss        start:0x00E1A1E4 end:0x00E1A1F8
 
 Black/Serialise.cpp:
 	.text       start:0x00716710 end:0x00717190
@@ -4015,7 +4024,7 @@ Lionhead/LH3DLib/development/Leash.cpp:
 
 Lionhead/LH3DLib/development/LH3DPrimitive.cpp:
 	.text       start:0x0084EB50 end:0x00862970
-	.CRT$XCU    start:0x00A47E08 end:0x00A47E80 align:4
+	.CRT$XCU    start:0x00A47E2C end:0x00A47E40 align:4
 
 Lionhead/LH3DLib/development/LH3DVRAMTex.cpp:
 	.text       start:0x00862970 end:0x00863600
@@ -4024,15 +4033,26 @@ Lionhead/LH3DLib/development/CAnim.cpp:
 	.text       start:0x00863600 end:0x00867B50
 	.bss        start:0x00F863D8 end:0x00F867DC
 
+Lionhead/LHLib/ver5.0/RPFollow.cpp:
+	.text       start:0x00867B50 end:0x0086A140
+	.text$x     start:0x008AD3D0 end:0x008AD7C8 align:4
+	.rdata      start:0x00A23598 end:0x00A235AC
+	.CRT$XCU    start:0x00A47E40 end:0x00A47E48 align:4
+	.bss        start:0x00F867DC end:0x00F87578
+
+Lionhead/LH3DLib/development/LH3DMeshIntersect.cpp:
+	.text       start:0x0086A140 end:0x0086CE90
+	.rdata      start:0x00A235AC end:0x00A235B0
+	.CRT$XCU    start:0x00A47E48 end:0x00A47E58 align:4
+	.data       start:0x00CBA41C end:0x00CBA47C
+	.bss        start:0x00F87578 end:0x01023598
+
 lib/libcimt/_ios.obj:
 	.text       start:0x008A5676 end:0x008A58AC align:1
 	.rdata      start:0x00A263EC end:0x00A26400
 	.rdata$r    start:0x00A3BC38 end:0x00A3BC80
 	.data       start:0x00CBD064 end:0x00CBD070
 	.bss        start:0x0102D9B0 end:0x0102D9EC
-
-Lionhead/LHLib/ver5.0/RPFollow.cpp:
-	.text$x     start:0x008AD3D0 end:0x008AD7C8 align:4
 
 lib/libcimt/fstream.obj:
 	.text       start:0x008A58AC end:0x008A5CFB align:1

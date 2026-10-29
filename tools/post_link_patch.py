@@ -650,6 +650,7 @@ BW1W120_SAFEDISC_CALLS = (
     (0x00461B7B, call_rel32(0x00401879)),  # CameraModeScript
     (0x0046B7AB, call_rel32(0x00401879)),  # Container
     (0x00471ADB, call_rel32(0x00401879)),  # CPUCheck
+    (0x004C496B, call_rel32(0x00401879)),  # CreatureAnimInfo
     (0x004C4C5B, call_rel32(0x00401879)),  # CreatureAttitudeToCreature
     (0x004C4F5A, call_indirect(0x008A900C)),  # CreatureAttitudeToCreature: __imp__GetUserNameA@4
     (0x004C4FAA, call_indirect(0x008A9888)),  # CreatureAttitudeToCreature: __imp__mmioAscend@4
@@ -911,6 +912,9 @@ BW1W130_SAFEDISC_CALLS = (
     (0x00473F14, jmp_run(0x00473E48)),  # CPUCheck
     (0x004749E2, copy_run(0x00473F14)),  # CPUCheck
     (0x00474A06, copy_run(0x004749E2)),  # CPUCheck
+    (0x004C6CD3, jmp_run(0x004C6B58)),  # CreatureAnimInfo
+    (0x004C6CFB, call_rel32(0x00403C49)),  # CreatureAnimInfo
+    (0x004C6F65, copy_run(0x004C6CFB)),  # CreatureAnimInfo
     (0x004C6FC3, copy_run(0x004C6F65)),  # CreatureAttitudeToCreature
     (0x004C6FEB, call_rel32(0x00403C49)),  # CreatureAttitudeToCreature
     (0x004C7006, copy_run(0x004C6FEB)),  # CreatureAttitudeToCreature
@@ -2072,6 +2076,12 @@ BW1W130_SAFEDISC_CALLS = (
     (0x006CB827, copy_run(0x006CB72A)),  # PSysProperties
     (0x006CBB55, jmp_run(0x006CB827)),  # PSysProperties
     (0x006CBC98, jmp_run(0x006CBB55)),  # PSysProperties
+    (0x00715EE3, copy_run(0x00715E65)),  # ScriptTimer
+    (0x00715F56, jmp_run(0x00715EE3)),  # ScriptTimer
+    (0x00715F78, jmp_run(0x00715F56)),  # ScriptTimer
+    (0x00715FBB, call_rel32(0x004034F9)),  # ScriptTimer
+    (0x007160F1, jmp_run(0x00715FBB)),  # ScriptTimer
+    (0x007161A1, copy_run(0x00532515)),  # ScriptTimer
     (0x00764C73, jmp_run(0x00764C12)),  # VillagerHome
     (0x00764D52, jmp_run(0x00764C73)),  # VillagerHome
     (0x00764DE6, copy_run(0x00764D52)),  # VillagerHome
