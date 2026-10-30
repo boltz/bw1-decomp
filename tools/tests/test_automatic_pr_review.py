@@ -674,6 +674,39 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(result, {"findings": [], "quality": {}})
         self.assertEqual(opener.open.call_count, 3)
 
+    def test_model_retries_a_timed_out_response_read(self):
+        timed_out = mock.MagicMock()
+        timed_out.__enter__.return_value = timed_out
+        timed_out.read.side_effect = TimeoutError("The read operation timed out")
+        succeeded = mock.MagicMock()
+        succeeded.__enter__.return_value = succeeded
+        succeeded.read.return_value = json.dumps({
+            "output_text": json.dumps({"findings": [], "quality": {}}),
+        }).encode("utf-8")
+        opener = mock.MagicMock()
+        opener.open.side_effect = [timed_out, succeeded]
+        with (
+            mock.patch.object(automatic_pr_review.urllib.request, "build_opener", return_value=opener),
+            mock.patch.object(automatic_pr_review.time, "sleep") as sleep,
+        ):
+            result = call_model("https://example.test/v1", "token", "model", "system", "user")
+        self.assertEqual(result, {"findings": [], "quality": {}})
+        self.assertEqual(opener.open.call_count, 2)
+        sleep.assert_called_once_with(1)
+
+    def test_model_reports_exhausted_connection_timeouts(self):
+        opener = mock.MagicMock()
+        opener.open.side_effect = TimeoutError("The read operation timed out")
+        with (
+            mock.patch.object(automatic_pr_review.urllib.request, "build_opener", return_value=opener),
+            mock.patch.object(automatic_pr_review.time, "sleep") as sleep,
+            self.assertRaisesRegex(automatic_pr_review.ReviewError, "Model API request failed") as error,
+        ):
+            call_model("https://example.test/v1", "secret-token", "model", "system", "user")
+        self.assertEqual(opener.open.call_count, automatic_pr_review.MAX_RETRIES)
+        self.assertEqual(sleep.call_count, automatic_pr_review.MAX_RETRIES - 1)
+        self.assertNotIn("secret-token", str(error.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

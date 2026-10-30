@@ -584,7 +584,7 @@ def call_model(api_base, api_key, model, system, user):
                 detail = error.read(2_000).decode("utf-8", "replace")
                 raise ReviewError("Model API returned HTTP {}: {}".format(error.code, detail)) from error
             time.sleep(2**attempt)
-        except urllib.error.URLError as error:
+        except (urllib.error.URLError, TimeoutError) as error:
             if attempt + 1 == MAX_RETRIES:
                 raise ReviewError("Model API request failed: {}".format(error)) from error
             time.sleep(2**attempt)
