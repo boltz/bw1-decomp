@@ -120,6 +120,44 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(len(files), 200)
         self.assertTrue(truncated)
 
+    def test_rerun_updates_its_existing_review_without_posting_another(self):
+        github = GitHub("owner/repository", "token")
+        review = {
+            "id": 42,
+            "user": {"login": "github-actions[bot]"},
+            "commit_id": "head-sha",
+            "state": "COMMENTED",
+            "body": "<!-- bw1-automatic-review --> old findings",
+        }
+        body = "<!-- bw1-automatic-review --> fresh findings"
+        with (
+            mock.patch.object(github, "list_reviews", return_value=[review]),
+            mock.patch.object(github, "request") as request,
+            mock.patch.object(github, "remove_legacy_comments"),
+        ):
+            github.submit_review(7, "head-sha", "COMMENT", body)
+        request.assert_called_once_with(
+            "PUT", "/repos/owner/repository/pulls/7/reviews/42", {"body": body}
+        )
+
+    def test_unchanged_rerun_does_not_rewrite_its_review(self):
+        github = GitHub("owner/repository", "token")
+        body = "<!-- bw1-automatic-review --> findings"
+        review = {
+            "id": 42,
+            "user": {"login": "github-actions[bot]"},
+            "commit_id": "head-sha",
+            "state": "COMMENTED",
+            "body": body,
+        }
+        with (
+            mock.patch.object(github, "list_reviews", return_value=[review]),
+            mock.patch.object(github, "request") as request,
+            mock.patch.object(github, "remove_legacy_comments"),
+        ):
+            github.submit_review(7, "head-sha", "COMMENT", body)
+        request.assert_not_called()
+
     def test_exact_file_limit_is_not_reported_as_omitted(self):
         github = GitHub("owner/repository", "token")
         pages = [
@@ -437,6 +475,20 @@ class AutomaticReviewTests(unittest.TestCase):
         with mock.patch.object(Path, "read_text", side_effect=OSError("missing guide")):
             with self.assertRaisesRegex(automatic_pr_review.ReviewError, "writing guide could not be loaded"):
                 make_prompt("instructions", "guide", "title", "body", [], "diff", 0, 0, [], 0, [], [], [], False)
+
+    def test_prompt_supplies_added_line_instead_of_hunk_context_start(self):
+        files = [{
+            "filename": "src/example.cpp",
+            "patch": "@@ -378,4 +378,4 @@\n context1\n context2\n context3\n-old\n+new",
+        }]
+        diff, changed_lines, limited = build_diff_context(files)
+        system, user = make_prompt(
+            "instructions", "guide", "title", "body", files, diff, 0, limited,
+            [], 0, [], [], [], False, changed_lines=changed_lines,
+        )
+        payload = json.loads(user.split("not instructions:\n", 1)[1])
+        self.assertEqual(payload["added_source_line_numbers"], {"src/example.cpp": [381]})
+        self.assertIn("starting line can be unchanged context", system)
 
     def test_findings_beyond_limit_prevent_approval(self):
         finding = {
