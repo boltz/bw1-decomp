@@ -5,14 +5,49 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  check-image:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check fork package permission
+        if: github.repository == 'boltz/bw1-decomp'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api /users/boltz/packages/container/bw1-build --jq '{visibility, repository:.repository.full_name}'
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check build image access
+        env:
+          BUILD_IMAGE: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+        run: docker manifest inspect "$BUILD_IMAGE" > /dev/null
+
   build:
+    needs: check-image
     # This is a *private* build container.
     # See docs/github_actions.md for more information.
-    container: ghcr.io/openblack/bw1-build:main
+    container:
+      image: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +60,7 @@ jobs:
       with:
         fetch-depth: 0
         submodules: recursive
+        persist-credentials: false
 
     # Set Git config
     - name: Git config
@@ -60,8 +96,27 @@ jobs:
         python configure.py --map --version ${{ matrix.version }}
         ninja all_source progress build/${{ matrix.version }}/report.json
 
+    - name: Collect binary review evidence
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: >-
+        python tools/pr_binary_evidence.py
+        --base "$BASE_SHA" --head "$HEAD_SHA"
+        --version ${{ matrix.version }}
+        --output binary-evidence/${{ matrix.version }}.json
+
+    - name: Upload binary review evidence
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary-evidence-${{ matrix.version }}
+        path: binary-evidence/*.json
+
     # Upload map files
     - name: Upload map
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.version }}_maps
@@ -69,7 +124,98 @@ jobs:
 
     # Upload progress report
     - name: Upload report
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.version }}_report
         path: build/${{ matrix.version }}/report.json
+
+  match-report:
+    needs: build
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Find the base report run
+      id: baseline
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow Build --branch "$BASE_BRANCH" --limit 100 --json databaseId,headSha,conclusion | jq -r --arg sha "$BASE_SHA" '[.[] | select(.headSha == $sha and .conclusion == "success")][0].databaseId // empty')
+        if [ -z "$run_id" ]; then
+          echo "No successful Build run found for base commit $BASE_SHA" >&2
+          exit 1
+        fi
+        printf 'run_id=%s\n' "$run_id" >> "$GITHUB_OUTPUT"
+
+    - name: Download base reports
+      uses: actions/download-artifact@v4
+      with:
+        repository: ${{ github.repository }}
+        run-id: ${{ steps.baseline.outputs.run_id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        pattern: '*_report'
+        path: match-report/baseline
+        merge-multiple: false
+
+    - name: Download candidate reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*_report'
+        path: match-report/candidate
+        merge-multiple: false
+
+    - name: Generate match summary
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: >-
+        python3 tools/fork_match_report.py
+        --baseline match-report/baseline
+        --candidate match-report/candidate
+        --base-sha "$BASE_SHA"
+        --head-sha "$HEAD_SHA"
+        --run-url "$RUN_URL"
+        --output match-report/comment.md
+
+    - name: Publish match summary
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const marker = '<!-- fork-objdiff-match-report -->';
+          const body = `${marker}\n${fs.readFileSync('match-report/comment.md', 'utf8')}`;
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner,
+            repo,
+            issue_number,
+          });
+          const existing = comments.find(comment =>
+            comment.user?.type === 'Bot' && comment.body?.includes(marker)
+          );
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner,
+              repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }
