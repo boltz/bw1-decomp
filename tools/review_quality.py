@@ -164,8 +164,11 @@ def comment_kind(path, text, start, end, comment, depth):
         if path.endswith((".h", ".hpp", ".inl")):
             return "address annotation"
         declaration = following.split(";", 1)[0]
-        if ";" in following and "{" not in declaration and "(" in declaration:
-            return "forward-declaration address annotation"
+        if ";" in following and "{" not in declaration:
+            if "(" in declaration:
+                return "forward-declaration address annotation"
+            if depth == 0 and re.match(r"extern\s+", declaration) and "=" not in declaration:
+                return "external-declaration address annotation"
     if re.fullmatch(r"// Inliner IL size: \d+", stripped) and following.startswith("// BW1W120 "):
         return "inliner annotation"
     prefix = text[text.rfind("\n", 0, start) + 1 : start].rstrip()
