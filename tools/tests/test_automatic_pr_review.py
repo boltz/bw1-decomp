@@ -1,3 +1,4 @@
+import io
 import json
 import unittest
 import tempfile
@@ -24,6 +25,37 @@ from tools.automatic_pr_review import (
 
 
 class AutomaticReviewTests(unittest.TestCase):
+    def test_github_retries_a_transient_read_failure(self):
+        github = GitHub("owner/repository", "token")
+        failed = automatic_pr_review.urllib.error.HTTPError(
+            "https://api.github.com/repos/owner/repository", 500, "temporary", {}, io.BytesIO(b"")
+        )
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.read.return_value = b'{"head": "current"}'
+        with (
+            mock.patch.object(automatic_pr_review.urllib.request, "urlopen", side_effect=[failed, response]) as request,
+            mock.patch.object(automatic_pr_review.time, "sleep") as sleep,
+        ):
+            result = github.request("GET", "/repos/owner/repository")
+        self.assertEqual(result, {"head": "current"})
+        self.assertEqual(request.call_count, 2)
+        sleep.assert_called_once_with(1)
+
+    def test_github_does_not_blindly_retry_creating_a_review(self):
+        github = GitHub("owner/repository", "token")
+        failed = automatic_pr_review.urllib.error.HTTPError(
+            "https://api.github.com/repos/owner/repository/pulls/1/reviews", 500, "temporary", {}, io.BytesIO(b"")
+        )
+        with (
+            mock.patch.object(automatic_pr_review.urllib.request, "urlopen", side_effect=failed) as request,
+            mock.patch.object(automatic_pr_review.time, "sleep") as sleep,
+            self.assertRaisesRegex(automatic_pr_review.ReviewError, "HTTP 500"),
+        ):
+            github.request("POST", "/repos/owner/repository/pulls/1/reviews", {"body": "review"})
+        self.assertEqual(request.call_count, 1)
+        sleep.assert_not_called()
+
     def test_reposcout_reports_missing_index_without_claiming_search(self):
         with mock.patch.dict("os.environ", {"PR_REVIEW_REPOSCOUT_DB": "/nonexistent/reposcout.sqlite3"}):
             evidence = automatic_pr_review.collect_reposcout_evidence([])
