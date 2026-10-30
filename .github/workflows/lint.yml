@@ -15,6 +15,11 @@ on:
       - '.github/workflows/lint.yml'
       - 'config/**/symbols.txt'
       - 'tools/check_addr_comments.py'
+      - 'tools/review_quality.py'
+      - 'tools/readability_review.py'
+      - 'tools/automatic_pr_review*'
+      - 'tools/reposcout.py'
+      - 'tools/tests/**'
 
 permissions:
   contents: read
@@ -47,3 +52,40 @@ jobs:
     # Every `// BW1W120 ...` comment must be `// BW1W120 <w> [BW1M119 <m> [(<module>)]]`
     # on its own line, with a Mac address that exists in config/BW1M119.
     - run: python tools/check_addr_comments.py
+
+  check-added-comments:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install YAML tokenizer
+      run: python -m pip install PyYAML==6.0.3
+    - name: Check added prose comments in owned source
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      run: python tools/review_quality.py --base "$BASE_SHA" --head "$HEAD_SHA" --check-comments --output added-comment-inventory.json
+    - name: Upload comment counts and locations
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: added-comment-inventory
+        path: added-comment-inventory.json
+        if-no-files-found: warn
+
+  test-reviewer:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - run: python -m pip install PyYAML==6.0.3
+    - run: python -m unittest tools.tests.test_automatic_pr_review tools.tests.test_review_quality tools.tests.test_reposcout tools.tests.test_build_evidence_report
