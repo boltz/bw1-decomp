@@ -379,7 +379,7 @@ bool32_t MeshIntersect::CreateFromTextureRef(LH3DMesh* mesh, LHMatrix* matrices,
 			LH3DVertex*    vertices = primitive->Vertices;
 			LH3DTexture*   texture = primitive->Material.texture;
 			long           v = 0;
-			texture->format.GetWidth();
+			(void)texture->format.GetWidth();
 			if (mesh->flags & LH3D_MESH_FLAGS_HAS_BONES)
 			{
 				for (long g = 0; g < primitive->NumVertexGroups; g++)
