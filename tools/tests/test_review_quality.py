@@ -87,6 +87,15 @@ class TokenInventoryTests(unittest.TestCase):
         self.assertEqual(inventory(text)["remove_comment_count"], 1)
         self.assertEqual(inventory("// BW1W120 00401000\nstatic void F();\n")["remove_comment_count"], 0)
 
+    def test_cpp_external_global_address_annotations(self):
+        address = "// BW1W120 00eb9954 BW1M119 011f24b4 (LHCombined Release)\n"
+        declaration = address + "extern LH3DTexture* g_weather_texture;\n"
+        self.assertEqual(inventory(declaration)["remove_comment_count"], 0)
+        definition = address + "extern LH3DTexture* g_weather_texture = NULL;\n"
+        self.assertEqual(inventory(definition)["remove_comment_count"], 1)
+        definition = address + "LH3DTexture* g_weather_texture;\n"
+        self.assertEqual(inventory(definition)["remove_comment_count"], 1)
+
     def test_python_docstrings_strings_and_directives(self):
         text = '#!/usr/bin/env python3\n"""Documentation 55 # string"""\nx = "# 66"\ny = 37 # explanation\n'
         result = inventory(text, "tools/example.py")
