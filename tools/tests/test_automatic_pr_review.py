@@ -25,6 +25,29 @@ from tools.automatic_pr_review import (
 
 
 class AutomaticReviewTests(unittest.TestCase):
+    def test_unchanged_companion_header_is_read_from_the_reviewed_head(self):
+        github = GitHub("owner/repository", "token")
+        files = [{"filename": "src/Room.cpp", "status": "modified"}]
+        contents = {"src/Room.cpp": '#include "Room.h"\nint Room::Text[0x2000];\n',
+                    "src/Room.h": 'struct Room { static int Text[0x2000]; };\n'}
+        with mock.patch.object(github, "get_text_file", side_effect=lambda path, ref: contents[path]) as fetch:
+            contexts, limited = collect_source_context(github, files, "reviewed-head")
+        self.assertEqual(limited, 0)
+        self.assertEqual(contexts[-1], {"path": "src/Room.h", "status": "complete", "text": contents["src/Room.h"],
+                                        "role": "unchanged companion header"})
+        self.assertEqual(fetch.call_args_list[-1].args, ("src/Room.h", "reviewed-head"))
+        self.assertNotIn("src/Room.h", build_diff_context(files)[1])
+
+    def test_companion_header_does_not_hide_a_real_context_size_limit(self):
+        github = GitHub("owner/repository", "token")
+        source = '#include "Room.h"\n'
+        with (mock.patch.object(github, "get_text_file", side_effect=[source, 'int Text[0x2000];']),
+              mock.patch.object(automatic_pr_review, "MAX_SOURCE_CONTEXT_CHARS", len(source) + 3)):
+            contexts, limited = collect_source_context(github, [{"filename": "src/Room.cpp"}], "head")
+        self.assertEqual(limited, 1)
+        self.assertEqual(contexts[-1]["status"], "truncated")
+        self.assertEqual(contexts[-1]["text"], "int")
+
     def test_readability_coverage_keeps_generated_maps_as_reference_metadata(self):
         files = [
             {"filename": "src/sky.cpp", "patch": "@@ -0,0 +1 @@\n+int value = 3;", "additions": 1},
