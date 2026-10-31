@@ -23,7 +23,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       vars.AI_PR_REVIEW_ENABLED == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       # Run the exact trusted revision that supplied this workflow. The PR head
       # is read through the GitHub API below and is never checked out or executed.
