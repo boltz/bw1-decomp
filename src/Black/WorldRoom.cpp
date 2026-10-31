@@ -1053,7 +1053,7 @@ void WorldRoom::PreToolTipProcess()
 	}
 }
 
-wchar_t WorldRoom::WorldStatisticsText[8192];
+wchar_t WorldRoom::WorldStatisticsText[0x2000];
 
 float         WorldRoom::MarkerAngle = 0.0f;
 SubmeshName*  WorldRoom::ScrollSubMesh = NULL;

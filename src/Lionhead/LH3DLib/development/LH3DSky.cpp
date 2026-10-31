@@ -146,10 +146,7 @@ LH3DColor LH3DSky::Interpolate444Colour(uint16_t from, uint16_t to, int amount)
 
 uint32_t ClampSkyChannel(uint32_t value)
 {
-	if (value > LH3D_SKY_ALPHA_MAX)
-	{
-		value = LH3D_SKY_ALPHA_MAX;
-	}
+	value = min(LH3D_SKY_ALPHA_MAX, value);
 	return value;
 }
 
@@ -252,10 +249,7 @@ void LH3DSky::CalculateColours()
 	int fade = (topcol.r * SKY_FOG_RED_WEIGHT + topcol.g * SKY_FOG_GREEN_WEIGHT + topcol.b * SKY_FOG_BLUE_WEIGHT) /
 	               SKY_FOG_WEIGHT_SUM +
 	           SKY_FOG_ALPHA_OFFSET;
-	if (fade > LH3D_SKY_ALPHA_MAX)
-	{
-		fade = LH3D_SKY_ALPHA_MAX;
-	}
+	fade = min(LH3D_SKY_ALPHA_MAX, fade);
 	fog_red = topcol.r / SKY_FOG_COLOUR_DIVISOR;
 	fog_green = topcol.g / SKY_FOG_COLOUR_DIVISOR;
 	fog_blue = topcol.b / SKY_FOG_COLOUR_DIVISOR;
@@ -279,13 +273,16 @@ void LH3DSky::CalculateColours()
 		{
 			overcast = 1.0f;
 		}
-		fog_red += (((topcol.r / SKY_FOG_OVERCAST_COLOUR_DIVISOR) + SKY_FOG_OVERCAST_OFFSET) - fog_red) * overcast;
-		fog_green += (((topcol.g / SKY_FOG_OVERCAST_COLOUR_DIVISOR) + SKY_FOG_OVERCAST_OFFSET) - fog_green) * overcast;
-		fog_blue += (((topcol.b / SKY_FOG_OVERCAST_COLOUR_DIVISOR) + SKY_FOG_OVERCAST_OFFSET) - fog_blue) * overcast;
-		fog_fade += (int)((SKY_FOG_OVERCAST_ALPHA - fade) * overcast);
-		float overcastNear = SKY_FOG_OVERCAST_NEAR;
-		nearDensity += (1.0f / overcastNear - nearDensity) * overcast;
-		farDensity += (1.0f / SKY_FOG_OVERCAST_FAR - farDensity) * overcast;
+		float overcastFogRed = topcol.r / SKY_FOG_OVERCAST_COLOUR_DIVISOR + SKY_FOG_OVERCAST_OFFSET;
+		fog_red += overcast * (overcastFogRed - fog_red);
+		float overcastFogGreen = topcol.g / SKY_FOG_OVERCAST_COLOUR_DIVISOR + SKY_FOG_OVERCAST_OFFSET;
+		fog_green += overcast * (overcastFogGreen - fog_green);
+		float overcastFogBlue = topcol.b / SKY_FOG_OVERCAST_COLOUR_DIVISOR + SKY_FOG_OVERCAST_OFFSET;
+		fog_blue += overcast * (overcastFogBlue - fog_blue);
+		fog_fade += (int)(overcast * (SKY_FOG_OVERCAST_ALPHA - fade));
+		float overcastNearDistance = SKY_FOG_OVERCAST_NEAR;
+		nearDensity += overcast * (1.0f / overcastNearDistance - nearDensity);
+		farDensity += overcast * (1.0f / SKY_FOG_OVERCAST_FAR - farDensity);
 	}
 	if (LightningGlow)
 	{
@@ -810,10 +807,7 @@ void LH3DSky::Draw()
 {
 	LHPoint moonPosition = LH3DAtmos::GetMoonPos();
 	int     moonFog = (int)(moonPosition.y * LH3D_SKY_MOON_FOG_SCALE - LH3D_SKY_MOON_FOG_OFFSET);
-	if (moonFog > LH3D_SKY_MOON_FOG_MAX)
-	{
-		moonFog = LH3D_SKY_MOON_FOG_MAX;
-	}
+	moonFog = min(LH3D_SKY_MOON_FOG_MAX, moonFog);
 	if (overcast > 0.0f && LH3DIsland::g_b_use_fog)
 	{
 		moonFog = (int)(moonFog / (overcast * LH3D_SKY_FOG_SCALE + 1.0f));
@@ -824,14 +818,7 @@ void LH3DSky::Draw()
 		moonPosition += cameraPos;
 		moonobj->SetNeedClipping(true);
 	}
-	if (evil < SKY_ALIGNMENT_GOOD)
-	{
-		evil = SKY_ALIGNMENT_GOOD;
-	}
-	else if (evil > SKY_ALIGNMENT_EVIL)
-	{
-		evil = SKY_ALIGNMENT_EVIL;
-	}
+	CLAMP(evil, SKY_ALIGNMENT_GOOD, SKY_ALIGNMENT_EVIL);
 	int           alignmentAlpha;
 	SKY_ALIGNMENT firstSky, secondSky;
 	if (!(evil > SKY_ALIGNMENT_NEUTRAL))
