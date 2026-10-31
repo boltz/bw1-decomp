@@ -1,0 +1,383 @@
+{
+  "build_jobs": {
+    "BW1W100": "success",
+    "BW1W110": "success",
+    "BW1W120": "success",
+    "BW1W130": "success",
+    "BW1WCI": "success"
+  },
+  "conclusion": "success",
+  "created_at": "2026-10-31T16:46:00Z",
+  "eligible": true,
+  "event": "push",
+  "head_branch": "main",
+  "head_sha": "d39eae32262147e13ca4b2a75573d8ad9fa9968c",
+  "ingested_at": "2026-10-31T16:54:20.453290+00:00",
+  "other_jobs": {
+    "check-image": "success",
+    "match-report": "skipped"
+  },
+  "report_storage": "summary_only",
+  "repository": "boltz/bw1-decomp",
+  "run_id": 41221250312,
+  "run_url": "https://github.com/boltz/bw1-decomp/actions/runs/41221250312",
+  "schema": "bw1-progress-snapshot-v1",
+  "version_identity": "GitHub Actions artifact name and matrix job; objdiff report v2 has no embedded game version",
+  "versions": {
+    "BW1W100": {
+      "artifact_name": "BW1W100_report",
+      "categories": [
+        {
+          "id": "dol",
+          "matched_code_percent": 24.585073,
+          "matched_data_percent": 29.563993,
+          "name": "runblack"
+        },
+        {
+          "id": "game",
+          "matched_code_percent": 27.429346,
+          "matched_data_percent": 42.18255,
+          "name": "Game Code"
+        },
+        {
+          "id": "sdk",
+          "matched_code_percent": 60.116814,
+          "matched_data_percent": 11.128685,
+          "name": "Engine Code"
+        },
+        {
+          "id": "modules",
+          "matched_code_percent": 67.4667,
+          "matched_data_percent": 36.30839,
+          "name": "DLLs"
+        },
+        {
+          "id": "LHAudio",
+          "matched_code_percent": 82.39165,
+          "matched_data_percent": 75.56585,
+          "name": "LHAudio"
+        },
+        {
+          "id": "LHLog",
+          "matched_code_percent": 68.64262,
+          "matched_data_percent": 11.65234,
+          "name": "LHLog"
+        },
+        {
+          "id": "LHMultiplayer",
+          "matched_code_percent": 74.35129,
+          "matched_data_percent": 14.015863,
+          "name": "LHMultiplayer"
+        },
+        {
+          "id": "LHDialog",
+          "matched_code_percent": 14.996059,
+          "matched_data_percent": 0.26331186,
+          "name": "LHDialog"
+        }
+      ],
+      "measures": {
+        "complete_code": 645234,
+        "complete_code_percent": 13.931176,
+        "complete_data": 620357,
+        "complete_data_percent": 8.043713,
+        "complete_units": 797,
+        "matched_code": 1424527,
+        "matched_code_percent": 30.756807,
+        "matched_data": 2307172,
+        "matched_data_percent": 29.915401,
+        "matched_functions": 10140,
+        "total_code": 4631583,
+        "total_data": 7712322,
+        "total_functions": 25087,
+        "total_units": 4213
+      },
+      "sha256": "d8daefec791a0b5fb7e89ab4a126ba1850bfa4b26bd25877ca3298326759b3c0",
+      "units_count": 4213
+    },
+    "BW1W110": {
+      "artifact_name": "BW1W110_report",
+      "categories": [
+        {
+          "id": "dol",
+          "matched_code_percent": 26.010672,
+          "matched_data_percent": 29.119482,
+          "name": "runblack"
+        },
+        {
+          "id": "game",
+          "matched_code_percent": 28.944687,
+          "matched_data_percent": 40.041866,
+          "name": "Game Code"
+        },
+        {
+          "id": "sdk",
+          "matched_code_percent": 54.93037,
+          "matched_data_percent": 11.4601145,
+          "name": "Engine Code"
+        },
+        {
+          "id": "modules",
+          "matched_code_percent": 67.98286,
+          "matched_data_percent": 36.18307,
+          "name": "DLLs"
+        },
+        {
+          "id": "LHAudio",
+          "matched_code_percent": 82.39165,
+          "matched_data_percent": 75.56585,
+          "name": "LHAudio"
+        },
+        {
+          "id": "LHLog",
+          "matched_code_percent": 70.04161,
+          "matched_data_percent": 11.636378,
+          "name": "LHLog"
+        },
+        {
+          "id": "LHMultiplayer",
+          "matched_code_percent": 75.111374,
+          "matched_data_percent": 13.65688,
+          "name": "LHMultiplayer"
+        },
+        {
+          "id": "LHDialog",
+          "matched_code_percent": 14.996059,
+          "matched_data_percent": 0.26331186,
+          "name": "LHDialog"
+        }
+      ],
+      "measures": {
+        "complete_code": 721710,
+        "complete_code_percent": 13.619937,
+        "complete_data": 345474,
+        "complete_data_percent": 4.4004,
+        "complete_units": 840,
+        "matched_code": 1658229,
+        "matched_code_percent": 31.2937,
+        "matched_data": 2314562,
+        "matched_data_percent": 29.481232,
+        "matched_functions": 13536,
+        "total_code": 5298923,
+        "total_data": 7850968,
+        "total_functions": 31989,
+        "total_units": 4709
+      },
+      "sha256": "9b7af23a3dd513315b5e3bafe4658876ba648520e40192210ca1775ffd449da9",
+      "units_count": 4709
+    },
+    "BW1W120": {
+      "artifact_name": "BW1W120_report",
+      "categories": [
+        {
+          "id": "dol",
+          "matched_code_percent": 30.66768,
+          "matched_data_percent": 29.262957,
+          "name": "runblack"
+        },
+        {
+          "id": "game",
+          "matched_code_percent": 32.7455,
+          "matched_data_percent": 40.024467,
+          "name": "Game Code"
+        },
+        {
+          "id": "sdk",
+          "matched_code_percent": 63.720913,
+          "matched_data_percent": 13.08541,
+          "name": "Engine Code"
+        },
+        {
+          "id": "modules",
+          "matched_code_percent": 78.09774,
+          "matched_data_percent": 42.232697,
+          "name": "DLLs"
+        },
+        {
+          "id": "LHAudio",
+          "matched_code_percent": 82.39165,
+          "matched_data_percent": 75.56585,
+          "name": "LHAudio"
+        },
+        {
+          "id": "LHLog",
+          "matched_code_percent": 88.807846,
+          "matched_data_percent": 9.134142,
+          "name": "LHLog"
+        },
+        {
+          "id": "LHMultiplayer",
+          "matched_code_percent": 92.33389,
+          "matched_data_percent": 34.712345,
+          "name": "LHMultiplayer"
+        },
+        {
+          "id": "LHDialog",
+          "matched_code_percent": 14.996059,
+          "matched_data_percent": 0.26331186,
+          "name": "LHDialog"
+        }
+      ],
+      "measures": {
+        "complete_code": 861461,
+        "complete_code_percent": 16.107319,
+        "complete_data": 433095,
+        "complete_data_percent": 5.514667,
+        "complete_units": 888,
+        "matched_code": 1956190,
+        "matched_code_percent": 36.57621,
+        "matched_data": 2349786,
+        "matched_data_percent": 29.920197,
+        "matched_functions": 16713,
+        "total_code": 5348258,
+        "total_data": 7853511,
+        "total_functions": 36010,
+        "total_units": 4424
+      },
+      "sha256": "17d85f5636786e6f9713f7077cbbfc9c9e6d80a5f067cdaacc9c5a9081261d3a",
+      "units_count": 4424
+    },
+    "BW1W130": {
+      "artifact_name": "BW1W130_report",
+      "categories": [
+        {
+          "id": "dol",
+          "matched_code_percent": 18.22543,
+          "matched_data_percent": 27.367092,
+          "name": "runblack"
+        },
+        {
+          "id": "game",
+          "matched_code_percent": 18.730215,
+          "matched_data_percent": 38.605274,
+          "name": "Game Code"
+        },
+        {
+          "id": "sdk",
+          "matched_code_percent": 57.63198,
+          "matched_data_percent": 13.658111,
+          "name": "Engine Code"
+        },
+        {
+          "id": "modules",
+          "matched_code_percent": 78.09774,
+          "matched_data_percent": 42.232697,
+          "name": "DLLs"
+        },
+        {
+          "id": "LHAudio",
+          "matched_code_percent": 82.39165,
+          "matched_data_percent": 75.56585,
+          "name": "LHAudio"
+        },
+        {
+          "id": "LHLog",
+          "matched_code_percent": 88.807846,
+          "matched_data_percent": 9.134142,
+          "name": "LHLog"
+        },
+        {
+          "id": "LHMultiplayer",
+          "matched_code_percent": 92.33389,
+          "matched_data_percent": 34.712345,
+          "name": "LHMultiplayer"
+        },
+        {
+          "id": "LHDialog",
+          "matched_code_percent": 14.996059,
+          "matched_data_percent": 0.26331186,
+          "name": "LHDialog"
+        }
+      ],
+      "measures": {
+        "complete_code": 773357,
+        "complete_code_percent": 14.096115,
+        "complete_data": 327040,
+        "complete_data_percent": 3.9107113,
+        "complete_units": 843,
+        "matched_code": 1398804,
+        "matched_code_percent": 25.496248,
+        "matched_data": 2347782,
+        "matched_data_percent": 28.074541,
+        "matched_functions": 12689,
+        "total_code": 5486313,
+        "total_data": 8362673,
+        "total_functions": 37113,
+        "total_units": 4506
+      },
+      "sha256": "3dab6d5bba4dee212b215a439ecf5bccb3c2269d4cd25ae06edcb5a0e8b59e29",
+      "units_count": 4506
+    },
+    "BW1WCI": {
+      "artifact_name": "BW1WCI_report",
+      "categories": [
+        {
+          "id": "dol",
+          "matched_code_percent": 18.58893,
+          "matched_data_percent": 27.553452,
+          "name": "runblack"
+        },
+        {
+          "id": "game",
+          "matched_code_percent": 24.034464,
+          "matched_data_percent": 43.560833,
+          "name": "Game Code"
+        },
+        {
+          "id": "sdk",
+          "matched_code_percent": 57.43124,
+          "matched_data_percent": 12.680785,
+          "name": "Engine Code"
+        },
+        {
+          "id": "modules",
+          "matched_code_percent": 68.93785,
+          "matched_data_percent": 40.42762,
+          "name": "DLLs"
+        },
+        {
+          "id": "LHAudio",
+          "matched_code_percent": 70.59272,
+          "matched_data_percent": 81.56081,
+          "name": "LHAudio"
+        },
+        {
+          "id": "LHLog",
+          "matched_code_percent": 70.04161,
+          "matched_data_percent": 11.636378,
+          "name": "LHLog"
+        },
+        {
+          "id": "LHMultiplayer",
+          "matched_code_percent": 84.60541,
+          "matched_data_percent": 25.606419,
+          "name": "LHMultiplayer"
+        },
+        {
+          "id": "LHDialog",
+          "matched_code_percent": 14.996059,
+          "matched_data_percent": 0.26331186,
+          "name": "LHDialog"
+        }
+      ],
+      "measures": {
+        "complete_code": 648188,
+        "complete_code_percent": 11.862815,
+        "complete_data": 315977,
+        "complete_data_percent": 3.8274415,
+        "complete_units": 715,
+        "matched_code": 1320235,
+        "matched_code_percent": 24.162285,
+        "matched_data": 2324526,
+        "matched_data_percent": 28.157074,
+        "matched_functions": 12390,
+        "total_code": 5464032,
+        "total_data": 8255567,
+        "total_functions": 34104,
+        "total_units": 8121
+      },
+      "sha256": "e0a94d9116f9abcf0422fd0cd55cc0166b63ad5acd6220d302f6aaa498bcca82",
+      "units_count": 8121
+    }
+  }
+}
