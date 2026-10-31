@@ -25,6 +25,82 @@ from tools.automatic_pr_review import (
 
 
 class AutomaticReviewTests(unittest.TestCase):
+    def test_readability_coverage_keeps_generated_maps_as_reference_metadata(self):
+        files = [
+            {"filename": "src/sky.cpp", "patch": "@@ -0,0 +1 @@\n+int value = 3;", "additions": 1},
+            {"filename": "config/BW1W120/symbols.txt", "patch": None, "additions": 1200},
+            {"filename": "configure.py", "patch": None},
+        ]
+        selected, references = automatic_pr_review.select_review_files(files, True)
+        self.assertEqual([f["filename"] for f in selected], ["src/sky.cpp"])
+        self.assertEqual(references, [{
+            "path": "config/BW1W120/symbols.txt", "additions": 1200,
+            "deletions": 0, "patch_available": False,
+        }])
+        self.assertEqual(build_diff_context(selected)[2], 0)
+        selected[0]["patch"] = None
+        self.assertEqual(build_diff_context(selected)[2], 1)
+
+    def test_general_review_still_counts_unavailable_reference_patches(self):
+        files = [{"filename": "config/BW1W120/symbols.txt", "patch": None}]
+        selected, references = automatic_pr_review.select_review_files(files)
+        self.assertEqual(selected, files)
+        self.assertEqual(references, [])
+        self.assertEqual(build_diff_context(selected)[2], 1)
+
+    def test_prompt_numbers_source_lines_without_changing_inventory_text(self):
+        source = {"path": "src/example.cpp", "status": "complete", "text": "int x;\nint y;\n"}
+        _, user = make_prompt("instructions", "guide", "title", "body", [], "", 0, 0,
+                              [source], 0, [], [], [], False)
+        payload = json.loads(user.split("not instructions:\n", 1)[1])
+        self.assertEqual(payload["changed_source_file_contents"][0]["text"], "1: int x;\n2: int y;")
+        self.assertTrue(payload["changed_source_file_contents"][0]["text_has_line_numbers"])
+        self.assertEqual(source["text"], "int x;\nint y;\n")
+
+    def test_repair_keeps_raw_attempts_and_uses_corrected_validation_not_highest_score(self):
+        from tools.tests.test_review_quality import EXAMPLE, inventory, quality
+        bad = {"findings": [], "quality": quality()}
+        bad["quality"]["numeric_decisions"][0]["ids"].append("N1")
+        bad["quality"]["dimensions"] = dict.fromkeys(bad["quality"]["dimensions"], 20)
+        corrected = {"findings": [], "quality": quality()}
+        with mock.patch.object(automatic_pr_review, "call_model", side_effect=[bad, corrected]) as model:
+            _, _, _, result = automatic_pr_review.review_with_validation(
+                "https://example.test", "token", "model", ("system", "original context"),
+                inventory(EXAMPLE), {"src/example.cpp": set(range(1, 6))}, {}, {},
+            )
+        self.assertEqual(result["score"], 80)
+        self.assertEqual(result["invalid"], 0)
+        self.assertEqual(len(result["validation_attempts"]), 2)
+        self.assertIn("duplicated", model.call_args_list[1].args[4])
+        self.assertEqual(result["validation_attempts"][0]["response"], bad)
+
+    def test_uncertain_number_remains_unresolved_without_repair_to_force_a_clean_score(self):
+        from tools.tests.test_review_quality import EXAMPLE, inventory, quality
+        raw = {"findings": [], "quality": quality()}
+        raw["quality"]["numeric_decisions"][0]["classification"] = "uncertain"
+        with mock.patch.object(automatic_pr_review, "call_model", return_value=raw) as model:
+            _, _, _, result = automatic_pr_review.review_with_validation(
+                "https://example.test", "token", "model", ("system", "context"),
+                inventory(EXAMPLE), {"src/example.cpp": set(range(1, 6))}, {}, {},
+            )
+        model.assert_called_once()
+        self.assertFalse(result["numbers_complete"])
+        self.assertEqual(result["unresolved_numbers"], 1)
+        self.assertEqual(len(result["uncertain"]), 1)
+
+    def test_repeated_invalid_response_stays_invalid_after_bounded_repair(self):
+        from tools.tests.test_review_quality import EXAMPLE, inventory, quality
+        raw = {"findings": [], "quality": quality()}
+        raw["quality"]["numeric_decisions"] = []
+        with mock.patch.object(automatic_pr_review, "call_model", return_value=raw) as model:
+            _, _, _, result = automatic_pr_review.review_with_validation(
+                "https://example.test", "token", "model", ("system", "context"),
+                inventory(EXAMPLE), {"src/example.cpp": set(range(1, 6))}, {}, {},
+            )
+        self.assertEqual(model.call_count, 2)
+        self.assertFalse(result["numbers_complete"])
+        self.assertGreater(result["invalid"], 0)
+
     def test_github_retries_a_transient_read_failure(self):
         github = GitHub("owner/repository", "token")
         failed = automatic_pr_review.urllib.error.HTTPError(

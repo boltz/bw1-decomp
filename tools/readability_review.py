@@ -81,6 +81,7 @@ def validate_quality(raw, inventory, changed_lines, precedents):
         "justified": [],
         "uncertain": [],
         "invalid": 0,
+        "validation_errors": [],
         "rationale": "",
         "lionhead_context": "",
         "precedent_summary": "",
@@ -90,6 +91,7 @@ def validate_quality(raw, inventory, changed_lines, precedents):
     }
     if not isinstance(raw, dict):
         result["invalid"] += 1
+        result["validation_errors"].append("Quality must be an object")
         return result
     applicable = any(
         lines
@@ -106,6 +108,7 @@ def validate_quality(raw, inventory, changed_lines, precedents):
         value = raw.get(field)
         if not isinstance(value, str) or not value.strip():
             result["invalid"] += 1
+            result["validation_errors"].append("Required rationale/context field is empty: " + field)
         else:
             result[field] = value.strip()[:MAX_SUMMARY_CHARS]
     if applicable and valid_dimensions:
@@ -113,15 +116,19 @@ def validate_quality(raw, inventory, changed_lines, precedents):
         result["score"] = sum(dimensions.values())
     elif applicable:
         result["invalid"] += 1
+        result["validation_errors"].append("Dimension scores are invalid")
     if applicable and result["score"] is not None and result["score"] < MIN_READABLE_SCORE and not raw.get("bad"):
         result["invalid"] += 1
+        result["validation_errors"].append("A low score has no concrete negative observation")
     for kind in ("good", "bad"):
         entries = raw.get(kind)
         if not isinstance(entries, list):
             result["invalid"] += 1
+            result["validation_errors"].append("Observation list must be an array: " + kind)
             continue
         if len(entries) > MAX_OBSERVATIONS:
             result["invalid"] += 1
+            result["validation_errors"].append("Too many observations: " + kind)
         for entry in entries[:MAX_OBSERVATIONS]:
             if (
                 not isinstance(entry, dict)
@@ -133,11 +140,13 @@ def validate_quality(raw, inventory, changed_lines, precedents):
                 or not isinstance(entry.get("suggestion"), str)
             ):
                 result["invalid"] += 1
+                result["validation_errors"].append("Observation is malformed or not on an added line: " + kind)
                 continue
             if kind == "bad" and (
                 entry.get("severity") not in ("low", "medium", "high") or not entry["suggestion"].strip()
             ):
                 result["invalid"] += 1
+                result["validation_errors"].append("Negative observation needs a severity and specific suggestion")
                 continue
             result[kind].append(
                 {
@@ -148,14 +157,17 @@ def validate_quality(raw, inventory, changed_lines, precedents):
     if applicable and not result["good"] and not result["bad"]:
         result["score"] = None
         result["invalid"] += 1
+        result["validation_errors"].append("No valid readability observations support the score")
     numbers = {number["id"]: number for number in inventory["numbers"]}
     seen = set()
     decisions = raw.get("numeric_decisions")
     if not isinstance(decisions, list):
         decisions = []
         result["invalid"] += 1
+        result["validation_errors"].append("Numeric decisions must be an array")
     if len(decisions) > MAX_DECISION_GROUPS:
         result["invalid"] += 1
+        result["validation_errors"].append("Too many numeric decision groups")
     for decision in decisions[:MAX_DECISION_GROUPS]:
         if (
             not isinstance(decision, dict)
@@ -168,10 +180,12 @@ def validate_quality(raw, inventory, changed_lines, precedents):
             or (decision["classification"] == "magic" and not decision["suggestion"].strip())
         ):
             result["invalid"] += 1
+            result["validation_errors"].append("Numeric decision is malformed")
             continue
         for identifier in decision["ids"]:
             if not isinstance(identifier, str) or identifier not in numbers or identifier in seen:
                 result["invalid"] += 1
+                result["validation_errors"].append("Numeric ID is unknown, duplicated, or not a string: " + str(identifier))
                 continue
             seen.add(identifier)
             result[decision["classification"]].append(
@@ -182,6 +196,10 @@ def validate_quality(raw, inventory, changed_lines, precedents):
                 )
             )
     result["unresolved_numbers"] = inventory["number_count"] - len(result["magic"]) - len(result["justified"])
+    missing = set(numbers) - seen
+    if missing:
+        result["invalid"] += 1
+        result["validation_errors"].append("Numeric IDs were not classified: " + ", ".join(sorted(missing)))
     result["numbers_complete"] = (
         not inventory["limitations"]
         and not result["unresolved_numbers"]
@@ -191,8 +209,10 @@ def validate_quality(raw, inventory, changed_lines, precedents):
     if not isinstance(cited, list):
         cited = []
         result["invalid"] += 1
+        result["validation_errors"].append("Precedents must be an array")
     if len(cited) > MAX_PRECEDENTS:
         result["invalid"] += 1
+        result["validation_errors"].append("Too many precedents")
     for citation in cited[:MAX_PRECEDENTS]:
         if (
             not isinstance(citation, dict)
@@ -209,6 +229,7 @@ def validate_quality(raw, inventory, changed_lines, precedents):
             or citation["quote"] not in precedents[citation["url"]].get("excerpt", "")
         ):
             result["invalid"] += 1
+            result["validation_errors"].append("Precedent quote or source is unsupported")
             continue
         result["precedents"].append(
             dict(
