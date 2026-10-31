@@ -252,6 +252,35 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertEqual(limited, 0)
         self.assertTrue(all(value == {1} for value in lines.values()))
 
+    def test_rendering_review_keeps_weather_and_matrix_after_large_consumers(self):
+        github = GitHub("owner/repository", "token")
+        sizes = {
+            "src/LH3DPrimitive.cpp": 207_065,
+            "src/WorldRoom.cpp": 35_099,
+            "src/Fixed.cpp": 22_474,
+            "src/RenderingHeaders.h": 67_000,
+            "src/LH3DSky.cpp": 40_864,
+            "src/LH3DWeather.cpp": 36_885,
+            "src/LHMatrix.h": 12_457,
+        }
+        files = [{"filename": path, "status": "modified"} for path in sizes]
+        with mock.patch.object(github, "get_text_file", side_effect=lambda path, ref: "x" * sizes[path]):
+            contexts, limited = collect_source_context(github, files, "head")
+        self.assertEqual(limited, 0)
+        self.assertTrue(all(item["status"] == "complete" for item in contexts))
+        self.assertEqual(sum(len(item["text"]) for item in contexts), sum(sizes.values()))
+
+    def test_rendering_review_keeps_available_backport_patches(self):
+        files = [
+            {"filename": "config/BW1WCI/symbols.txt", "patch": "s" * 96_820},
+            {"filename": "config/BW1W110/symbols.txt", "patch": "s" * 88_328},
+            {"filename": "config/BW1W100/symbols.txt", "patch": "s" * 87_645},
+            {"filename": "src/LH3DSky.cpp", "patch": "@@ -0,0 +1 @@\n+" + "x" * 42_232},
+        ]
+        context, _, limited = build_diff_context(files)
+        self.assertEqual(limited, 0)
+        self.assertNotIn("truncated", context)
+
     def test_excluded_python_does_not_consume_file_budget_or_reach_diff(self):
         github = GitHub("owner/repository", "token")
         excluded = [{"filename": "tools/file{}.py".format(i), "patch": "@@ -0,0 +1 @@\n+# comment"} for i in range(100)]
