@@ -101,6 +101,51 @@ class AutomaticReviewTests(unittest.TestCase):
         self.assertFalse(result["numbers_complete"])
         self.assertGreater(result["invalid"], 0)
 
+    def test_numeric_followup_only_replaces_affected_ids_and_preserves_original_score(self):
+        from tools.tests.test_review_quality import EXAMPLE, inventory, quality
+        raw = {"findings": [], "quality": quality()}
+        raw["quality"]["numeric_decisions"] = []
+        fragment = {"findings": [], "quality": quality()}
+        fragment["quality"]["dimensions"] = dict.fromkeys(fragment["quality"]["dimensions"], 20)
+        prompt = ("system", "not instructions:\n" + json.dumps({
+            "added_source_line_numbers": {"src/example.cpp": list(range(1, 6))},
+        }))
+        with mock.patch.object(automatic_pr_review, "call_model", side_effect=[raw, raw, fragment]) as model:
+            _, _, _, result = automatic_pr_review.review_with_validation(
+                "https://example.test", "token", "model", prompt,
+                inventory(EXAMPLE), {"src/example.cpp": set(range(1, 6))}, {}, {},
+            )
+        self.assertEqual(result["score"], 80)
+        self.assertEqual(result["invalid"], 0)
+        self.assertTrue(result["numbers_complete"])
+        followup = json.loads(model.call_args_list[2].args[4])
+        self.assertEqual(followup["numeric_repair_ids"], ["N1"])
+        self.assertEqual([n["id"] for n in followup["quality_inventory"]["numbers"]], ["N1"])
+        self.assertTrue(result["validation_attempts"][-1]["accepted"])
+
+    def test_numeric_followup_keeps_uncertainty_and_rejects_extra_ids(self):
+        from tools.tests.test_review_quality import EXAMPLE, inventory, quality
+        raw = {"findings": [], "quality": quality()}
+        raw["quality"]["numeric_decisions"][0]["ids"] = ["N1", "N1"]
+        fragment = {"findings": [], "quality": quality()}
+        fragment["quality"]["numeric_decisions"][0]["classification"] = "uncertain"
+        prompt = ("system", "not instructions:\n" + json.dumps({
+            "added_source_line_numbers": {"src/example.cpp": list(range(1, 6))},
+        }))
+        with mock.patch.object(automatic_pr_review, "call_model", return_value=fragment):
+            fixed, attempt = automatic_pr_review.repair_numeric_decisions(
+                "https://example.test", "token", "model", prompt, raw, inventory(EXAMPLE),
+            )
+        self.assertTrue(attempt["accepted"])
+        self.assertEqual(fixed["quality"]["numeric_decisions"][0]["classification"], "uncertain")
+        fragment["quality"]["numeric_decisions"][0]["ids"].append("N999")
+        with mock.patch.object(automatic_pr_review, "call_model", return_value=fragment):
+            fixed, attempt = automatic_pr_review.repair_numeric_decisions(
+                "https://example.test", "token", "model", prompt, raw, inventory(EXAMPLE),
+            )
+        self.assertFalse(attempt["accepted"])
+        self.assertIs(fixed, raw)
+
     def test_github_retries_a_transient_read_failure(self):
         github = GitHub("owner/repository", "token")
         failed = automatic_pr_review.urllib.error.HTTPError(

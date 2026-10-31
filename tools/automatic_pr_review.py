@@ -586,8 +586,63 @@ def review_with_validation(api_base, api_key, model, prompt, inventory, changed_
                 "Do not remove a valid concern merely to pass validation. No new source or binary evidence was added.\n"
                 + json.dumps(attempts[-1], ensure_ascii=False)
             )
+    if quality["invalid"] and quality["validation_errors"] and all(
+        error.startswith(("Numeric ID is ", "Numeric IDs were ")) for error in quality["validation_errors"]
+    ):
+        result, numeric_attempt = repair_numeric_decisions(api_base, api_key, model, prompt, result, inventory)
+        if numeric_attempt:
+            attempts.append(numeric_attempt)
+            findings, invalid, omitted = valid_findings(result, changed_lines, changed_text)
+            quality = readability_review.validate_quality(result.get("quality"), inventory, changed_lines, precedents)
     quality["validation_attempts"] = attempts
     return findings, invalid, omitted, quality
+
+
+def repair_numeric_decisions(api_base, api_key, model, prompt, result, inventory):
+    numbers = {item["id"]: item for item in inventory["numbers"]}
+    counts = {}
+    decisions = result["quality"]["numeric_decisions"]
+    for decision in decisions:
+        for identifier in decision["ids"]:
+            if isinstance(identifier, str):
+                counts[identifier] = counts.get(identifier, 0) + 1
+    affected = {identifier for identifier in numbers if counts.get(identifier, 0) != 1}
+    if not affected or len(affected) > 64:
+        return result, None
+    try:
+        original_data = json.loads(prompt[1].split("not instructions:\n", 1)[1])
+    except (IndexError, json.JSONDecodeError):
+        return result, None
+    original_data["quality_inventory"] = dict(inventory, numbers=[numbers[key] for key in sorted(affected)])
+    original_data["quality_inventory"]["number_count"] = len(affected)
+    original_data["numeric_repair_ids"] = sorted(affected)
+    system = prompt[0] + (
+        "\nThis follow-up classifies only numeric_repair_ids. The inventory contains only those IDs. "
+        "Other literal uses remain outside this numeric follow-up. Return one decision per supplied ID. "
+        "Preserve uncertainty when meaning is unsupported. Findings and nonnumeric quality fields in this "
+        "response are not used to alter the original review or its score."
+    )
+    fragment = call_model(api_base, api_key, model, system, json.dumps(original_data, ensure_ascii=False))
+    numeric = fragment.get("quality", {}).get("numeric_decisions")
+    if not isinstance(numeric, list):
+        return result, {"numeric_repair_ids": sorted(affected), "response": fragment, "accepted": False}
+    proposed = []
+    for decision in decisions:
+        ids = [identifier for identifier in decision["ids"] if isinstance(identifier, str)
+               and identifier not in affected and identifier in numbers]
+        if ids:
+            proposed.append(dict(decision, ids=ids))
+    candidate = dict(result, quality=dict(result["quality"], numeric_decisions=proposed + numeric))
+    check = readability_review.validate_quality(candidate["quality"], inventory, original_data["added_source_line_numbers"], {})
+    # Only the numeric records are replaced; existing score, observations and citations are retained.
+    seen = [identifier for decision in numeric if isinstance(decision, dict)
+            and isinstance(decision.get("ids"), list) for identifier in decision["ids"]]
+    accepted = all(isinstance(identifier, str) for identifier in seen) and len(seen) == len(affected) and set(seen) == affected and not any(
+        error.startswith(("Numeric ", "Too many numeric")) for error in check["validation_errors"]
+    )
+    return (candidate if accepted else result), {
+        "numeric_repair_ids": sorted(affected), "response": fragment, "accepted": accepted,
+    }
 
 
 def call_model(api_base, api_key, model, system, user):
