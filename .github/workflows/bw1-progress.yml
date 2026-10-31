@@ -1,0 +1,98 @@
+name: BW1 progress
+
+on:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful main Build run ID to archive
+        required: true
+        type: string
+
+concurrency:
+  group: bw1-progress-history
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: >-
+      github.repository == 'boltz/bw1-decomp' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Check out tracker source
+        uses: actions/checkout@v4
+        with:
+          path: source
+          persist-credentials: false
+
+      - name: Check out history storage
+        uses: actions/checkout@v4
+        with:
+          path: history
+          fetch-depth: 1
+
+      - name: Select or create history branch
+        working-directory: history
+        run: |
+          test "$GITHUB_REPOSITORY" = 'boltz/bw1-decomp'
+          if git ls-remote --exit-code --heads origin progress-data >/dev/null; then
+            git fetch origin progress-data:refs/remotes/origin/progress-data
+            git switch -C progress-data origin/progress-data
+          else
+            git switch --orphan progress-data
+          fi
+
+      - name: Ingest verified Build reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.run_id || github.event.workflow_run.id }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          python3 source/tools/bw1_progress_tracker.py --data history/data ingest-run \
+            --repo "$GITHUB_REPOSITORY" --run "$RUN_ID" \
+            --summary-only --require-branch main
+          python3 source/tools/bw1_progress_tracker.py --data history/data verify
+          python3 source/tools/bw1_progress_tracker.py --data history/data render \
+            --repo "$GITHUB_REPOSITORY" --branch main --output history/site
+
+      - name: Save progress history to fork
+        working-directory: history
+        env:
+          RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.run_id || github.event.workflow_run.id }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data site
+          if ! git diff --cached --quiet; then
+            git commit -m "Archive BW1 progress for Build run $RUN_ID"
+            git push origin HEAD:progress-data
+          fi
+
+      - name: Package progress page
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: history/site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - name: Publish progress page
+        id: publish
+        uses: actions/deploy-pages@v4
