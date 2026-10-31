@@ -38,7 +38,7 @@ MAX_FINDINGS = 12
 MAX_RESPONSE_BYTES = 1_000_000
 MAX_RETRIES = 3
 MAX_MODEL_OUTPUT_TOKENS = 20_000
-MODEL_REQUEST_TIMEOUT_SECONDS = 180
+MODEL_REQUEST_TIMEOUT_SECONDS = 300
 MAX_REVIEW_BODY_CHARS = 58_000
 REVIEW_BODY_FOOTER_CHARS = 1000
 MAX_REPOSCOUT_FILE_TOPICS = 4
@@ -141,17 +141,24 @@ class GitHub:
                 "User-Agent": "bw1-automatic-review",
             },
         )
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                data = response.read(MAX_RESPONSE_BYTES + 1)
-                if len(data) > MAX_RESPONSE_BYTES:
-                    raise ReviewError("GitHub API response exceeded the size limit")
-                return json.loads(data.decode("utf-8")) if data else None
-        except urllib.error.HTTPError as error:
-            detail = error.read(2_000).decode("utf-8", "replace")
-            raise ReviewError("GitHub API returned HTTP {}: {}".format(error.code, detail)) from error
-        except (urllib.error.URLError, TimeoutError) as error:
-            raise ReviewError("GitHub API request failed: {}".format(error)) from error
+        attempts = MAX_RETRIES if method == "GET" else 1
+        for attempt in range(attempts):
+            try:
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    data = response.read(MAX_RESPONSE_BYTES + 1)
+                    if len(data) > MAX_RESPONSE_BYTES:
+                        raise ReviewError("GitHub API response exceeded the size limit")
+                    return json.loads(data.decode("utf-8")) if data else None
+            except urllib.error.HTTPError as error:
+                if error.code not in (429, 500, 502, 503, 504) or attempt + 1 == attempts:
+                    detail = error.read(2_000).decode("utf-8", "replace")
+                    raise ReviewError("GitHub API returned HTTP {}: {}".format(error.code, detail)) from error
+                error.close()
+                time.sleep(2**attempt)
+            except (urllib.error.URLError, TimeoutError) as error:
+                if attempt + 1 == attempts:
+                    raise ReviewError("GitHub API request failed: {}".format(error)) from error
+                time.sleep(2**attempt)
 
     def list_changed_files(self, number):
         files = []
@@ -584,7 +591,7 @@ def call_model(api_base, api_key, model, system, user):
                 detail = error.read(2_000).decode("utf-8", "replace")
                 raise ReviewError("Model API returned HTTP {}: {}".format(error.code, detail)) from error
             time.sleep(2**attempt)
-        except urllib.error.URLError as error:
+        except (urllib.error.URLError, TimeoutError) as error:
             if attempt + 1 == MAX_RETRIES:
                 raise ReviewError("Model API request failed: {}".format(error)) from error
             time.sleep(2**attempt)
