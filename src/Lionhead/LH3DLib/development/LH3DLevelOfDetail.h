@@ -26,7 +26,7 @@ struct LH3DLevelOfDetail
 	static long g_detail_idx;
 	// BW1W120 00c381e0 BW1M119 011ce84c (LHCombined Release)
 	static LH3DCitadelLevelOfDetail g_citadellod;
-	// BW1W120 00c38200 BW1M119 null (LHCombined Release)
+	// BW1W120 00c38200 BW1M119 011ce86c (LHCombined Release)
 	static bool32_t g_b_use_day_and_night;
 	// BW1W120 00c3820c BW1M119 011ce878 (LHCombined Release)
 	static bool32_t g_b_draw_dynamic_shadow;

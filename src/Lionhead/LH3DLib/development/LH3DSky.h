@@ -50,9 +50,9 @@ struct LHPoint;
 #define SKY_TEXTURE_UPDATE_LINES                       0x20
 #define SKY_TYPE_CHANGE_THRESHOLD                      0.03f
 #define LH3D_SKY_MOON_QUAD_SIZE                        500.0f
-#define LH3D_SKY_MOON_UV_MIN                           0.25f
-#define LH3D_SKY_MOON_UV_INSET                         (2.0f / 320.0f)
-#define LH3D_SKY_MOON_UV_MAX                           (0.5f - LH3D_SKY_MOON_UV_INSET)
+#define LH3D_SKY_MOON_GLOW_UV_MIN                      0.25f
+#define LH3D_SKY_MOON_GLOW_UV_INSET                    0.00625f
+#define LH3D_SKY_MOON_GLOW_UV_MAX                      (0.5f - LH3D_SKY_MOON_GLOW_UV_INSET)
 #define LH3D_SKY_MOON_RED_DIVISOR                      6
 #define LH3D_SKY_MOON_GREEN_DIVISOR                    5
 #define LH3D_SKY_MOON_BLUE_DIVISOR                     4
