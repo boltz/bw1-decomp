@@ -159,7 +159,6 @@ enum SKY_TIME_INTERVAL
 class LH3DSky
 {
 public:
-	// Original Mac import
 	// BW1W120 00fa2760 BW1M119 012d3540 (LHCombined Release)
 	static bool32_t g_b_we_are_inside_citadel;
 	// BW1W120 00c395a8 BW1M119 011d11b8 (LHCombined Release)
