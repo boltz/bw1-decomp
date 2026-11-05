@@ -824,6 +824,8 @@ union SkyPixel565 {
 		uint32_t Green : 6;
 		uint32_t Red : 5;
 	} RGB;
+
+	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue) { return (red << 11) + (green << 5) + blue; }
 };
 
 union SkyPixel555 {
@@ -835,13 +837,14 @@ union SkyPixel555 {
 		uint32_t Red : 5;
 		uint32_t Unused : 1;
 	} RGB;
+
+	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue) { return (red << 10) + (green << 5) + blue; }
 };
 
 template <class Pixel> struct SkyPixelRow
 {
 	static uint32_t Blend(const uint16_t* source1, const uint16_t* source2)
 	{
-		Pixel channelMaximums = {~(uint32_t)0};
 		Pixel firstPixel, secondPixel;
 		memcpy(&firstPixel.Value, source1, sizeof(firstPixel.Value));
 		memcpy(&secondPixel.Value, source2, sizeof(secondPixel.Value));
@@ -851,7 +854,7 @@ template <class Pixel> struct SkyPixelRow
 		green += multab1[secondPixel.RGB.Green];
 		uint8_t blue = multab0[firstPixel.RGB.Blue];
 		blue += multab1[secondPixel.RGB.Blue];
-		return (red * (channelMaximums.RGB.Green + 1) + green) * (channelMaximums.RGB.Blue + 1) + blue;
+		return Pixel::Pack(red, green, blue);
 	}
 
 	static void Interpolate(uint16_t*& dest, uint16_t*& source1, uint16_t*& source2, uint8_t pixels_remaining)
