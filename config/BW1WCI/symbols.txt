@@ -45646,3 +45646,4 @@ __real@4@4003a800000000000000 = .rdata:0x00A13F60; // type:object size:0x4 scope
 __real@4@400bea60000000000000 = .rdata:0x00A13F5C; // type:object size:0x4 scope:global data:float comdat
 
 __real@4@bffc860a920000000000 = .rdata:0x00A13F58; // type:object size:0x4 scope:global data:float comdat
+__real@8@3ff9f5c28f0000000000 = .rdata:0x00A09A80; // type:object size:0x8 scope:global data:double
