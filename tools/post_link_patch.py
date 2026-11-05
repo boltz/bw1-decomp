@@ -2608,6 +2608,7 @@ BW1W130_SAFEDISC_CALLS = (
     (0x00835116, jmp_run(0x008350D4)),  # LH3DRender
     (0x00835188, copy_run(0x00835116)),  # LH3DRender
     (0x008351D2, jmp_run(0x00835188)),  # LH3DRender
+    (0x0083EA0B, call_rel32(0x004034F9)),  # LH3DLine
     (0x0083EB08, copy_run(0x0083EA0B)),  # LH3DAnimation
     (0x0083ED44, copy_run(0x0083EB08)),  # LH3DAnimation
     (0x0083F097, jmp_run(0x0083ED44)),  # LH3DAnimation
@@ -2700,6 +2701,9 @@ BW1W130_SAFEDISC_CALLS = (
     (0x008712B8, jmp_run(0x00871193)),  # LH3DSky
     (0x00871399, jmp_run(0x008712B8)),  # LH3DSky
     (0x00871447, copy_run(0x00871399)),  # LH3DSky
+    (0x008721B5, jmp_run(0x00871D13)),  # DynamicLightAndShadow
+    (0x008721D1, jmp_run(0x008721B5)),  # DynamicLightAndShadow
+    (0x0087261B, jmp_run(0x008721D1)),  # DynamicLightAndShadow
     (0x00884AC3, copy_run(0x00884842)),  # LH3DCT
     (0x00884AF5, jmp_run(0x00884AC3)),  # LH3DCT
     (0x00884B76, jmp_run(0x00884AF5)),  # LH3DCT

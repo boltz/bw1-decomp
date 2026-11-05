@@ -808,7 +808,11 @@ union SkyPixel565 {
 		uint32_t Red : 5;
 	} RGB;
 
-	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue) { return (red << 11) + (green << 5) + blue; }
+	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue)
+	{
+		uint32_t pixel = (red << 11) + (green << 5);
+		return pixel + blue;
+	}
 };
 
 union SkyPixel555 {
@@ -821,7 +825,11 @@ union SkyPixel555 {
 		uint32_t Unused : 1;
 	} RGB;
 
-	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue) { return (red << 10) + (green << 5) + blue; }
+	static uint32_t Pack(uint8_t red, uint8_t green, uint8_t blue)
+	{
+		uint32_t pixel = (red << 10) + (green << 5);
+		return pixel + blue;
+	}
 };
 
 template <class Pixel> struct SkyPixelRow
