@@ -49,9 +49,6 @@
 
 #include "MapCoordsMeters.h" /* For MapCoords::MapMetersX */
 
-// The name is a guess, but not a free one: cl6 orders .bss by a hash of the symbol name, and this
-// unit's .bss has the constant between Draw's sign_texts guard and White. PSysProperties.cpp and
-// Player.cpp hold the same constant as OneOverLogHalf, which sorts after White.
 static float OneOnLogHalf = 1.0f / (float)log(0.5);
 
 #ifdef VERSION_BW1WCI
@@ -95,8 +92,6 @@ bool32_t WorldRoom::DisplayMagicActivity = true;
 bool32_t WorldRoom::DisplayInfluence = true;
 bool32_t WorldRoom::DisplayCreature = true;
 bool32_t WorldRoom::DisplayChallenges = true;
-
-wchar_t WorldRoom::WorldStatisticsText[0x2000];
 
 static uint32_t UnusedStatic = 0;
 
@@ -1041,6 +1036,8 @@ void WorldRoom::PreToolTipProcess()
 		}
 	}
 }
+
+wchar_t WorldRoom::WorldStatisticsText[0x2000];
 
 float         WorldRoom::MarkerAngle = 0.0f;
 SubmeshName*  WorldRoom::ScrollSubMesh = NULL;
