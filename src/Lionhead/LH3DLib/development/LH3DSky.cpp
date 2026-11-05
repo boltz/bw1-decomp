@@ -1,5 +1,6 @@
 #include "LH3DSky.h"
 
+#include <limits.h>
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -73,24 +74,6 @@ float    LH3DSky::ONIGHT_FULL_TIME = LH3D_SKY_OLD_NIGHT_FULL_TIME;
 float    LH3DSky::ODUSK_START_TIME = LH3D_SKY_OLD_DUSK_START_TIME;
 float    LH3DSky::ODUSK_END_TIME = LH3D_SKY_OLD_DUSK_END_TIME;
 float    LH3DSky::ODAY_FULL_TIME = LH3D_SKY_OLD_DAY_FULL_TIME;
-
-#if defined(VERSION_BW1WCI)
-static inline uint16_t AverageSky555(uint16_t first, uint16_t second)
-{
-	int red = (((first >> 10) + (second >> 10)) / 2) & 0x1f;
-	int green = ((((first >> 5) & 0x1f) + ((second >> 5) & 0x1f)) / 2) & 0x1f;
-	int blue = (((first & 0x1f) + (second & 0x1f)) / 2) & 0x1f;
-	return (((red << 5) | green) << 5) | blue;
-}
-
-static inline uint16_t AverageSky565(uint16_t first, uint16_t second)
-{
-	int red = ((first >> 11) + (second >> 11)) / 2;
-	int greenUpperBits = ((((first >> 6) & 0x1f) + ((second >> 6) & 0x1f)) / 2) & 0x1f;
-	int blue = (((first & 0x1f) + (second & 0x1f)) / 2) & 0x1f;
-	return (((red << 5) | greenUpperBits) << 6) | blue;
-}
-#endif
 
 // BW1W120 00869770 BW1M119 inlined
 uint32_t ClampSkyChannel(uint32_t value);
@@ -857,15 +840,20 @@ template <class Pixel> struct SkyPixelRow
 		return Pixel::Pack(red, green, blue);
 	}
 
-	static void Interpolate(uint16_t*& dest, uint16_t*& source1, uint16_t*& source2, uint8_t pixels_remaining)
+	static void Interpolate(uint16_t*& dest, uint16_t*& source1, uint16_t*& source2, int row_width)
 	{
-		do
+		int pixelsRemaining = (uint8_t)row_width;
+		if (pixelsRemaining == 0)
+		{
+			pixelsRemaining = UCHAR_MAX + 1;
+		}
+		for (; pixelsRemaining > 0; --pixelsRemaining)
 		{
 			uint32_t blendedPixel = Blend(source1, source2);
 			++source1;
 			++source2;
 			*dest++ = (uint16_t)blendedPixel;
-		} while (--pixels_remaining);
+		}
 	}
 };
 
@@ -892,20 +880,24 @@ void LH3DSky::Interpolate555Texture(uint16_t* dest, uint16_t* source1, uint16_t*
 	{
 		multab1[channel] = weightedChannel >> 8;
 	}
-	uint8_t rowsRemaining = (uint8_t)num_lines;
+	int rowsRemaining = (uint8_t)num_lines;
+	if (rowsRemaining == 0)
+	{
+		rowsRemaining = UCHAR_MAX + 1;
+	}
 	if (LH3DTexture::g_b_use_565)
 	{
-		do
+		for (; rowsRemaining > 0; --rowsRemaining)
 		{
-			SkyPixelRow<SkyPixel565>::Interpolate(dest, source1, source2, (uint8_t)xc_temp);
-		} while (--rowsRemaining);
+			SkyPixelRow<SkyPixel565>::Interpolate(dest, source1, source2, xc_temp);
+		}
 	}
 	else
 	{
-		do
+		for (; rowsRemaining > 0; --rowsRemaining)
 		{
-			SkyPixelRow<SkyPixel555>::Interpolate(dest, source1, source2, (uint8_t)xc_temp);
-		} while (--rowsRemaining);
+			SkyPixelRow<SkyPixel555>::Interpolate(dest, source1, source2, xc_temp);
+		}
 	}
 }
 
