@@ -84,12 +84,17 @@ inline MapCoords::MapCoords(float meters_x, float meters_z)
 	SetAltitude(0.0f);
 }
 
+inline char* GetWorldRoomMeshName()
+{
+	return !LH3DLevelOfDetail::g_citadellod.Lightmaps ? "data\\citadel\\engine\\mainlo.l3d"
+	                                                  : "data\\citadel\\engine\\main.l3d";
+}
+
 WorldRoom::WorldRoom() : TempleRoom("World Room")
 {
 	ResetStatics();
-	LoadOptionData(!LH3DLevelOfDetail::g_citadellod.Lightmaps ? "data\\citadel\\engine\\mainlo.l3d"
-	                                                          : "data\\citadel\\engine\\main.l3d",
-	               WORLD_ROOM_CONTROL_COUNT, ControlSetCallbacks, ControlGetCallbacks, Controls);
+	LoadOptionData(GetWorldRoomMeshName(), WORLD_ROOM_CONTROL_COUNT, ControlSetCallbacks, ControlGetCallbacks,
+	               Controls);
 	Map = NULL;
 	WaterMesh = NULL;
 	WaterObject = NULL;
@@ -113,8 +118,7 @@ void WorldRoom::InitEngine()
 	{
 		return;
 	}
-	TempleRoom::InitEngine(!LH3DLevelOfDetail::g_citadellod.Lightmaps ? "data\\citadel\\engine\\mainlo.l3d"
-	                                                                  : "data\\citadel\\engine\\main.l3d",
+	TempleRoom::InitEngine(GetWorldRoomMeshName(),
 	                       !LH3DLevelOfDetail::g_citadellod.Lightmaps ? "data\\citadel\\engine\\mainfloorlo.l3d"
 	                                                                  : "data\\citadel\\engine\\mainfloor.l3d",
 	                       "data\\citadel\\engine\\main.glw", "data\\citadel\\engine\\main.cam");
@@ -740,104 +744,64 @@ inline void SetWorldRoomToolTip(unsigned long text, KEYALIGN align)
 	TempleRoom::ToolTipAlign = align;
 }
 
-int WorldRoom::WorldButtonDisplayCitadelCheckedGet(CallbackData& data)
+inline bool32_t UpdateWorldRoomButtonDisplay(CallbackData& data, bool32_t visible, unsigned long tooltip_text)
 {
-	data.Visible = DisplayCitadel == true;
+	data.Visible = visible;
 	if (data.Highlighted)
 	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23), KEYALIGN_0x0);
+		SetWorldRoomToolTip(tooltip_text, KEYALIGN_0x0);
 	}
-	return 1;
+	return true;
+}
+
+int WorldRoom::WorldButtonDisplayCitadelCheckedGet(CallbackData& data)
+{
+	return UpdateWorldRoomButtonDisplay(data, DisplayCitadel == true, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23));
 }
 
 int WorldRoom::WorldButtonDisplayCitadelUncheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayCitadel == false;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayCitadel == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23));
 }
 
 int WorldRoom::WorldButtonDisplayCreatureCheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayCreature == true;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayCreature == true, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21));
 }
 
 int WorldRoom::WorldButtonDisplayCreatureUncheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayCreature == false;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayCreature == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21));
 }
 
 int WorldRoom::WorldButtonDisplayMagicActivityCheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayMagicActivity == true;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayMagicActivity == true, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25));
 }
 
 int WorldRoom::WorldButtonDisplayMagicActivityUncheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayMagicActivity == false;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayMagicActivity == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25));
 }
 
 int WorldRoom::WorldButtonDisplayInfluenceCheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayInfluence == true;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayInfluence == true, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24));
 }
 
 int WorldRoom::WorldButtonDisplayInfluenceUncheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayInfluence == false;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayInfluence == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24));
 }
 
 int WorldRoom::WorldButtonDisplayChallengesCheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayChallenges == true;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayChallenges == true, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22));
 }
 
 int WorldRoom::WorldButtonDisplayChallengesUncheckedGet(CallbackData& data)
 {
-	data.Visible = DisplayChallenges == false;
-	if (data.Highlighted)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22), KEYALIGN_0x0);
-	}
-	return 1;
+	return UpdateWorldRoomButtonDisplay(data, DisplayChallenges == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22));
 }
 
 int WorldRoom::WorldScrollSet(CallbackData& data)
