@@ -43,52 +43,31 @@
 #include "Temple.h"           /* For struct Temple */
 #include "WorldRoomCamera.h"  /* For struct WorldRoomCamera, enum WORLD_ROOM_DOOR */
 
-#include "MapCellConstants.h"  /* For MetresPerMapCell, ahead of the GameTimeConstants.h pair in .rdata */
+#include "MapCellConstants.h"
 #include "GameTimeConstants.h" /* For SecondsPerYear */
 #include "ColourConstants.h"   /* For White */
 
 #include "MapCoordsMeters.h" /* For MapCoords::MapMetersX */
 
-// The name is a guess, but not a free one: cl6 orders .bss by a hash of the symbol name, and this
-// unit's .bss has the constant between Draw's sign_texts guard and White. PSysProperties.cpp and
-// Player.cpp hold the same constant as OneOverLogHalf, which sorts after White.
 static float OneOnLogHalf = 1.0f / (float)log(0.5);
 
 #ifdef VERSION_BW1WCI
-#define ROOM_TEXT(text) (text)
-// Creature Isle's text database has eight more entries ahead of the tooltips than HelpTextEnums.h.
-#define TOOLTIP_TEXT(text) ((text) + 8)
+#define ROOM_TEXT(text)    (text)
+#define TOOLTIP_TEXT(text) ((text) + WORLD_ROOM_CI_TOOLTIP_ID_OFFSET)
 #else
-// HelpTextEnums.h comes from a later build that has four more entries ahead of the room texts, so its
-// HELP_TEXT_ROOM_* values sit four above the ones this build reads.
-#define ROOM_TEXT(text)    ((text) - 4)
+#define ROOM_TEXT(text)    ((text) - WORLD_ROOM_TEXT_ID_OFFSET)
 #define TOOLTIP_TEXT(text) (text)
 #endif
 
-// One name scroll per door; the challenge door's is the last.
-#define NUM_SIGNS 7
-
-// The scroll squeaks with one of these samples at random.
 #define NUM_SCROLL_SQUEAKS (LH_SAMPLE_G_SCROLLSQUEAK_06 - LH_SAMPLE_G_SCROLLSQUEAK_01 + 1)
-
-// The map markers and the glows drawn under them.
-#define MARKER_SCALE     0.05f
-#define MARKER_GLOW_SIZE 0.65f
-#define MARKER_GLOW_LIFT 0.1f
-
-// The water is the citadel colour darkened to WATER_COLOUR_SCALE / 256.
-#define WATER_COLOUR_SCALE 208
-
-// The name scrolls are drawn fully opaque; DrawNameScrolls takes four times the alpha.
-#define SIGN_FADE (0xff * 4)
 
 bool32_t WorldRoom::ShowInfluence = true;
 
-static char*         SignNames[NUM_SIGNS] = {"SIGN CREATURE", "SIGN OPTIONS",  "SIGN EXIT",     "SIGN MULTIPLKAYER",
-                                             "SIGN CREDITS",  "SIGN SAVEGAME", "SIGN CHALLENGE"};
-static unsigned long SignColours[NUM_SIGNS][3] = {{0xec, 0xc6, 0x64}, {0xe5, 0xd4, 0x41}, {0xde, 0xe3, 0xef},
-                                                  {0x6f, 0x92, 0xeb}, {0xd4, 0x6b, 0xfb}, {0x9c, 0xd1, 0x40},
-                                                  {0xeb, 0x92, 0x6f}};
+static char* SignNames[WORLD_ROOM_SIGN_COUNT] = {"SIGN CREATURE", "SIGN OPTIONS",  "SIGN EXIT",     "SIGN MULTIPLKAYER",
+                                                 "SIGN CREDITS",  "SIGN SAVEGAME", "SIGN CHALLENGE"};
+static unsigned long SignColours[WORLD_ROOM_SIGN_COUNT][3] = {
+	{0xec, 0xc6, 0x64}, {0xe5, 0xd4, 0x41}, {0xde, 0xe3, 0xef}, {0x6f, 0x92, 0xeb},
+	{0xd4, 0x6b, 0xfb}, {0x9c, 0xd1, 0x40}, {0xeb, 0x92, 0x6f}};
 
 bool32_t WorldRoom::DisplayCitadel = true;
 bool32_t WorldRoom::DisplayMagicActivity = true;
@@ -96,14 +75,7 @@ bool32_t WorldRoom::DisplayInfluence = true;
 bool32_t WorldRoom::DisplayCreature = true;
 bool32_t WorldRoom::DisplayChallenges = true;
 
-wchar_t WorldRoom::WorldStatisticsText[0x2000];
-
 static uint32_t UnusedStatic = 0;
-
-#define LIGHTEN_MARKER_COLOUR(colour)                                                                                  \
-	(0xff000000 | (((colour & 0xff0000) + ((0xff0000 - (colour & 0xff0000)) * 64 >> 8)) & 0xff0000) |                  \
-	 (((colour & 0xff00) + ((0xff00 - (colour & 0xff00)) * 64 >> 8)) & 0xff00) |                                       \
-	 (((colour & 0xff) + ((0xff - (colour & 0xff)) * 64 >> 8)) & 0xff))
 
 inline MapCoords::MapCoords(float meters_x, float meters_z)
 {
@@ -117,7 +89,7 @@ WorldRoom::WorldRoom() : TempleRoom("World Room")
 	ResetStatics();
 	LoadOptionData(!LH3DLevelOfDetail::g_citadellod.Lightmaps ? "data\\citadel\\engine\\mainlo.l3d"
 	                                                          : "data\\citadel\\engine\\main.l3d",
-	               NUM_CONTROLS, ControlSetCallbacks, ControlGetCallbacks, Controls);
+	               WORLD_ROOM_CONTROL_COUNT, ControlSetCallbacks, ControlGetCallbacks, Controls);
 	Map = NULL;
 	WaterMesh = NULL;
 	WaterObject = NULL;
@@ -189,10 +161,11 @@ void WorldRoom::InitEngine()
 	delete camera;
 	camera = new (FILEPATH, 150) WorldRoomCamera;
 	camera->Init("data\\citadel\\engine\\main.cam");
-	ScrollTexture = LH3DTexture::Create("Data\\Citadel\\Controls\\ChallengeScroll.raw", 0x44, 0, NULL);
+	ScrollTexture = LH3DTexture::Create("Data\\Citadel\\Controls\\ChallengeScroll.raw",
+	                                    LH3D_TEXTURE_TYPE_SYSTEM_MEMORY | LH3D_TEXTURE_FLAGS_ALPHA, 0, NULL);
 	ScrollMaterial =
 		LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_ALPHA_TEXTURED_ALPHA, ScrollTexture);
-	InitNameScrolls(SignNames, NUM_SIGNS);
+	InitNameScrolls(SignNames, WORLD_ROOM_SIGN_COUNT);
 	SubmeshNameData* names = (SubmeshNameData*)inner_room->Mesh->GetNameData();
 	for (unsigned long i = 0; i < names->Count; i++)
 	{
@@ -258,17 +231,18 @@ void WorldRoom::CloseEngine()
 
 void WorldRoom::DrawDoors()
 {
-	if (Temple::DoorPosition > 0.01f)
+	if (Temple::DoorPosition > WORLD_ROOM_DOOR_DRAW_THRESHOLD)
 	{
 		Draw();
 		return;
 	}
 	LH3DMesh::g_hinge_only = true;
 	inner_room->Object->SetNeedClipping(true);
-	inner_room->Object->SetColorSpecular(*(unsigned long*)&Temple::CitadelColour,
-	                                     *(unsigned long*)&Temple::CitadelSpecular);
+	inner_room->Object->SetColorSpecular(Temple::CitadelColour.GetColor(), Temple::CitadelSpecular.GetColor());
 	((LH3DStaticObject*)inner_room->Object)
-		->DrawLightMap(NULL, 0, LH3DLevelOfDetail::g_citadellod.Lightmaps ? 5 : 0, 4, 0, true);
+		->DrawLightMap(
+			NULL, 0, LH3DLevelOfDetail::g_citadellod.Lightmaps ? LH3D_2ND_TEX_MODE_MODULATE_2X : LH3D_2ND_TEX_MODE_OFF,
+			4, false, true);
 	LH3DMesh::g_hinge_only = false;
 }
 
@@ -283,21 +257,21 @@ void WorldRoom::DrawCitadel(bool glow)
 			if (glow)
 			{
 				LHPoint point = Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
-				point.y += MARKER_GLOW_LIFT;
-				LH3DColor colour(0x7c, 0x6e, 0x61);
-				inner_room->Glow->DrawGlowAtPoint(point, colour, MARKER_GLOW_SIZE);
+				point.y += WORLD_ROOM_MARKER_GLOW_LIFT;
+				LH3DColor colour(WORLD_ROOM_MARKER_GLOW_RED, WORLD_ROOM_MARKER_GLOW_GREEN, WORLD_ROOM_MARKER_GLOW_BLUE);
+				inner_room->Glow->DrawGlowAtPoint(point, colour, WORLD_ROOM_MARKER_GLOW_SIZE);
 			}
 			else
 			{
-				LH3DColor     marker_colour = player->GetPlayer3DColor();
-				unsigned long colour = *(unsigned long*)&marker_colour;
-				if ((colour & 0xffffff) == 0)
+				LH3DColor     markerColour = player->GetPlayer3DColor();
+				unsigned long colour = markerColour.GetColor();
+				if ((colour & LH3D_COLOR_RGB_MASK) == 0)
 				{
-					colour = 0xffffffff;
+					colour = LH3D_COLOR_WHITE;
 				}
-				marker_colour = LH3DColor(LIGHTEN_MARKER_COLOUR(colour));
-				Map->DrawMarkerAt(marker_colour, pos.MapMetersX(), pos.MapMetersZ(), CitadelIconObject, MarkerAngle,
-				                  MARKER_SCALE);
+				markerColour = LH3DColor(LH3D_BLEND_COLOR(colour, LH3D_COLOR_WHITE, WORLD_ROOM_MARKER_LIGHTEN_AMOUNT));
+				Map->DrawMarkerAt(markerColour, pos.MapMetersX(), pos.MapMetersZ(), CitadelIconObject, MarkerAngle,
+				                  WORLD_ROOM_MARKER_SCALE);
 			}
 		}
 	}
@@ -306,10 +280,12 @@ void WorldRoom::DrawCitadel(bool glow)
 void MiniMap::DrawMarker(const LH3DColor& colour, LHPoint pos, LH3DObject* object, float angle, float scale)
 {
 	object->SetPosition(pos, angle, scale);
-	unsigned long marker_colour = *(unsigned long*)&colour | 0xff000000;
+	unsigned long markerColour;
+	memcpy(&markerColour, &colour, sizeof(markerColour));
+	markerColour |= LH3D_COLOR_WHITE & ~LH3D_COLOR_RGB_MASK;
 	unsigned long specular = 0;
-	ApplyCitadelColoring(marker_colour, specular);
-	object->SetColorSpecular(marker_colour, specular);
+	ApplyCitadelColoring(markerColour, specular);
+	object->SetColorSpecular(markerColour, specular);
 	object->AddDrawing();
 }
 
@@ -324,22 +300,22 @@ void WorldRoom::DrawCreature(bool glow)
 			if (glow)
 			{
 				LHPoint point = Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
-				point.y += MARKER_GLOW_LIFT;
-				LH3DColor colour(0x7c, 0x6e, 0x61);
-				inner_room->Glow->DrawGlowAtPoint(point, colour, MARKER_GLOW_SIZE);
+				point.y += WORLD_ROOM_MARKER_GLOW_LIFT;
+				LH3DColor colour(WORLD_ROOM_MARKER_GLOW_RED, WORLD_ROOM_MARKER_GLOW_GREEN, WORLD_ROOM_MARKER_GLOW_BLUE);
+				inner_room->Glow->DrawGlowAtPoint(point, colour, WORLD_ROOM_MARKER_GLOW_SIZE);
 			}
 			else
 			{
 				GPlayer*      player = creature->GetPlayer();
-				LH3DColor     marker_colour = player != NULL ? player->GetPlayer3DColor() : LH3DColor(0xffffffff);
-				unsigned long colour = *(unsigned long*)&marker_colour;
-				if ((colour & 0xffffff) == 0)
+				LH3DColor     markerColour = player != NULL ? player->GetPlayer3DColor() : LH3DColor(LH3D_COLOR_WHITE);
+				unsigned long colour = markerColour.GetColor();
+				if ((colour & LH3D_COLOR_RGB_MASK) == 0)
 				{
-					colour = 0xffffffff;
+					colour = LH3D_COLOR_WHITE;
 				}
-				marker_colour = LH3DColor(LIGHTEN_MARKER_COLOUR(colour));
-				Map->DrawMarkerAt(marker_colour, pos.MapMetersX(), pos.MapMetersZ(), CreatureIconObject, MarkerAngle,
-				                  MARKER_SCALE);
+				markerColour = LH3DColor(LH3D_BLEND_COLOR(colour, LH3D_COLOR_WHITE, WORLD_ROOM_MARKER_LIGHTEN_AMOUNT));
+				Map->DrawMarkerAt(markerColour, pos.MapMetersX(), pos.MapMetersZ(), CreatureIconObject, MarkerAngle,
+				                  WORLD_ROOM_MARKER_SCALE);
 			}
 		}
 	}
@@ -367,7 +343,7 @@ void Spell::DeleteSpellSeedGraphic()
 {
 	if (SeedGraphic != NULL)
 	{
-		SeedGraphic->ToBeDeleted(0);
+		SeedGraphic->ToBeDeleted(false);
 		SeedGraphic = NULL;
 	}
 }
@@ -376,9 +352,9 @@ void SpellPosToWorldRoomPos(MapCoords& pos, LHMatrix* matrix, float* scale)
 {
 	LHPoint point = ((WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD))
 	                    ->Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
-	*scale = 0.1f;
-	point.y += 0.5f;
-	matrix->SetScale(0.1f);
+	*scale = WORLD_ROOM_SPELL_MARKER_SCALE;
+	point.y += WORLD_ROOM_SPELL_HEIGHT_OFFSET;
+	matrix->SetScale(WORLD_ROOM_SPELL_MARKER_SCALE);
 	matrix->SetTranslateOnly(point);
 }
 
@@ -390,12 +366,13 @@ void Spell::CreateSpellSeedGraphic()
 	LHPoint         point;
 	point = ((WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD))
 	            ->Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
-	point.y += 0.5f;
-	MapCoords seed_pos(point.x, point.z);
-	seed_pos.SetAltitude(point.y - LH3DIsland::GetAltitude(point));
+	point.y += WORLD_ROOM_SPELL_HEIGHT_OFFSET;
+	MapCoords seedPos(point.x, point.z);
+	seedPos.SetAltitude(point.y - LH3DIsland::GetAltitude(point));
 	if (type != SPELL_SEED_TYPE_NONE)
 	{
-		SeedGraphic = SpellSeedGraphic::Create(seed_pos, type, GetPlayer(), 0.1f, POWER_UP_TYPE_NONE);
+		SeedGraphic =
+			SpellSeedGraphic::Create(seedPos, type, GetPlayer(), WORLD_ROOM_SPELL_SEED_SIZE, POWER_UP_TYPE_NONE);
 		SeedGraphic->SetAutoUpdate(false);
 	}
 }
@@ -448,15 +425,15 @@ void WorldRoom::DrawChallenges(bool glow)
 		{
 			if (glow)
 			{
-				LHPoint glow_pos = pos;
-				glow_pos.y += MARKER_GLOW_LIFT;
-				LH3DColor colour(0x7c, 0x6e, 0x61);
-				inner_room->Glow->DrawGlowAtPoint(glow_pos, colour, MARKER_GLOW_SIZE);
+				LHPoint glowPos = pos;
+				glowPos.y += WORLD_ROOM_MARKER_GLOW_LIFT;
+				LH3DColor colour(WORLD_ROOM_MARKER_GLOW_RED, WORLD_ROOM_MARKER_GLOW_GREEN, WORLD_ROOM_MARKER_GLOW_BLUE);
+				inner_room->Glow->DrawGlowAtPoint(glowPos, colour, WORLD_ROOM_MARKER_GLOW_SIZE);
 			}
 			else
 			{
 				Map->DrawMarkerAt(LH3DColor(0xff, 0xff, 0xff), pos.x, pos.z, ChallengeIconObject, MarkerAngle,
-				                  MARKER_SCALE);
+				                  WORLD_ROOM_MARKER_SCALE);
 			}
 		}
 	}
@@ -466,9 +443,9 @@ void WorldRoom::DrawAdditional(bool reflection)
 {
 	if (!reflection)
 	{
-		for (int pass = 0; pass < 2; pass++)
+		for (int pass = WORLD_ROOM_DRAW_PASS_GLOW; pass < WORLD_ROOM_DRAW_PASS_COUNT; pass++)
 		{
-			if (pass != 0)
+			if (pass != WORLD_ROOM_DRAW_PASS_GLOW)
 			{
 				if (DisplayMagicActivity)
 				{
@@ -485,22 +462,22 @@ void WorldRoom::DrawAdditional(bool reflection)
 			}
 			if (DisplayCitadel)
 			{
-				DrawCitadel(pass == 0);
+				DrawCitadel(pass == WORLD_ROOM_DRAW_PASS_GLOW);
 			}
 			if (DisplayCreature)
 			{
-				DrawCreature(pass == 0);
+				DrawCreature(pass == WORLD_ROOM_DRAW_PASS_GLOW);
 			}
 			if (DisplayChallenges)
 			{
-				DrawChallenges(pass == 0);
+				DrawChallenges(pass == WORLD_ROOM_DRAW_PASS_GLOW);
 			}
-			if (pass == 0)
+			if (pass == WORLD_ROOM_DRAW_PASS_GLOW)
 			{
 				LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
 			}
 		}
-		MarkerAngle += LH3DTech::g_delta_time * 0.001f;
+		MarkerAngle += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
 	}
 	TempleRoom::DrawAdditional(reflection);
 }
@@ -524,40 +501,41 @@ void WorldRoom::Draw()
 		DrawAdditional(true);
 		inner_room->DrawGlow(true);
 	}
-	inner_room->DrawFloor(0xff);
+	inner_room->DrawFloor(LH3D_COLOR_OPAQUE);
 
 	static float time = 0.0f;
-	time += LH3DTech::g_delta_time * 0.001f;
-	int alpha = (int)(32.0 * sin(time) + 128.0);
+	time += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
+	int waterAlpha = (int)(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(time) + WORLD_ROOM_WATER_ALPHA_BASE);
 
-	unsigned long water_colour =
-		((((*(unsigned long*)&Temple::CitadelColour & 0xff0000) >> 8) * WATER_COLOUR_SCALE & 0xff0000) |
-	     (((*(unsigned long*)&Temple::CitadelColour >> 8 & 0xff) * WATER_COLOUR_SCALE >> 8) << 8) |
-	     ((*(unsigned long*)&Temple::CitadelColour & 0xff) * WATER_COLOUR_SCALE >> 8)) &
-		0xffffff;
+	unsigned long citadelColour = Temple::CitadelColour.GetColor();
+	unsigned long waterRed = ((citadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE & 0xff0000;
+	unsigned long waterGreen = ((citadelColour >> 8 & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8) << 8;
+	unsigned long waterBlue = (citadelColour & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8;
+	unsigned long waterColour = (waterRed | waterGreen | waterBlue) & LH3D_COLOR_RGB_MASK;
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
 	WaterObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
-	WaterObject->SetColorSpecular(water_colour + (alpha << 24), *(unsigned long*)&Temple::CitadelSpecular);
+	WaterObject->SetColorSpecular(waterColour + (waterAlpha << 24), Temple::CitadelSpecular.GetColor());
 	WaterObject->SetNeedClipping(true);
-	WaterObject->SetAnimatedUV(-time * 0.01f, time * 0.007f);
+	WaterObject->SetAnimatedUV(-time * WORLD_ROOM_WATER_U_SPEED, time * WORLD_ROOM_WATER_BASE_V_SPEED);
 	WaterObject->Draw();
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
-	WaterObject->SetPosition(LHPoint(0.0f, 0.05f, 0.0f), QUARTER_PI_F, 1.0f);
-	WaterObject->SetColorSpecular(water_colour + ((255 - alpha) << 24), *(unsigned long*)&Temple::CitadelSpecular);
+	WaterObject->SetPosition(LHPoint(0.0f, WORLD_ROOM_UPPER_WATER_OFFSET, 0.0f), QUARTER_PI_F, 1.0f);
+	WaterObject->SetColorSpecular(waterColour + ((LH3D_COLOR_CHANNEL_MAX - waterAlpha) << 24),
+	                              Temple::CitadelSpecular.GetColor());
 	WaterObject->SetNeedClipping(true);
-	WaterObject->SetAnimatedUV(time * 0.01f, time * 0.005f);
+	WaterObject->SetAnimatedUV(time * WORLD_ROOM_WATER_U_SPEED, time * WORLD_ROOM_WATER_UPPER_V_SPEED);
 	WaterObject->Draw();
 
-	static int global_alpha = 0;
+	static bool32_t global_alpha = false;
 	LH3DMaterial::g_list_render_func =
 		global_alpha ? LH3DMaterial::g_list_render_func_global_alpha : LH3DMaterial::g_list_render_func_normal;
 
 	Map->DrawMap();
 	TempleRoom::Draw();
 
-	static wchar_t* sign_texts[NUM_SIGNS] = {
+	static wchar_t* sign_texts[WORLD_ROOM_SIGN_COUNT] = {
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_CREATURE_TITLE)),
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_GAMEOPTIONS_TITLE)),
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_EXIT_TITLE)),
@@ -566,49 +544,55 @@ void WorldRoom::Draw()
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_SAVEGAME_TITLE)),
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_CHALLENGE_TITLE)),
 	};
-	int highlighted = camera->HighlightedDoor;
-	if (highlighted == WORLD_ROOM_DOOR_CHALLENGE)
+	int highlightedSignIndex = camera->HighlightedDoor;
+	if (highlightedSignIndex == WORLD_ROOM_DOOR_CHALLENGE)
 	{
-		highlighted = NUM_SIGNS - 1;
+		highlightedSignIndex = WORLD_ROOM_SIGN_COUNT - 1;
 	}
-	DrawNameScrolls(NUM_SIGNS, SIGN_FADE, highlighted, sign_texts, SignColours, 1.0f, 1.0f);
+	DrawNameScrolls(WORLD_ROOM_SIGN_COUNT, WORLD_ROOM_SIGN_FADE, highlightedSignIndex, sign_texts, SignColours, 1.0f,
+	                1.0f);
 
 	// Walking out of the citadel: the exit door fills with light.
 	if (camera->State == INNER_CAMERA_STATE_THROUGH_DOOR && camera->TargetRoom == TEMPLE_ROOM_COUNT)
 	{
-		float t = (float)((camera->StateTime - 2.2) * 1.5);
-		if (t < 0.0f)
+		float exitGlowProgress =
+			(float)((camera->StateTime - WORLD_ROOM_EXIT_GLOW_DELAY) * WORLD_ROOM_EXIT_GLOW_INITIAL_RATE);
+		if (exitGlowProgress < 0.0f)
 		{
-			t = 0.0f;
+			exitGlowProgress = 0.0f;
 		}
-		if (t > 2.0f)
+		if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_KNEE)
 		{
-			t = (t - 2.0f) * 1.5f + 2.0f;
+			exitGlowProgress = (exitGlowProgress - WORLD_ROOM_EXIT_GLOW_KNEE) * WORLD_ROOM_EXIT_GLOW_ACCELERATION +
+			                   WORLD_ROOM_EXIT_GLOW_KNEE;
 		}
-		if (t > 4.0f)
+		if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_LIMIT)
 		{
-			t = 4.0f;
+			exitGlowProgress = WORLD_ROOM_EXIT_GLOW_LIMIT;
 		}
-		if (t > 0.0f)
+		if (exitGlowProgress > 0.0f)
 		{
-			unsigned long grey = (unsigned long)(t * 127.0f);
-			grey = min(0xff, grey);
-			unsigned long glow_alpha = (unsigned long)(t * 75.0f);
-			glow_alpha = min(0xff, glow_alpha);
-			float spread = (t - 2.0f) * 7.0f;
-			if (spread < 0.0f)
+			unsigned long exitGlowBrightness = (unsigned long)(exitGlowProgress * WORLD_ROOM_EXIT_GLOW_BRIGHTNESS_RATE);
+			exitGlowBrightness = min(LH3D_COLOR_CHANNEL_MAX, exitGlowBrightness);
+			unsigned long glowAlpha = (unsigned long)(exitGlowProgress * WORLD_ROOM_EXIT_GLOW_ALPHA_RATE);
+			glowAlpha = min(LH3D_COLOR_CHANNEL_MAX, glowAlpha);
+			float startRadius = (exitGlowProgress - WORLD_ROOM_EXIT_GLOW_KNEE) * WORLD_ROOM_EXIT_GLOW_SPREAD_RATE;
+			if (startRadius < 0.0f)
 			{
-				spread = 0.0f;
+				startRadius = 0.0f;
 			}
 			LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
-			LHPoint  start(80.0f, 5.0f, 0.0f);
-			LHPoint  end(60.0f, 5.0f, 0.0f);
+			LHPoint  start(WORLD_ROOM_EXIT_GLOW_START_X, WORLD_ROOM_EXIT_GLOW_HEIGHT, 0.0f);
+			LHPoint  end(WORLD_ROOM_EXIT_GLOW_END_X, WORLD_ROOM_EXIT_GLOW_HEIGHT, 0.0f);
 			LHMatrix rotation;
 			rotation.SetRotationY(((WorldRoomCamera*)camera)->SelectedDoor * QUARTER_PI_F);
 			rotation.TransformPoint(start);
 			rotation.TransformPoint(end);
-			inner_room->Glow->DrawWhiteGlow(start, end, 20.0f, t * 10.0f + 20.0f, spread, t * 15.0f,
-			                                (glow_alpha << 24) + (grey << 16) + (grey << 8) + grey);
+			inner_room->Glow->DrawWhiteGlow(
+				start, end, WORLD_ROOM_EXIT_GLOW_START_HEIGHT,
+				exitGlowProgress * WORLD_ROOM_EXIT_GLOW_END_HEIGHT_RATE + WORLD_ROOM_EXIT_GLOW_END_HEIGHT_BASE,
+				startRadius, exitGlowProgress * WORLD_ROOM_EXIT_GLOW_END_RADIUS_RATE,
+				(glowAlpha << 24) + (exitGlowBrightness << 16) + (exitGlowBrightness << 8) + exitGlowBrightness);
 			LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
 		}
 	}
@@ -616,7 +600,7 @@ void WorldRoom::Draw()
 	WorldRoom* room = (WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD);
 	if (!ShowStatistics)
 	{
-		if (room->camera->ZoomProgress > 0.5)
+		if (room->camera->ZoomProgress > WORLD_ROOM_STATISTICS_ZOOM_THRESHOLD)
 		{
 			ShowStatistics = true;
 		}
@@ -624,7 +608,7 @@ void WorldRoom::Draw()
 	else
 	{
 		MakeScrollText(true);
-		if (room->camera->ZoomProgress <= 0.5)
+		if (room->camera->ZoomProgress <= WORLD_ROOM_STATISTICS_ZOOM_THRESHOLD)
 		{
 			ShowStatistics = false;
 			MakeScrollText(false);
@@ -632,7 +616,7 @@ void WorldRoom::Draw()
 	}
 
 	InfluenceCircle::g_pos_inside_citadel = Map->CalcPoint(0.0f, 0.0f, NULL);
-	InfluenceCircle::g_scale_inside_citadel = Map->Scale / 80.0f;
+	InfluenceCircle::g_scale_inside_citadel = Map->Scale / WORLD_ROOM_INFLUENCE_SCALE_DIVISOR;
 }
 
 void WorldRoom::UpdateMouse(LHCoord coord, INTERFACE_MESSAGE_TYPES message)
@@ -645,61 +629,75 @@ void WorldRoom::UpdateKeyboard(LH_KEY key, uint16_t modifiers)
 	TempleRoom::UpdateKeyboard(key, modifiers);
 }
 
-#define PLAY_CITADEL_BUTTON_SOUND(attached_object, sample, pitch)                                                      \
-	LH_SamplePlayOptions options;                                                                                      \
-	options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];                                     \
-	options.AttachedObject = attached_object;                                                                          \
-	options.SampleNumber = sample;                                                                                     \
-	options.Positional = false;                                                                                        \
-	options.PlayType = LH_SAMPLE_PLAY_TYPE_RESTART;                                                                    \
-	options.Pitch = pitch;                                                                                             \
-	GGlobal::Global.audio->PlaySoundEffect(&options)
+inline void PlayCitadelButtonSound(LH_SamplePlayOptions& options, LH_SAMPLE sample, WORLD_ROOM_BUTTON_PITCH pitch)
+{
+	options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
+	options.AttachedObject = NULL;
+	options.SampleNumber = sample;
+	options.Positional = false;
+	options.PlayType = LH_SAMPLE_PLAY_TYPE_RESTART;
+	options.Pitch = pitch;
+	GGlobal::Global.audio->PlaySoundEffect(&options);
+}
 
 int WorldRoom::WorldButtonDisplayCitadelCheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, 100);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
 	DisplayCitadel = false;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayCitadelUncheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, 100);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
 	DisplayCitadel = true;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayCreatureCheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, 110);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CREATURE);
 	DisplayCreature = false;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayCreatureUncheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND((Base*)110, LH_SAMPLE_G_CITADELBUTTONUP_01, 100);
+	LH_SamplePlayOptions options;
+	options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
+	options.AttachedObject = (Base*)110;
+	options.SampleNumber = LH_SAMPLE_G_CITADELBUTTONUP_01;
+	options.Positional = false;
+	options.PlayType = LH_SAMPLE_PLAY_TYPE_RESTART;
+	options.Pitch = WORLD_ROOM_BUTTON_PITCH_NORMAL;
+	GGlobal::Global.audio->PlaySoundEffect(&options);
 	DisplayCreature = true;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayMagicActivityCheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, 95);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
 	DisplayMagicActivity = false;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayMagicActivityUncheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, 95);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
 	DisplayMagicActivity = true;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayInfluenceCheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, 105);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
 	DisplayInfluence = false;
 	ShowInfluence = false;
 	return 1;
@@ -707,7 +705,8 @@ int WorldRoom::WorldButtonDisplayInfluenceCheckedSet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayInfluenceUncheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, 105);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
 	DisplayInfluence = true;
 	ShowInfluence = true;
 	((WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD))->CreateWorldMapColours();
@@ -716,14 +715,16 @@ int WorldRoom::WorldButtonDisplayInfluenceUncheckedSet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayChallengesCheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, 108);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
 	DisplayChallenges = false;
 	return 1;
 }
 
 int WorldRoom::WorldButtonDisplayChallengesUncheckedSet(CallbackData& data)
 {
-	PLAY_CITADEL_BUTTON_SOUND(NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, 108);
+	LH_SamplePlayOptions options;
+	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
 	DisplayChallenges = true;
 	return 1;
 }
@@ -850,7 +851,7 @@ int WorldRoom::WorldButtonDisplayChallengesUncheckedGet(CallbackData& data)
 
 int WorldRoom::WorldScrollSet(CallbackData& data)
 {
-	GGame::g_game->temple->SetCameraToLookAtSubMesh(data.SubMesh, -30.0f, 0.0f, 0.0f);
+	GGame::g_game->temple->SetCameraToLookAtSubMesh(data.SubMesh, WORLD_ROOM_SCROLL_CAMERA_PITCH, 0.0f, 0.0f);
 	if (!GGame::g_game->temple->HelpSuppressed)
 	{
 		Temple::StartTempleScript("CitadelWorldRoomScrollHelp");
@@ -869,20 +870,20 @@ int WorldRoom::WorldScrollGet(CallbackData& data)
 	WorldRoom* room = (WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD);
 	if (data.ScrollAmount != 0)
 	{
-		long previous_offset = ScrollOffset;
+		long previousOffset = ScrollOffset;
 		ScrollOffset -= data.ScrollAmount;
 		ScrollOffset = FindProperTextOffset(ScrollNumLines, ScrollOffset);
 		if (!ShowStatistics)
 		{
 			MakeScrollText(false);
 		}
-		if (ScrollOffset != previous_offset)
+		if (ScrollOffset != previousOffset)
 		{
 			if (!sound_played)
 			{
 				GGlobal::Global.audio->PlaySoundEffect(
-					NULL, LH_SAMPLE_G_SCROLLSQUEAK_01 + GetTickCount() % NUM_SCROLL_SQUEAKS, 2, 0, 0, 0,
-					AUDIO_SFX_BANK_TYPE_IN_GAME);
+					NULL, LH_SAMPLE_G_SCROLLSQUEAK_01 + GetTickCount() % NUM_SCROLL_SQUEAKS, LH_SAMPLE_PLAY_TYPE_ONCE,
+					0, false, false, AUDIO_SFX_BANK_TYPE_IN_GAME);
 				sound_played = true;
 			}
 		}
@@ -998,10 +999,9 @@ void WorldRoom::PreToolTipProcess()
 			ToolTipAlign = KEYALIGN_0x0;
 		}
 	}
-	int door = camera->HighlightedDoor;
-	if (door != -1 && People == NULL)
+	if (camera->HighlightedDoor != -1 && People == NULL)
 	{
-		switch (door)
+		switch (camera->HighlightedDoor)
 		{
 		case WORLD_ROOM_DOOR_CREATURE:
 			ToolTipAction = BINDABLE_ACTION_MOVE;
@@ -1041,6 +1041,8 @@ void WorldRoom::PreToolTipProcess()
 		}
 	}
 }
+
+wchar_t WorldRoom::WorldStatisticsText[WORLD_ROOM_STATISTICS_TEXT_CAPACITY];
 
 float         WorldRoom::MarkerAngle = 0.0f;
 SubmeshName*  WorldRoom::ScrollSubMesh = NULL;
