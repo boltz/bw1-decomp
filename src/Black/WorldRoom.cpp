@@ -178,6 +178,14 @@ void WorldRoom::InitEngine()
 	MakeScrollText(false);
 }
 
+template <class Resource> inline void ReleaseWorldRoomResource(Resource* resource)
+{
+	if (resource != NULL)
+	{
+		resource->Release();
+	}
+}
+
 void WorldRoom::CloseEngine()
 {
 	if (!EngineInitialised)
@@ -186,38 +194,14 @@ void WorldRoom::CloseEngine()
 	}
 	TempleRoom::CloseEngine();
 	Font = NULL;
-	if (WaterObject != NULL)
-	{
-		WaterObject->Release();
-	}
-	if (WaterMesh != NULL)
-	{
-		WaterMesh->Release();
-	}
-	if (CitadelIconObject != NULL)
-	{
-		CitadelIconObject->Release();
-	}
-	if (CitadelIconMesh != NULL)
-	{
-		CitadelIconMesh->Release();
-	}
-	if (CreatureIconObject != NULL)
-	{
-		CreatureIconObject->Release();
-	}
-	if (CreatureIconMesh != NULL)
-	{
-		CreatureIconMesh->Release();
-	}
-	if (ChallengeIconObject != NULL)
-	{
-		ChallengeIconObject->Release();
-	}
-	if (ChallengeIconMesh != NULL)
-	{
-		ChallengeIconMesh->Release();
-	}
+	ReleaseWorldRoomResource(WaterObject);
+	ReleaseWorldRoomResource(WaterMesh);
+	ReleaseWorldRoomResource(CitadelIconObject);
+	ReleaseWorldRoomResource(CitadelIconMesh);
+	ReleaseWorldRoomResource(CreatureIconObject);
+	ReleaseWorldRoomResource(CreatureIconMesh);
+	ReleaseWorldRoomResource(ChallengeIconObject);
+	ReleaseWorldRoomResource(ChallengeIconMesh);
 	if (Map != NULL)
 	{
 		Map->Close();
@@ -350,8 +334,8 @@ void Spell::DeleteSpellSeedGraphic()
 
 void SpellPosToWorldRoomPos(MapCoords& pos, LHMatrix* matrix, float* scale)
 {
-	LHPoint point = ((WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD))
-	                    ->Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
+	WorldRoom* room = (WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD);
+	LHPoint    point = room->Map->CalcPoint(pos.MapMetersX(), pos.MapMetersZ(), NULL);
 	*scale = WORLD_ROOM_SPELL_MARKER_SCALE;
 	point.y += WORLD_ROOM_SPELL_HEIGHT_OFFSET;
 	matrix->SetScale(WORLD_ROOM_SPELL_MARKER_SCALE);
@@ -399,7 +383,7 @@ void WorldRoom::DrawWorldMapSpells()
 			float    scale;
 			SpellPosToWorldRoomPos(spell->Pos, &matrix, &scale);
 			spell->SeedGraphic->DrawUpdateAtPos(matrix, scale);
-			spell->SeedGraphic->DrawSpellGraphic(NULL, true, false, 0xff);
+			spell->SeedGraphic->DrawSpellGraphic(NULL, true, false, LH3D_COLOR_CHANNEL_MAX);
 		}
 	}
 }
@@ -492,6 +476,36 @@ void WorldRoom::Update()
 	}
 }
 
+inline unsigned long CalcWorldRoomWaterColour(const float& animation_time, int& alpha)
+{
+	alpha = (int)(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(animation_time) + WORLD_ROOM_WATER_ALPHA_BASE);
+
+	unsigned long citadelColour = Temple::CitadelColour.GetColor();
+	unsigned long waterRed = ((citadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE & 0xff0000;
+	unsigned long waterGreen = ((citadelColour >> 8 & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8) << 8;
+	unsigned long waterBlue = (citadelColour & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8;
+	return (waterRed | waterGreen | waterBlue) & LH3D_COLOR_RGB_MASK;
+}
+
+inline float CalcWorldRoomExitGlowProgress(float state_time)
+{
+	float exitGlowProgress = (float)((state_time - WORLD_ROOM_EXIT_GLOW_DELAY) * WORLD_ROOM_EXIT_GLOW_INITIAL_RATE);
+	if (exitGlowProgress < 0.0f)
+	{
+		exitGlowProgress = 0.0f;
+	}
+	if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_KNEE)
+	{
+		exitGlowProgress = (exitGlowProgress - WORLD_ROOM_EXIT_GLOW_KNEE) * WORLD_ROOM_EXIT_GLOW_ACCELERATION +
+		                   WORLD_ROOM_EXIT_GLOW_KNEE;
+	}
+	if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_LIMIT)
+	{
+		exitGlowProgress = WORLD_ROOM_EXIT_GLOW_LIMIT;
+	}
+	return exitGlowProgress;
+}
+
 void WorldRoom::Draw()
 {
 	RoomsAvailable = true;
@@ -505,13 +519,8 @@ void WorldRoom::Draw()
 
 	static float time = 0.0f;
 	time += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
-	int waterAlpha = (int)(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(time) + WORLD_ROOM_WATER_ALPHA_BASE);
-
-	unsigned long citadelColour = Temple::CitadelColour.GetColor();
-	unsigned long waterRed = ((citadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE & 0xff0000;
-	unsigned long waterGreen = ((citadelColour >> 8 & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8) << 8;
-	unsigned long waterBlue = (citadelColour & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8;
-	unsigned long waterColour = (waterRed | waterGreen | waterBlue) & LH3D_COLOR_RGB_MASK;
+	int           waterAlpha;
+	unsigned long waterColour = CalcWorldRoomWaterColour(time, waterAlpha);
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
 	WaterObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
@@ -555,21 +564,7 @@ void WorldRoom::Draw()
 	// Walking out of the citadel: the exit door fills with light.
 	if (camera->State == INNER_CAMERA_STATE_THROUGH_DOOR && camera->TargetRoom == TEMPLE_ROOM_COUNT)
 	{
-		float exitGlowProgress =
-			(float)((camera->StateTime - WORLD_ROOM_EXIT_GLOW_DELAY) * WORLD_ROOM_EXIT_GLOW_INITIAL_RATE);
-		if (exitGlowProgress < 0.0f)
-		{
-			exitGlowProgress = 0.0f;
-		}
-		if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_KNEE)
-		{
-			exitGlowProgress = (exitGlowProgress - WORLD_ROOM_EXIT_GLOW_KNEE) * WORLD_ROOM_EXIT_GLOW_ACCELERATION +
-			                   WORLD_ROOM_EXIT_GLOW_KNEE;
-		}
-		if (exitGlowProgress > WORLD_ROOM_EXIT_GLOW_LIMIT)
-		{
-			exitGlowProgress = WORLD_ROOM_EXIT_GLOW_LIMIT;
-		}
+		float exitGlowProgress = CalcWorldRoomExitGlowProgress(camera->StateTime);
 		if (exitGlowProgress > 0.0f)
 		{
 			unsigned long exitGlowBrightness = (unsigned long)(exitGlowProgress * WORLD_ROOM_EXIT_GLOW_BRIGHTNESS_RATE);
@@ -724,14 +719,19 @@ int WorldRoom::WorldButtonDisplayChallengesUncheckedSet(CallbackData& data)
 	return 1;
 }
 
+inline void SetWorldRoomToolTip(unsigned long text, KEYALIGN align)
+{
+	TempleRoom::ToolTipAction = BINDABLE_ACTION_MOVE;
+	TempleRoom::ToolTipText = text;
+	TempleRoom::ToolTipAlign = align;
+}
+
 int WorldRoom::WorldButtonDisplayCitadelCheckedGet(CallbackData& data)
 {
 	data.Visible = DisplayCitadel == true;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -741,9 +741,7 @@ int WorldRoom::WorldButtonDisplayCitadelUncheckedGet(CallbackData& data)
 	data.Visible = DisplayCitadel == false;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -753,9 +751,7 @@ int WorldRoom::WorldButtonDisplayCreatureCheckedGet(CallbackData& data)
 	data.Visible = DisplayCreature == true;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -765,9 +761,7 @@ int WorldRoom::WorldButtonDisplayCreatureUncheckedGet(CallbackData& data)
 	data.Visible = DisplayCreature == false;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -777,9 +771,7 @@ int WorldRoom::WorldButtonDisplayMagicActivityCheckedGet(CallbackData& data)
 	data.Visible = DisplayMagicActivity == true;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -789,9 +781,7 @@ int WorldRoom::WorldButtonDisplayMagicActivityUncheckedGet(CallbackData& data)
 	data.Visible = DisplayMagicActivity == false;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -801,9 +791,7 @@ int WorldRoom::WorldButtonDisplayInfluenceCheckedGet(CallbackData& data)
 	data.Visible = DisplayInfluence == true;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -813,9 +801,7 @@ int WorldRoom::WorldButtonDisplayInfluenceUncheckedGet(CallbackData& data)
 	data.Visible = DisplayInfluence == false;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -825,9 +811,7 @@ int WorldRoom::WorldButtonDisplayChallengesCheckedGet(CallbackData& data)
 	data.Visible = DisplayChallenges == true;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -837,9 +821,7 @@ int WorldRoom::WorldButtonDisplayChallengesUncheckedGet(CallbackData& data)
 	data.Visible = DisplayChallenges == false;
 	if (data.Highlighted)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -903,22 +885,16 @@ int WorldRoom::WorldScrollGet(CallbackData& data)
 	{
 		if (room->camera->ZoomProgress != 1.0)
 		{
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_105);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_105), KEYALIGN_0x0);
 		}
 		else
 		{
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_104);
-			ToolTipAlign = KEYALIGN_0x300;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_104), KEYALIGN_0x300);
 		}
 	}
 	else if (room->camera->State == INNER_CAMERA_STATE_FOCUSED && room->camera->ZoomProgress == 1.0)
 	{
-		ToolTipAction = BINDABLE_ACTION_MOVE;
-		ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_17);
-		ToolTipAlign = KEYALIGN_0x0;
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_17), KEYALIGN_0x0);
 	}
 	return 1;
 }
@@ -976,22 +952,16 @@ void WorldRoom::PreDraw()
 
 void WorldRoom::PreToolTipProcess()
 {
-	ToolTipAction = BINDABLE_ACTION_MOVE;
-	ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_04);
-	ToolTipAlign = KEYALIGN_0xf00;
+	SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_04), KEYALIGN_0xf00);
 	if (camera->MouseHitType == INNER_CAMERA_HIT_NEAR)
 	{
 		if (camera->ClickHitType == INNER_CAMERA_HIT_NEAR && camera->ZoomProgress == 1.0)
 		{
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_115);
-			ToolTipAlign = KEYALIGN_0xf00;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_115), KEYALIGN_0xf00);
 		}
 		else if (camera->ZoomProgress != 1.0)
 		{
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_INTERRUPTION_IN_CITADEL_21);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_INTERRUPTION_IN_CITADEL_21), KEYALIGN_0x0);
 		}
 	}
 	if (camera->HighlightedDoor != -1 && People == NULL)
@@ -999,39 +969,25 @@ void WorldRoom::PreToolTipProcess()
 		switch (camera->HighlightedDoor)
 		{
 		case WORLD_ROOM_DOOR_CREATURE:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_27);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_27), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_CHALLENGE:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_26);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_26), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_SAVE_GAME:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_28);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_28), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_UNIVERSE:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_32);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_32), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_GAME_OPTIONS:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_31);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_31), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_CREDITS:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_29);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_29), KEYALIGN_0x0);
 			break;
 		case WORLD_ROOM_DOOR_EXIT:
-			ToolTipAction = BINDABLE_ACTION_MOVE;
-			ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_30);
-			ToolTipAlign = KEYALIGN_0x0;
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_30), KEYALIGN_0x0);
 			break;
 		}
 	}
