@@ -447,8 +447,9 @@ void WorldRoom::DrawChallenges(bool glow)
 			}
 			else
 			{
-				Map->DrawMarkerAt(LH3DColor(0xff, 0xff, 0xff), challengePos.x, challengePos.z, ChallengeIconObject,
-				                  MarkerAngle, WORLD_ROOM_MARKER_SCALE);
+				Map->DrawMarkerAt(LH3DColor(LH3D_COLOR_CHANNEL_MAX, LH3D_COLOR_CHANNEL_MAX, LH3D_COLOR_CHANNEL_MAX),
+				                  challengePos.x, challengePos.z, ChallengeIconObject, MarkerAngle,
+				                  WORLD_ROOM_MARKER_SCALE);
 			}
 		}
 	}
@@ -509,7 +510,7 @@ void WorldRoom::Update()
 	}
 }
 
-inline unsigned long CalcWorldRoomWaterColour(const float& animation_time, int& alpha)
+inline unsigned long CalcWorldRoomWaterColour(float animation_time, int& alpha)
 {
 	alpha = static_cast<int>(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(animation_time) + WORLD_ROOM_WATER_ALPHA_BASE);
 
@@ -561,6 +562,17 @@ inline void UpdateWorldRoomStatistics()
 	}
 }
 
+inline void DrawWorldRoomSignLabels(WorldRoom* room, wchar_t** sign_texts)
+{
+	int highlightedSignIndex = room->camera->HighlightedDoor;
+	if (highlightedSignIndex == WORLD_ROOM_DOOR_CHALLENGE)
+	{
+		highlightedSignIndex = WORLD_ROOM_SIGN_COUNT - 1;
+	}
+	room->DrawNameScrolls(WORLD_ROOM_SIGN_COUNT, WORLD_ROOM_SIGN_FADE, highlightedSignIndex, sign_texts, SignColours,
+	                      1.0f, 1.0f);
+}
+
 void WorldRoom::Draw()
 {
 	RoomsAvailable = true;
@@ -610,13 +622,7 @@ void WorldRoom::Draw()
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_SAVEGAME_TITLE)),
 		HelpTextDataBase::HelpTextDatabase.GetHelpText(ROOM_TEXT(HELP_TEXT_ROOM_CHALLENGE_TITLE)),
 	};
-	int highlightedSignIndex = camera->HighlightedDoor;
-	if (highlightedSignIndex == WORLD_ROOM_DOOR_CHALLENGE)
-	{
-		highlightedSignIndex = WORLD_ROOM_SIGN_COUNT - 1;
-	}
-	DrawNameScrolls(WORLD_ROOM_SIGN_COUNT, WORLD_ROOM_SIGN_FADE, highlightedSignIndex, signTexts, SignColours, 1.0f,
-	                1.0f);
+	DrawWorldRoomSignLabels(this, signTexts);
 
 	// Walking out of the citadel: the exit door fills with light.
 	if (camera->State == INNER_CAMERA_STATE_THROUGH_DOOR && camera->TargetRoom == TEMPLE_ROOM_COUNT)
