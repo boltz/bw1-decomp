@@ -795,7 +795,7 @@ int WorldRoom::WorldButtonDisplayCitadelCheckedGet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayCitadelUncheckedGet(CallbackData& data)
 {
-	return UpdateWorldRoomButtonDisplay(data, DisplayCitadel == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23));
+	return UpdateWorldRoomButtonDisplay(data, !DisplayCitadel, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_23));
 }
 
 int WorldRoom::WorldButtonDisplayCreatureCheckedGet(CallbackData& data)
@@ -805,7 +805,7 @@ int WorldRoom::WorldButtonDisplayCreatureCheckedGet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayCreatureUncheckedGet(CallbackData& data)
 {
-	return UpdateWorldRoomButtonDisplay(data, DisplayCreature == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21));
+	return UpdateWorldRoomButtonDisplay(data, !DisplayCreature, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_21));
 }
 
 int WorldRoom::WorldButtonDisplayMagicActivityCheckedGet(CallbackData& data)
@@ -815,7 +815,7 @@ int WorldRoom::WorldButtonDisplayMagicActivityCheckedGet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayMagicActivityUncheckedGet(CallbackData& data)
 {
-	return UpdateWorldRoomButtonDisplay(data, DisplayMagicActivity == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25));
+	return UpdateWorldRoomButtonDisplay(data, !DisplayMagicActivity, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_25));
 }
 
 int WorldRoom::WorldButtonDisplayInfluenceCheckedGet(CallbackData& data)
@@ -825,7 +825,7 @@ int WorldRoom::WorldButtonDisplayInfluenceCheckedGet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayInfluenceUncheckedGet(CallbackData& data)
 {
-	return UpdateWorldRoomButtonDisplay(data, DisplayInfluence == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24));
+	return UpdateWorldRoomButtonDisplay(data, !DisplayInfluence, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_24));
 }
 
 int WorldRoom::WorldButtonDisplayChallengesCheckedGet(CallbackData& data)
@@ -835,7 +835,7 @@ int WorldRoom::WorldButtonDisplayChallengesCheckedGet(CallbackData& data)
 
 int WorldRoom::WorldButtonDisplayChallengesUncheckedGet(CallbackData& data)
 {
-	return UpdateWorldRoomButtonDisplay(data, DisplayChallenges == false, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22));
+	return UpdateWorldRoomButtonDisplay(data, !DisplayChallenges, TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_22));
 }
 
 int WorldRoom::WorldScrollSet(CallbackData& data)
