@@ -510,10 +510,13 @@ void WorldRoom::Update()
 	}
 }
 
-inline unsigned long CalcWorldRoomWaterColour(float animation_time, int& alpha)
+inline int CalcWorldRoomWaterAlpha(float animation_time)
 {
-	alpha = static_cast<int>(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(animation_time) + WORLD_ROOM_WATER_ALPHA_BASE);
+	return static_cast<int>(WORLD_ROOM_WATER_ALPHA_AMPLITUDE * sin(animation_time) + WORLD_ROOM_WATER_ALPHA_BASE);
+}
 
+inline uint32_t CalcWorldRoomWaterColour()
+{
 	uint32_t citadelColour = Temple::CitadelColour.GetColor();
 	uint32_t waterRed = ((citadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE & 0xff0000;
 	uint32_t waterGreen = ((citadelColour >> 8 & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE >> 8) << 8;
@@ -586,8 +589,8 @@ void WorldRoom::Draw()
 
 	static float waterAnimationTime = 0.0f;
 	waterAnimationTime += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
-	int      waterAlpha;
-	uint32_t waterColour = CalcWorldRoomWaterColour(waterAnimationTime, waterAlpha);
+	int      waterAlpha = CalcWorldRoomWaterAlpha(waterAnimationTime);
+	uint32_t waterColour = CalcWorldRoomWaterColour();
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
 	WaterObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
