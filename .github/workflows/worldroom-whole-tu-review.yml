@@ -1,0 +1,32 @@
+name: WorldRoom whole TU readability
+on:
+  push:
+    branches: [review/worldroom-whole-tu-review-20261106]
+permissions:
+  contents: read
+jobs:
+  review:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Review pinned whole TU
+        env:
+          TARGET_SHA: 5e9ffd81e479a52f408ed069c704d61e38c41653
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
+          PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
+          PR_REVIEW_MODEL: ${{ vars.PR_REVIEW_MODEL || 'gpt-6-luna' }}
+        run: python tools/worldroom_whole_tu_review.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worldroom-whole-tu-review
+          path: whole-tu-*.json
