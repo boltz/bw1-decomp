@@ -863,6 +863,25 @@ inline void UpdateWorldRoomScrollSound(long previous_offset, bool32_t& sound_pla
 	}
 }
 
+inline void UpdateWorldRoomScrollToolTip(WorldRoom* room, const CallbackData& data)
+{
+	if (data.Highlighted)
+	{
+		if (room->camera->ZoomProgress != 1.0)
+		{
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_105), KEYALIGN_0x0);
+		}
+		else
+		{
+			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_104), KEYALIGN_0x300);
+		}
+	}
+	else if (room->camera->State == INNER_CAMERA_STATE_FOCUSED && room->camera->ZoomProgress == 1.0)
+	{
+		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_17), KEYALIGN_0x0);
+	}
+}
+
 int WorldRoom::WorldScrollGet(CallbackData& data)
 {
 	static bool32_t scrollSoundPlayed = false;
@@ -895,54 +914,47 @@ int WorldRoom::WorldScrollGet(CallbackData& data)
 	{
 		data.Material = NULL;
 	}
-	if (data.Highlighted)
-	{
-		if (room->camera->ZoomProgress != 1.0)
-		{
-			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_105), KEYALIGN_0x0);
-		}
-		else
-		{
-			SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_104), KEYALIGN_0x300);
-		}
-	}
-	else if (room->camera->State == INNER_CAMERA_STATE_FOCUSED && room->camera->ZoomProgress == 1.0)
-	{
-		SetWorldRoomToolTip(TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_17), KEYALIGN_0x0);
-	}
+	UpdateWorldRoomScrollToolTip(room, data);
 	return 1;
+}
+
+inline void BuildWorldRoomStatisticsText()
+{
+	WorldRoom::ClearText(WorldRoom::WorldStatisticsText);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_WORLD_TITLE), 0);
+	WorldRoom::AddNewLine(WorldRoom::WorldStatisticsText);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_TOTAL_POPULATION), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_PERCENT_OF_POPULATION_BELIEVE_IN_YOU),
+	                   0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_PERCENT_OF_POPULATION_THAT_ARE_MALE),
+	                   0);
+	WorldRoom::AddNewLine(WorldRoom::WorldStatisticsText);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_DEATHS_IN_YOUR_REGION), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BIRTHS_IN_YOUR_REGION), 0);
+#ifdef VERSION_BW1WCI
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, HELP_TEXT_PAUSE_STATS_108, 0);
+#else
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, HELP_TEXT_PAUSE_STATS_83, 0);
+#endif
+	WorldRoom::AddNewLine(WorldRoom::WorldStatisticsText);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BUILDINGS_BUILT), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_WONDERS_BUILT), 0);
+	WorldRoom::AddNewLine(WorldRoom::WorldStatisticsText);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_DISCIPLES), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BUILDERS), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BREEDERS), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FISHERMEN), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FARMERS), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FORESTERS), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_MISSIONARIES), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_CRAFTSMEN), 0);
+	WorldRoom::AddText(WorldRoom::WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_TRADERS), 0);
+	WorldRoom::EndText(WorldRoom::WorldStatisticsText);
 }
 
 void WorldRoom::MakeScrollText(bool32_t show_statistics)
 {
-	ClearText(WorldStatisticsText);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_WORLD_TITLE), 0);
-	AddNewLine(WorldStatisticsText);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_TOTAL_POPULATION), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_PERCENT_OF_POPULATION_BELIEVE_IN_YOU), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_PERCENT_OF_POPULATION_THAT_ARE_MALE), 0);
-	AddNewLine(WorldStatisticsText);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_DEATHS_IN_YOUR_REGION), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BIRTHS_IN_YOUR_REGION), 0);
-#ifdef VERSION_BW1WCI
-	AddText(WorldStatisticsText, HELP_TEXT_PAUSE_STATS_108, 0);
-#else
-	AddText(WorldStatisticsText, HELP_TEXT_PAUSE_STATS_83, 0);
-#endif
-	AddNewLine(WorldStatisticsText);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BUILDINGS_BUILT), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_WONDERS_BUILT), 0);
-	AddNewLine(WorldStatisticsText);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_DISCIPLES), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BUILDERS), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_BREEDERS), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FISHERMEN), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FARMERS), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_FORESTERS), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_MISSIONARIES), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_CRAFTSMEN), 0);
-	AddText(WorldStatisticsText, ROOM_TEXT(HELP_TEXT_ROOM_NUMBER_OF_TRADERS), 0);
-	EndText(WorldStatisticsText);
+	BuildWorldRoomStatisticsText();
 	if (show_statistics)
 	{
 		ScrollNumLines =
