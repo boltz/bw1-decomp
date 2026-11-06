@@ -1,5 +1,9 @@
 #include "WorldRoom.h"
 
+#ifdef VERSION_BW1W130
+#include "ControlHand.h"
+#endif
+
 #include <math.h>    /* For cos, log, sin */
 #include <string.h>  /* For _stricmp, strcpy */
 #include <windows.h> /* For GetTickCount */
@@ -978,6 +982,9 @@ void WorldRoom::PreToolTipProcess()
 	ToolTipAction = BINDABLE_ACTION_MOVE;
 	ToolTipText = TOOLTIP_TEXT(HELP_TEXT_TOOLTIP_04);
 	ToolTipAlign = KEYALIGN_0xf00;
+#ifdef VERSION_BW1W130
+	CHand::GloveGlyphOverride = CHAND_GLOVE_GLYPH_DEFAULT;
+#endif
 	if (camera->MouseHitType == INNER_CAMERA_HIT_NEAR)
 	{
 		if (camera->ClickHitType == INNER_CAMERA_HIT_NEAR && camera->ZoomProgress == 1.0)
@@ -993,10 +1000,12 @@ void WorldRoom::PreToolTipProcess()
 			ToolTipAlign = KEYALIGN_0x0;
 		}
 	}
-	int door = camera->HighlightedDoor;
-	if (door != -1 && People == NULL)
+	if (camera->HighlightedDoor != -1 && People == NULL)
 	{
-		switch (door)
+#ifdef VERSION_BW1W130
+		CHand::GloveGlyphOverride = CHAND_GLOVE_GLYPH_INTERACT;
+#endif
+		switch (camera->HighlightedDoor)
 		{
 		case WORLD_ROOM_DOOR_CREATURE:
 			ToolTipAction = BINDABLE_ACTION_MOVE;

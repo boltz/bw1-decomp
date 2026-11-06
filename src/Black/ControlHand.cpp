@@ -11,6 +11,10 @@
 #include "GameTimeConstants.h"
 #include "PSysHandFX.h"
 
+#ifdef VERSION_BW1W130
+CHAND_GLOVE_GLYPH CHand::GloveGlyphOverride;
+#endif
+
 CHand::CHand(LHPoint point, GInterfaceStatus* status)
 {
 	uint32_t i;

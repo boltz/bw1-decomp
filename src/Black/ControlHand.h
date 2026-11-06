@@ -21,6 +21,18 @@
 #include "HandStatePlayAnim.h"
 #include "HandStateCitadel.h"
 
+#ifdef VERSION_BW1W130
+enum CHAND_GLOVE_GLYPH
+{
+	CHAND_GLOVE_GLYPH_DEFAULT = 0,
+	CHAND_GLOVE_GLYPH_INTERACT = 0x20,
+	CHAND_GLOVE_GLYPH_OBJECT = 0x21,
+	CHAND_GLOVE_GLYPH_HOLDING = 0x22,
+	CHAND_GLOVE_GLYPH_CAMERA_ORIENT = 0x23,
+	CHAND_GLOVE_GLYPH_CAMERA_ZOOM = 0x24
+};
+#endif
+
 // Forward Declares
 
 class GInterfaceStatus;
@@ -33,6 +45,10 @@ class CHand;
 class CHand : public Morphable
 {
 public:
+#ifdef VERSION_BW1W130
+	static CHAND_GLOVE_GLYPH GloveGlyphOverride;
+#endif
+
 	// BW1W120 0046e8c0 BW1M119 011cd410
 	void OnClearMap();
 	// BW1W120 0046c050 BW1M119 011d0860
