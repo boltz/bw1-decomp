@@ -629,10 +629,11 @@ void WorldRoom::UpdateKeyboard(LH_KEY key, uint16_t modifiers)
 	TempleRoom::UpdateKeyboard(key, modifiers);
 }
 
-inline void PlayCitadelButtonSound(LH_SamplePlayOptions& options, LH_SAMPLE sample, WORLD_ROOM_BUTTON_PITCH pitch)
+inline void PlayCitadelButtonSound(LH_SamplePlayOptions& options, Base* attached_object, LH_SAMPLE sample,
+                                   WORLD_ROOM_BUTTON_PITCH pitch)
 {
 	options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
-	options.AttachedObject = NULL;
+	options.AttachedObject = attached_object;
 	options.SampleNumber = sample;
 	options.Positional = false;
 	options.PlayType = LH_SAMPLE_PLAY_TYPE_RESTART;
@@ -643,7 +644,7 @@ inline void PlayCitadelButtonSound(LH_SamplePlayOptions& options, LH_SAMPLE samp
 int WorldRoom::WorldButtonDisplayCitadelCheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
 	DisplayCitadel = false;
 	return 1;
 }
@@ -651,7 +652,7 @@ int WorldRoom::WorldButtonDisplayCitadelCheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayCitadelUncheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
 	DisplayCitadel = true;
 	return 1;
 }
@@ -659,7 +660,7 @@ int WorldRoom::WorldButtonDisplayCitadelUncheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayCreatureCheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CREATURE);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CREATURE);
 	DisplayCreature = false;
 	return 1;
 }
@@ -667,13 +668,7 @@ int WorldRoom::WorldButtonDisplayCreatureCheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayCreatureUncheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	options.Bank = GGlobal::Global.audio->AudioBanks[AUDIO_SFX_BANK_TYPE_IN_GAME];
-	options.AttachedObject = (Base*)110;
-	options.SampleNumber = LH_SAMPLE_G_CITADELBUTTONUP_01;
-	options.Positional = false;
-	options.PlayType = LH_SAMPLE_PLAY_TYPE_RESTART;
-	options.Pitch = WORLD_ROOM_BUTTON_PITCH_NORMAL;
-	GGlobal::Global.audio->PlaySoundEffect(&options);
+	PlayCitadelButtonSound(options, (Base*)110, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_NORMAL);
 	DisplayCreature = true;
 	return 1;
 }
@@ -681,7 +676,7 @@ int WorldRoom::WorldButtonDisplayCreatureUncheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayMagicActivityCheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
 	DisplayMagicActivity = false;
 	return 1;
 }
@@ -689,7 +684,7 @@ int WorldRoom::WorldButtonDisplayMagicActivityCheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayMagicActivityUncheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_MAGIC);
 	DisplayMagicActivity = true;
 	return 1;
 }
@@ -697,7 +692,7 @@ int WorldRoom::WorldButtonDisplayMagicActivityUncheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayInfluenceCheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
 	DisplayInfluence = false;
 	ShowInfluence = false;
 	return 1;
@@ -706,7 +701,7 @@ int WorldRoom::WorldButtonDisplayInfluenceCheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayInfluenceUncheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_INFLUENCE);
 	DisplayInfluence = true;
 	ShowInfluence = true;
 	((WorldRoom*)GGame::g_game->temple->GetRoom(TEMPLE_ROOM_WORLD))->CreateWorldMapColours();
@@ -716,7 +711,7 @@ int WorldRoom::WorldButtonDisplayInfluenceUncheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayChallengesCheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
 	DisplayChallenges = false;
 	return 1;
 }
@@ -724,7 +719,7 @@ int WorldRoom::WorldButtonDisplayChallengesCheckedSet(CallbackData& data)
 int WorldRoom::WorldButtonDisplayChallengesUncheckedSet(CallbackData& data)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
+	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_BUTTON_PITCH_CHALLENGES);
 	DisplayChallenges = true;
 	return 1;
 }
