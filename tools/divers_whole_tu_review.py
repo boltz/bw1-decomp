@@ -49,6 +49,7 @@ facts.append('GWater::Process has original initializer stores to the12-byte orig
 
 facts.append('Original pagination control-flow evidence: the original BW1W120 executable at0x824450 allocates all3buffers before LHFileLength, overwrites its status return with the output size at+0x84, and branches at+0x90 directly to restore/return+0x26f on wrong size, bypassing every Free. The640-byte configured original span resolves all17relocations with zero unresolved/mismatched bytes against the original executable. Thus this invalid-input behavior is original, not introduced by this pass. Preserve it in this decompilation; this evidence earns no readability points and does not claim the candidate function is byte-exact.')
 
+
 payload = {"scope": "whole src/Black/LH3DDivers.cpp, all %d function definitions and file-scope data" % len(functions), "function_inventory": functions, "context_facts_and_limits": facts, "files": [{"path": path, "numbered_source": "\n".join("%d: %s" % (i, line) for i, line in enumerate(content.splitlines(), 1))} for path, content in source.items()]}
 Path("whole-tu-input.json").write_text(json.dumps({"target_sha": sha, "functions": functions, "source_hashes": {p: hashlib.sha256(s.encode()).hexdigest() for p, s in source.items()}, "rubric": system}, indent=2) + "\n")
 result = api.call_model(os.environ.get("PR_REVIEW_API_BASE", "https://api.openai.com/v1"), os.environ["PR_REVIEW_API_KEY"], os.environ["PR_REVIEW_MODEL"], system, json.dumps(payload))
