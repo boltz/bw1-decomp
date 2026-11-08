@@ -1,114 +1,111 @@
 #ifndef BW1_DECOMP_LH_COLLIDE_INCLUDED_H
 #define BW1_DECOMP_LH_COLLIDE_INCLUDED_H
 
-#include <stdint.h>    /* For int16_t, uint32_t, uint8_t */
 #include <re_common.h> /* For bool32_t */
+#include <stdint.h>    /* For int16_t, uint32_t, uint8_t */
 
-#include <Lionhead/LH3DLib/development/LHPoint.h>    /* For struct LHPoint, struct Point2D */
 #include <Lionhead/LH3DLib/development/LH3DObject.h> /* For struct LH3DObject */
+#include <Lionhead/LH3DLib/development/LHPoint.h> /* For struct LHPoint, struct Point2D */
 
-enum ObjectCircleIteratorDirection
-{
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_SAME = 0x0,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_RIGHT = 0x1,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_LEFT = 0x2,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN = 0x3,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_UP = 0x4,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_UP_LEFT = 0x5,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN_LEFT = 0x6,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_UP_RIGHT = 0x7,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN_RIGHT = 0x8,
-	OBJECT_CIRCLE_ITERATOR_DIRECTION_NONE = 0x9,
-	_ObjectCircleIteratorDirection_COUNT = 0xa
+#define NEW_COLLIDE_MIN_SIZE 1.0f
+#define NEW_COLLIDE_MAX_RATIO 1.4f
+
+enum ObjectCircleIteratorDirection {
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_SAME = 0x0,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_RIGHT = 0x1,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_LEFT = 0x2,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN = 0x3,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_UP = 0x4,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_UP_LEFT = 0x5,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN_LEFT = 0x6,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_UP_RIGHT = 0x7,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_DOWN_RIGHT = 0x8,
+  OBJECT_CIRCLE_ITERATOR_DIRECTION_NONE = 0x9,
+  _ObjectCircleIteratorDirection_COUNT = 0xa
 };
 
-class NewCollide
-{
+class NewCollide {
 public:
-	struct Obj;
+  struct Obj;
 
-	struct List
-	{
-		uint32_t size;
-		int      count; // number of objs
-		Obj**    objs;
+  struct List {
+    uint32_t size;
+    int count; // number of objs
+    Obj **objs;
 
-		// Constructors
+    // Constructors
 
-		// BW1W120 008292d0 BW1M119 010d8220 (LHCombined Release)
-		List(long initial_size);
+    // BW1W120 008292d0 BW1M119 010d8220 (LHCombined Release)
+    List(long initial_size);
 
-		// Non-virtual methods
+    // Non-virtual methods
 
-		// BW1W120 00829330 BW1M119 0112d9f0 (LHCombined Release)
-		void IncreaseSize();
-		// BW1W120 inlined BW1M119 inlined
-		void Add(Obj* new_obj)
-		{
-			if (count == size)
-			{
-				IncreaseSize();
-			}
-			objs[count] = new_obj;
-			count++;
-		}
+    // BW1W120 00829330 BW1M119 0112d9f0 (LHCombined Release)
+    void IncreaseSize();
+    // BW1W120 inlined BW1M119 inlined
+    void Add(Obj *new_obj) {
+      if (count == size) {
+        IncreaseSize();
+      }
+      objs[count] = new_obj;
+      count++;
+    }
 
-		// Destructors
+    // Destructors
 
-		// BW1W120 00829260 BW1M119 01077390 (LHCombined Release)
-		~List();
-	};
+    // BW1W120 00829260 BW1M119 01077390 (LHCombined Release)
+    ~List();
+  };
 
-	struct Obj
-	{
-		LHPoint position; /* 0x0 */
-		float   radius;
-		float   r2; /* 0x10 */
-		float   angle;
-		LHPoint BoundingBox;
-		List*   IteratorList; /* 0x24 */
+  struct Obj {
+    LHPoint position; /* 0x0 */
+    float radius;
+    float r2; /* 0x10 */
+    float angle;
+    LHPoint BoundingBox;
+    List *IteratorList; /* 0x24 */
 
-		// Constructors
+    // Constructors
 
-		// BW1W120 0082ad90 BW1M119 0107a5c0 (LHCombined Release)
-		Obj(float radius, LHPoint* position);
-		// BW1W120 0082add0 BW1M119 0107f620 (LHCombined Release)
-		Obj(LHPoint* position, float bb_x, float bb_z, float angle);
+    // BW1W120 0082ad90 BW1M119 0107a5c0 (LHCombined Release)
+    Obj(float radius, LHPoint *position);
+    // BW1W120 0082add0 BW1M119 0107f620 (LHCombined Release)
+    Obj(LHPoint *position, float bb_x, float bb_z, float angle);
 
-		// Non-virtual methods
+    // Non-virtual methods
 
-		// BW1W120 00828f40 BW1M119 01083ef0 (LHCombined Release)
-		void CreateList();
-		// BW1W120 00828f30 BW1M119 010d4340 (LHCombined Release)
-		void Draw(int);
-		// BW1W120 00829140 BW1M119 0104bbf0 (LHCombined Release)
-		bool32_t Collide(Obj* other);
+    // BW1W120 00828f40 BW1M119 01083ef0 (LHCombined Release)
+    void CreateList();
+    // BW1W120 00828f30 BW1M119 010d4340 (LHCombined Release)
+    void Draw(int);
+    // BW1W120 00829140 BW1M119 0104bbf0 (LHCombined Release)
+    bool32_t Collide(Obj *other);
 
-		// Destructors
+    // Destructors
 
-		// BW1W120 0082ae60 BW1M119 010649b0 (LHCombined Release)
-		~Obj();
-	};
+    // BW1W120 0082ae60 BW1M119 010649b0 (LHCombined Release)
+    ~Obj();
+  };
 
-	// Called with each Obj as it is deleted.
-	typedef void (*DeleteCallback)(Obj* obj);
+  // Called with each Obj as it is deleted.
+  typedef void (*DeleteCallback)(Obj *obj);
 
-	// BW1W120 00eb9a98 BW1M119 011f1db8 (LHCombined Release)
-	static DeleteCallback g_collide_del_callback;
+  // BW1W120 00eb9a98 BW1M119 011f1db8 (LHCombined Release)
+  static DeleteCallback g_collide_del_callback;
 
-	Obj* obj;
+  Obj *obj;
 
-	// Constructors
+  // Constructors
 
-	// BW1W120 00829390 BW1M119 0112f210 (LHCombined Release)
-	NewCollide(LH3DObject* obj);
-	// BW1W120 00829590 BW1M119 010b9a30 (LHCombined Release)
-	NewCollide(LHPoint* position, float radius);
+  // BW1W120 00829390 BW1M119 0112f210 (LHCombined Release)
+  NewCollide(LH3DObject *obj);
+  // BW1W120 00829590 BW1M119 010b9a30 (LHCombined Release)
+  NewCollide(LHPoint *position, float radius);
 
-	// Destructors
+  // Destructors
 
-	// BW1W120 0082aea0 BW1M119 010a23a0 (LHCombined Release)
-	~NewCollide();
+  // BW1W120 0082aea0 BW1M119 010a23a0 (LHCombined Release)
+  ~NewCollide();
 };
 
 #endif /* BW1_DECOMP_LH_COLLIDE_INCLUDED_H */

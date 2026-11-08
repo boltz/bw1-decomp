@@ -6,43 +6,46 @@
 
 #include "LHPoint.h" /* For struct LHPoint */
 
+#define ROOTS_PILE_LIFE 15000
+#define ROOTS_PILE_FADE_TIME 1000
+#define ROOTS_PILE_SIZE 0.3f
+
 // Forward Declares
 
 class LH3DObject;
 
-class RootsPile
-{
+class RootsPile {
 public:
-	// Static members
+  // Static members
 
-	// BW1W120 00eb9a00 BW1M119 011f1e34 (LHCombined Release)
-	static RootsPile* g_first;
+  // BW1W120 00eb9a00 BW1M119 011f1e34 (LHCombined Release)
+  static RootsPile *g_first;
 
-	RootsPile*  Next;
-	LH3DObject* Object;
-	int32_t     TimeLeft;
+  RootsPile *Next;
+  LH3DObject *Object;
+  int32_t TimeLeft;
 
-	// Constructors
+  // Constructors
 
-	// BW1W120 008251c0 BW1M119 0109ece0 (LHCombined Release)
-	RootsPile(const LHPoint& pos, float angle, float scale, long mesh);
-	// BW1W120 008251f0 BW1M119 01047c90 (LHCombined Release)
-	RootsPile(LH3DObject* object, long mesh);
+  // BW1W120 008251c0 BW1M119 0109ece0 (LHCombined Release)
+  RootsPile(const LHPoint &pos, float angle, float scale, long mesh);
+  // BW1W120 008251f0 BW1M119 01047c90 (LHCombined Release)
+  RootsPile(LH3DObject *object, long mesh);
 
-	// Destructor
+  // Destructor
 
-	// BW1W120 00825300 BW1M119 0104e1a0 (LHCombined Release)
-	~RootsPile();
+  // BW1W120 00825300 BW1M119 0104e1a0 (LHCombined Release)
+  ~RootsPile();
 
-	// Static methods
+  // Static methods
 
-	// BW1W120 00825350 BW1M119 0100b6d0 (LHCombined Release)
-	static void DrawAll();
+  // BW1W120 00825350 BW1M119 0100b6d0 (LHCombined Release)
+  static void DrawAll();
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00825240 BW1M119 0107ced0 (LHCombined Release)
-	void Init(const LHPoint& pos, float angle, float scale, long mesh);
+  // BW1W120 00825240 BW1M119 0107ced0 (LHCombined Release)
+  void Init(const LHPoint &pos, float angle, float scale, long mesh);
 };
 static_assert(sizeof(RootsPile) == 0xc, "Data type is of wrong size");
 

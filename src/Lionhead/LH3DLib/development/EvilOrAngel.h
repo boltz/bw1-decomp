@@ -5,54 +5,59 @@
 
 #include <re_common.h> /* For bool32_t */
 
+#define EVIL_OR_ANGEL_VISAGE 1
+#define EVIL_OR_ANGEL_ANGEL_CHANCE 50.0f
+#define EVIL_OR_ANGEL_END_MARGIN 110
+#define EVIL_OR_ANGEL_FADE_TIME 500
+#define EVIL_OR_ANGEL_ALPHA 105
+
 // Forward Declares
 
 struct LH3DAnim;
 class LH3DObject;
 
-// The ghost animations; the DEAD1 ones follow a villager that died playing M_P_DEAD1.
-enum EVIL_OR_ANGEL_ANIM
-{
-	EVIL_OR_ANGEL_ANIM_ANGEL,
-	EVIL_OR_ANGEL_ANIM_ANGEL_DEAD1,
-	EVIL_OR_ANGEL_ANIM_EVIL,
-	EVIL_OR_ANGEL_ANIM_EVIL_DEAD1,
-	EVIL_OR_ANGEL_ANIM_LAST
+// The ghost animations; the DEAD1 ones follow a villager that died playing
+// M_P_DEAD1.
+enum EVIL_OR_ANGEL_ANIM {
+  EVIL_OR_ANGEL_ANIM_ANGEL,
+  EVIL_OR_ANGEL_ANIM_ANGEL_DEAD1,
+  EVIL_OR_ANGEL_ANIM_EVIL,
+  EVIL_OR_ANGEL_ANIM_EVIL_DEAD1,
+  EVIL_OR_ANGEL_ANIM_LAST
 };
 
-class EvilOrAngel
-{
+class EvilOrAngel {
 public:
-	// Static members
+  // Static members
 
-	// BW1W120 00eb9a7c BW1M119 011f1dc4 (LHCombined Release)
-	static EvilOrAngel* g_first;
-	// BW1W120 00eb9a80 BW1M119 011cea94 (LHCombined Release)
-	static LH3DAnim* g_list[EVIL_OR_ANGEL_ANIM_LAST];
+  // BW1W120 00eb9a7c BW1M119 011f1dc4 (LHCombined Release)
+  static EvilOrAngel *g_first;
+  // BW1W120 00eb9a80 BW1M119 011cea94 (LHCombined Release)
+  static LH3DAnim *g_list[EVIL_OR_ANGEL_ANIM_LAST];
 
-	EvilOrAngel* Next;
-	LH3DObject*  Object;
-	long         Time;
+  EvilOrAngel *Next;
+  LH3DObject *Object;
+  long Time;
 
-	// Constructors
+  // Constructors
 
-	// BW1W120 00828790 BW1M119 01092770 (LHCombined Release)
-	EvilOrAngel(LH3DObject* villager, long mesh, bool32_t child);
+  // BW1W120 00828790 BW1M119 01092770 (LHCombined Release)
+  EvilOrAngel(LH3DObject *villager, long mesh, bool32_t child);
 
-	// Destructor
+  // Destructor
 
-	// BW1W120 00828900 BW1M119 0107ab20 (LHCombined Release)
-	~EvilOrAngel();
+  // BW1W120 00828900 BW1M119 0107ab20 (LHCombined Release)
+  ~EvilOrAngel();
 
-	// Static methods
+  // Static methods
 
-	// BW1W120 00828950 BW1M119 0100ada0 (LHCombined Release)
-	static void DrawAll();
+  // BW1W120 00828950 BW1M119 0100ada0 (LHCombined Release)
+  static void DrawAll();
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00828990 BW1M119 0112bd60 (LHCombined Release)
-	bool32_t Draw();
+  // BW1W120 00828990 BW1M119 0112bd60 (LHCombined Release)
+  bool32_t Draw();
 };
 static_assert(sizeof(EvilOrAngel) == 0xc, "Data type is of wrong size");
 

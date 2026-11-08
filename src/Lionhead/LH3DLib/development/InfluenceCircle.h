@@ -8,72 +8,92 @@
 #include "LH3DColor.h" /* For struct LH3DColor */
 #include "LHPoint.h"   /* For struct LHPoint */
 
+#define INFLUENCE_CIRCLE_HIDDEN_COLOUR RGBA_MAKE(0xff, 0xff, 0xff, 0)
+#define INFLUENCE_CIRCLE_SEGMENT_LENGTH 20.0f
+#define INFLUENCE_CIRCLE_MIN_SEGMENTS 8
+#define INFLUENCE_CIRCLE_MAX_SEGMENTS 250
+#define INFLUENCE_CIRCLE_ROW_VERTICES 3
+#define INFLUENCE_CIRCLE_SEGMENT_INDICES 24
+#define INFLUENCE_CIRCLE_U_LENGTH -111.0f
+#define INFLUENCE_CIRCLE_V_RADIUS 60.0f
+#define INFLUENCE_CIRCLE_MAX_V 6
+#define INFLUENCE_CIRCLE_MIDDLE_HEIGHT 20.0f
+#define INFLUENCE_CIRCLE_TOP_HEIGHT 40.0f
+#define INFLUENCE_CIRCLE_MIDDLE_V 0.2f
+#define INFLUENCE_CIRCLE_TOP_V 0.4f
+#define INFLUENCE_CIRCLE_LOW_HEIGHT 100.0f
+#define INFLUENCE_CIRCLE_HIGH_HEIGHT 200.0f
+#define INFLUENCE_CIRCLE_HIGH_ALPHA 120
+#define INFLUENCE_CIRCLE_CITADEL_ALPHA 255
+#define INFLUENCE_CIRCLE_ANIM_PERIOD 10000
+#define INFLUENCE_CIRCLE_U_SPEED 10000.0f
+#define INFLUENCE_CIRCLE_V_SPEED 5000.0f
+
 #define INFLUENCE_CIRCLE_PLAYER_COUNT 8
 
 // Forward Declares
 
 struct LH3DMaterial;
 
-class InfluenceCircle
-{
+class InfluenceCircle {
 public:
-	// Static members
+  // Static members
 
-	// BW1W120 00eb9a14 BW1M119 011f1e18 (LHCombined Release)
-	static InfluenceCircle* g_first;
-	// BW1W120 00eb9a18 BW1M119 011f1e14 (LHCombined Release)
-	static LH3DMaterial* g_material;
-	// BW1W120 00eb9a1c BW1M119 011cea38 (LHCombined Release)
-	static bool32_t g_b_valid[INFLUENCE_CIRCLE_PLAYER_COUNT];
-	// BW1W120 00ea9f20 BW1M119 011f1e08 (LHCombined Release)
-	static LHPoint g_pos_inside_citadel;
-	// BW1W120 00eb9a3c BW1M119 011f1e04 (LHCombined Release)
-	static float g_yangle_inside_citadel;
-	// BW1W120 00c383dc BW1M119 011cea58 (LHCombined Release)
-	static float g_scale_inside_citadel;
-	// BW1W120 00ea9efc BW1M119 011f1de4 (LHCombined Release)
-	static LH3DColor g_players_color[INFLUENCE_CIRCLE_PLAYER_COUNT];
+  // BW1W120 00eb9a14 BW1M119 011f1e18 (LHCombined Release)
+  static InfluenceCircle *g_first;
+  // BW1W120 00eb9a18 BW1M119 011f1e14 (LHCombined Release)
+  static LH3DMaterial *g_material;
+  // BW1W120 00eb9a1c BW1M119 011cea38 (LHCombined Release)
+  static bool32_t g_b_valid[INFLUENCE_CIRCLE_PLAYER_COUNT];
+  // BW1W120 00ea9f20 BW1M119 011f1e08 (LHCombined Release)
+  static LHPoint g_pos_inside_citadel;
+  // BW1W120 00eb9a3c BW1M119 011f1e04 (LHCombined Release)
+  static float g_yangle_inside_citadel;
+  // BW1W120 00c383dc BW1M119 011cea58 (LHCombined Release)
+  static float g_scale_inside_citadel;
+  // BW1W120 00ea9efc BW1M119 011f1de4 (LHCombined Release)
+  static LH3DColor g_players_color[INFLUENCE_CIRCLE_PLAYER_COUNT];
 
-	InfluenceCircle* Next;
-	LHPoint          Pos;
-	float            Radius;
-	long             Segments;
-	bool32_t*        Hidden;
-	LHPoint*         Points;
-	unsigned long*   Colours;
-	long*            Indices;
-	float*           UVs;
-	long             Player;
-	bool32_t         Dead;
-	unsigned long    Alpha;
+  InfluenceCircle *Next;
+  LHPoint Pos;
+  float Radius;
+  long Segments;
+  bool32_t *Hidden;
+  LHPoint *Points;
+  unsigned long *Colours;
+  long *Indices;
+  float *UVs;
+  long Player;
+  bool32_t Dead;
+  unsigned long Alpha;
 
-	// Constructors
+  // Constructors
 
-	// BW1W120 008265f0 BW1M119 01167b60 (LHCombined Release)
-	InfluenceCircle(long player, const LHPoint& pos, float radius);
+  // BW1W120 008265f0 BW1M119 01167b60 (LHCombined Release)
+  InfluenceCircle(long player, const LHPoint &pos, float radius);
 
-	// Destructor
+  // Destructor
 
-	// BW1W120 00826bc0 BW1M119 010b8db0 (LHCombined Release)
-	~InfluenceCircle();
+  // BW1W120 00826bc0 BW1M119 010b8db0 (LHCombined Release)
+  ~InfluenceCircle();
 
-	// Static methods
+  // Static methods
 
-	// BW1W120 00826c50 BW1M119 01047c00 (LHCombined Release)
-	static void Reset();
-	// BW1W120 00826c90 BW1M119 0100cef0 (LHCombined Release)
-	static void Draw(int mode);
-	// BW1W120 00826fa0 BW1M119 010bede0 (LHCombined Release)
-	static void Add(long player, const LHPoint& position, float influence);
-	// BW1W120 00827040 BW1M119 011602a0 (LHCombined Release)
-	static void DeleteContact(InfluenceCircle* circle, InfluenceCircle* other);
+  // BW1W120 00826c50 BW1M119 01047c00 (LHCombined Release)
+  static void Reset();
+  // BW1W120 00826c90 BW1M119 0100cef0 (LHCombined Release)
+  static void Draw(int mode);
+  // BW1W120 00826fa0 BW1M119 010bede0 (LHCombined Release)
+  static void Add(long player, const LHPoint &position, float influence);
+  // BW1W120 00827040 BW1M119 011602a0 (LHCombined Release)
+  static void DeleteContact(InfluenceCircle *circle, InfluenceCircle *other);
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00827110 BW1M119 010b2470 (LHCombined Release)
-	void HideContact(InfluenceCircle* other);
-	// BW1W120 00827210 BW1M119 0104e510 (LHCombined Release)
-	bool32_t Contains(float x, float z);
+  // BW1W120 00827110 BW1M119 010b2470 (LHCombined Release)
+  void HideContact(InfluenceCircle *other);
+  // BW1W120 00827210 BW1M119 0104e510 (LHCombined Release)
+  bool32_t Contains(float x, float z);
 };
 static_assert(sizeof(InfluenceCircle) == 0x38, "Data type is of wrong size");
 

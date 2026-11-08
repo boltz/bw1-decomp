@@ -5,26 +5,28 @@
 
 #include <re_common.h> /* For bool32_t */
 
+#define LH3D_IN_BUILD_MAX_EDGES 1000
+#define LH3D_IN_BUILD_COLOR_SCALE 0xc0
+
 struct Vertex3D;
 
 // Draws the outline of an object that is being built.
-struct LH3DInBuild
-{
-	// BW1W120 00eb9994 BW1M119 011f2240 (LHCombined Release)
-	static uint16_t g_edge_count;
-	// BW1W120 00eb9998 BW1M119 011f223c (LHCombined Release)
-	static int ec1;
-	// BW1W120 00eb999c BW1M119 011f2238 (LHCombined Release)
-	static int ec2;
-	// BW1W120 00eb99a0 BW1M119 011f2234 (LHCombined Release)
-	static bool32_t g_b_fuck;
+struct LH3DInBuild {
+  // BW1W120 00eb9994 BW1M119 011f2240 (LHCombined Release)
+  static uint16_t g_edge_count;
+  // BW1W120 00eb9998 BW1M119 011f223c (LHCombined Release)
+  static int ec1;
+  // BW1W120 00eb999c BW1M119 011f2238 (LHCombined Release)
+  static int ec2;
+  // BW1W120 00eb99a0 BW1M119 011f2234 (LHCombined Release)
+  static bool32_t g_b_fuck;
 
-	// BW1W120 00820b10 BW1M119 010bcf80 (LHCombined Release)
-	static Vertex3D* GetListVertex();
-	// BW1W120 00820b20 BW1M119 010c0b00 (LHCombined Release)
-	static void Draw();
-	// BW1W120 00820ec0 BW1M119 010868b0 (LHCombined Release)
-	static void AddEdge(Vertex3D* a, Vertex3D* b);
+  // BW1W120 00820b10 BW1M119 010bcf80 (LHCombined Release)
+  static Vertex3D *GetListVertex();
+  // BW1W120 00820b20 BW1M119 010c0b00 (LHCombined Release)
+  static void Draw();
+  // BW1W120 00820ec0 BW1M119 010868b0 (LHCombined Release)
+  static void AddEdge(Vertex3D *a, Vertex3D *b);
 };
 
 #endif /* BW1_DECOMP_LH3D_IN_BUILD_INCLUDED_H */

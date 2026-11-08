@@ -6,40 +6,54 @@
 #include "LH3DColor.h" /* For struct LH3DColor */
 #include "LHPoint.h"   /* For struct LHPoint */
 
+#define SMOKY_STUFF_FRAME 16
+#define SMOKY_STUFF_BURST_SPEED 1.5f
+#define SMOKY_STUFF_MIN_SPEED 0.3f
+#define SMOKY_STUFF_BURST_LIFE 1.5f
+#define SMOKY_STUFF_LIFE 3.0f
+#define SMOKY_STUFF_FADE_LIFE 0.7f
+#define SMOKY_STUFF_BURST_COLOUR 0x68503d
+#define SMOKY_STUFF_ALPHA 100.0f
+#define SMOKY_STUFF_COLOUR 0x808080
+#define SMOKY_STUFF_DEFAULT_COLOUR 0xffffffff
+#define SMOKY_STUFF_SPIN 5.0f
+#define SMOKY_STUFF_FRAMES 15.0f
+#define SMOKY_STUFF_TYPE_BURST 1
+
 // Forward Declares
 
 struct LH3DSprite;
 
 #define SMOKY_STUFF_PUFFS 15
 
-struct SmokyStuff
-{
-	// BW1W120 00eb99cc BW1M119 011f1e70 (LHCombined Release)
-	static SmokyStuff* g_first;
-	// BW1W120 00c383cc BW1M119 011cea30 (LHCombined Release)
-	static float g_dt;
+struct SmokyStuff {
+  // BW1W120 00eb99cc BW1M119 011f1e70 (LHCombined Release)
+  static SmokyStuff *g_first;
+  // BW1W120 00c383cc BW1M119 011cea30 (LHCombined Release)
+  static float g_dt;
 
-	LHPoint     Directions[SMOKY_STUFF_PUFFS];
-	SmokyStuff* Next;
-	LH3DSprite* Sprites;
-	float       Life;
-	long        Type;
-	float       Size;
-	LH3DColor   Color;
+  LHPoint Directions[SMOKY_STUFF_PUFFS];
+  SmokyStuff *Next;
+  LH3DSprite *Sprites;
+  float Life;
+  long Type;
+  float Size;
+  LH3DColor Color;
 
-	// Static methods
+  // Static methods
 
-	// BW1W120 00823c90 BW1M119 010bcfc0 (LHCombined Release)
-	static SmokyStuff* Create(const LHPoint* pos, long type, float size, LH3DColor color);
-	// BW1W120 00824140 BW1M119 0100af90 (LHCombined Release)
-	static void ProcessAll();
+  // BW1W120 00823c90 BW1M119 010bcfc0 (LHCombined Release)
+  static SmokyStuff *Create(const LHPoint *pos, long type, float size,
+                            LH3DColor color);
+  // BW1W120 00824140 BW1M119 0100af90 (LHCombined Release)
+  static void ProcessAll();
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00823f20 BW1M119 010a1f10 (LHCombined Release)
-	void Release();
-	// BW1W120 00823f70 BW1M119 010c8e90 (LHCombined Release)
-	void Process();
+  // BW1W120 00823f20 BW1M119 010a1f10 (LHCombined Release)
+  void Release();
+  // BW1W120 00823f70 BW1M119 010c8e90 (LHCombined Release)
+  void Process();
 };
 static_assert(sizeof(SmokyStuff) == 0xcc, "Data type is of wrong size");
 

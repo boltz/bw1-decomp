@@ -7,131 +7,160 @@
 
 #include <Lionhead/LH3DLib/development/LHPoint.h> /* For struct LHPoint */
 
+#define FISH_MIN_SIZE 0.8f
+#define FISH_MAX_SIZE 1.2f
+#define FISH_SPRITE_FRAMES 15.5f
+#define FISH_FRAMES 15.0f
+#define FISH_SPREAD 5.0f
+#define FISH_DEPTH 1.0f
+#define FISH_MIN_SPEED 0.5f
+#define FISH_MAX_SPEED 1.5f
+#define FISH_TURN_VARIATION 0.1f
+#define FISH_TURN_SPEED (TWO_PI / 10.0f)
+#define FISH_FEAR_SPEED 4.0f
+#define FISH_MAX_STEP 0.1f
+#define FISH_ANIMATION_SPEED 25.0f
+#define FISH_FRAME_MASK 0xf
+#define FISH_FIRST_FRAME 8
+#define FISH_RUSH_COLLIDE_RADIUS 2.0f
+#define FISH_RUSH_FEAR_RADIUS 8.0f
+#define FISH_RUSH_FEAR_TIME 2.0f
+#define FISH_RUSH_FADE_DIST 200.0f
+#define FISH_RUSH_FADE_RANGE 100.0f
+#define FISH_RUSH_DRAW_DIST 300.0f
+#define FISH_RUSH_TARGET_TIME 0.5f
+#define FISH_RUSH_ESCAPE_DIST 2.0f
+#define FISH_RUSH_SPLASH_GROWTH 2.0f
+#define FISH_RUSH_SPLASH_FRAME 48
+#define FISH_RUSH_SPLASH_COLOUR 0xffffffff
+#define FISH_RUSH_NET_BOB 0.5f
+#define FISH_RUSH_NET_SHRINK_SPEED 2.0f
+#define FISH_RUSH_NET_RADIUS 10.0f
+#define FISH_RUSH_NET_SPEED 2.0f
+#define FISH_RUSH_NET_MESH_PATH "Data\\MISC\\Fishplot.l3d"
+
 // Forward Declares
 
 struct LH3DMesh;
 struct LH3DObject;
 struct LH3DSprite;
 
-#define FISH_RUSH_MAX_FISH     15
+#define FISH_RUSH_MAX_FISH 15
 #define FISH_RUSH_NET_SEGMENTS 7
 
-class Fish
-{
+class Fish {
 public:
-	LH3DSprite* Sprite;
-	LHPoint     Pos;
-	float       Angle;
-	float       Speed;
-	float       TurnSpeed;
-	float       Frame;
-	float       Fear;
+  LH3DSprite *Sprite;
+  LHPoint Pos;
+  float Angle;
+  float Speed;
+  float TurnSpeed;
+  float Frame;
+  float Fear;
 
-	// Constructors
+  // Constructors
 
-	// BW1W120 00824740 BW1M119 0104e2c0 (LHCombined Release)
-	Fish(LHPoint* pos);
+  // BW1W120 00824740 BW1M119 0104e2c0 (LHCombined Release)
+  Fish(LHPoint *pos);
 
-	// Destructor
+  // Destructor
 
-	// BW1W120 00824700 BW1M119 010a1850 (LHCombined Release)
-	~Fish();
+  // BW1W120 00824700 BW1M119 010a1850 (LHCombined Release)
+  ~Fish();
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00824720 BW1M119 01092e10 (LHCombined Release)
-	bool32_t Draw(LHPoint* target);
-	// BW1W120 008248e0 BW1M119 010211f0 (LHCombined Release)
-	bool32_t ComputePos(LHPoint* target);
+  // BW1W120 00824720 BW1M119 01092e10 (LHCombined Release)
+  bool32_t Draw(LHPoint *target);
+  // BW1W120 008248e0 BW1M119 010211f0 (LHCombined Release)
+  bool32_t ComputePos(LHPoint *target);
 };
 static_assert(sizeof(Fish) == 0x24, "Data type is of wrong size");
 
-// A shoal of fish swimming around its centre, which can be herded into a net to complete a challenge.
-class FishRush
-{
+// A shoal of fish swimming around its centre, which can be herded into a net to
+// complete a challenge.
+class FishRush {
 public:
-	// The net drawn around a challenge's goal.
-	struct PaulNet
-	{
-		LH3DObject* Object;                         /* 0x00 */
-		LH3DMesh*   Mesh;                           /* 0x04 */
-		LHPoint     Pos;                            /* 0x08 */
-		LHPoint     Points[FISH_RUSH_NET_SEGMENTS]; /* 0x14 */
-		float       Phase;                          /* 0x68 */
-		float       Bob[FISH_RUSH_NET_SEGMENTS];    /* 0x6c */
-		float       Size;                           /* 0x88 */
-		bool32_t    Caught;                         /* 0x8c */
+  // The net drawn around a challenge's goal.
+  struct PaulNet {
+    LH3DObject *Object;                     /* 0x00 */
+    LH3DMesh *Mesh;                         /* 0x04 */
+    LHPoint Pos;                            /* 0x08 */
+    LHPoint Points[FISH_RUSH_NET_SEGMENTS]; /* 0x14 */
+    float Phase;                            /* 0x68 */
+    float Bob[FISH_RUSH_NET_SEGMENTS];      /* 0x6c */
+    float Size;                             /* 0x88 */
+    bool32_t Caught;                        /* 0x8c */
 
-		// Constructors
+    // Constructors
 
-		// BW1W120 00829a30 BW1M119 010c10f0 (LHCombined Release)
-		PaulNet(LHPoint* pos, float radius);
+    // BW1W120 00829a30 BW1M119 010c10f0 (LHCombined Release)
+    PaulNet(LHPoint *pos, float radius);
 
-		// Destructor
+    // Destructor
 
-		// BW1W120 00829b20 BW1M119 010d7ad0 (LHCombined Release)
-		~PaulNet();
+    // BW1W120 00829b20 BW1M119 010d7ad0 (LHCombined Release)
+    ~PaulNet();
 
-		// Non-virtual methods
+    // Non-virtual methods
 
-		// BW1W120 00829b50 BW1M119 010d7b80 (LHCombined Release)
-		void Draw();
-		// BW1W120 00829bc0 BW1M119 010bc4d0 (LHCombined Release)
-		void PreDraw();
-	};
+    // BW1W120 00829b50 BW1M119 010d7b80 (LHCombined Release)
+    void Draw();
+    // BW1W120 00829bc0 BW1M119 010bc4d0 (LHCombined Release)
+    void PreDraw();
+  };
 
-	// A number of fish to be kept inside a circle for a while.
-	struct Challenge
-	{
-		LHPoint  Pos;       /* 0x00 */
-		float    Radius;    /* 0x0c */
-		long     Target;    /* 0x10 */
-		long     Duration;  /* 0x14 */
-		bool32_t Done;      /* 0x18 */
-		long     LastFrame; /* 0x1c */
-		long     Count;     /* 0x20 */
-		long     Time;      /* 0x24 */
-		PaulNet* Net;       /* 0x28 */
+  // A number of fish to be kept inside a circle for a while.
+  struct Challenge {
+    LHPoint Pos;    /* 0x00 */
+    float Radius;   /* 0x0c */
+    long Target;    /* 0x10 */
+    long Duration;  /* 0x14 */
+    bool32_t Done;  /* 0x18 */
+    long LastFrame; /* 0x1c */
+    long Count;     /* 0x20 */
+    long Time;      /* 0x24 */
+    PaulNet *Net;   /* 0x28 */
 
-		// Non-virtual methods
+    // Non-virtual methods
 
-		// BW1W120 00824d90 BW1M119 010bdf90 (LHCombined Release)
-		void Draw();
-	};
+    // BW1W120 00824d90 BW1M119 010bdf90 (LHCombined Release)
+    void Draw();
+  };
 
-	// Static members
+  // Static members
 
-	// BW1W120 00eb99f0 BW1M119 011f1e50 (LHCombined Release)
-	static bool32_t g_b_er_valid;
-	// BW1W120 00ea9f40 BW1M119 011f1e44 (LHCombined Release)
-	static LHPoint g_emergency;
-	// BW1W120 00eb99f4 BW1M119 011f1e40 (LHCombined Release)
-	static FishRush* g_first;
-	// BW1W120 00eb99f8 BW1M119 011f1e3c (LHCombined Release)
-	static Challenge* g_challenge;
+  // BW1W120 00eb99f0 BW1M119 011f1e50 (LHCombined Release)
+  static bool32_t g_b_er_valid;
+  // BW1W120 00ea9f40 BW1M119 011f1e44 (LHCombined Release)
+  static LHPoint g_emergency;
+  // BW1W120 00eb99f4 BW1M119 011f1e40 (LHCombined Release)
+  static FishRush *g_first;
+  // BW1W120 00eb99f8 BW1M119 011f1e3c (LHCombined Release)
+  static Challenge *g_challenge;
 
-	Fish*      Fishes[FISH_RUSH_MAX_FISH]; /* 0x00 */
-	LHPoint    Target;                     /* 0x3c */
-	LHPoint    Center;                     /* 0x48 */
-	float      TargetTime;                 /* 0x54 */
-	float      Radius;                     /* 0x58 */
-	Challenge* Goal;                       /* 0x5c */
-	FishRush*  Next;                       /* 0x60 */
-	float      Density;                    /* 0x64 */
+  Fish *Fishes[FISH_RUSH_MAX_FISH]; /* 0x00 */
+  LHPoint Target;                   /* 0x3c */
+  LHPoint Center;                   /* 0x48 */
+  float TargetTime;                 /* 0x54 */
+  float Radius;                     /* 0x58 */
+  Challenge *Goal;                  /* 0x5c */
+  FishRush *Next;                   /* 0x60 */
+  float Density;                    /* 0x64 */
 
-	// Static methods
+  // Static methods
 
-	// BW1W120 00824b10 BW1M119 010bb6d0 (LHCombined Release)
-	static FishRush* CollideWithFish(LHPoint* pos);
-	// BW1W120 00824b90 BW1M119 01013690 (LHCombined Release)
-	static void DrawPreAll();
-	// BW1W120 00824d60 BW1M119 0100b650 (LHCombined Release)
-	static void DrawPostAll();
+  // BW1W120 00824b10 BW1M119 010bb6d0 (LHCombined Release)
+  static FishRush *CollideWithFish(LHPoint *pos);
+  // BW1W120 00824b90 BW1M119 01013690 (LHCombined Release)
+  static void DrawPreAll();
+  // BW1W120 00824d60 BW1M119 0100b650 (LHCombined Release)
+  static void DrawPostAll();
 
-	// Non-virtual methods
+  // Non-virtual methods
 
-	// BW1W120 00824da0 BW1M119 01020b70 (LHCombined Release)
-	long Draw();
+  // BW1W120 00824da0 BW1M119 01020b70 (LHCombined Release)
+  long Draw();
 };
 static_assert(sizeof(FishRush) == 0x68, "Data type is of wrong size");
 
