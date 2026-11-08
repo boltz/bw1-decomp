@@ -4885,6 +4885,7 @@ void GWater::AddPlouf(LHPoint* pos)
 			continue;
 		}
 		Actives[i] = true;
+		bool createTrail = false;
 		switch (State)
 		{
 		case GWATER_STATE_NONE:
@@ -4897,70 +4898,38 @@ void GWater::AddPlouf(LHPoint* pos)
 			Actives[Last] = false;
 			State = GWATER_STATE_TRAIL_STARTED;
 			Types[i] = GWATER_PLOUF_TYPE_TRAIL_ALONE;
-			Trails[i].Start.Set(LastPos);
-			Trails[i].End.Set(pos->x, 0.0f, pos->z);
-			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
-				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
-				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
-				if (length < GWATER_PLOUF_MIN_SIZE)
-				{
-					length = GWATER_PLOUF_MIN_SIZE;
-				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
-			}
+			createTrail = true;
 			break;
 		case GWATER_STATE_TRAIL_STARTED:
 			Types[Last] = GWATER_PLOUF_TYPE_TRAIL_START;
 			Types[i] = GWATER_PLOUF_TYPE_TRAIL_END;
 			State = GWATER_STATE_TRAIL;
-			Trails[i].Start.Set(LastPos);
-			Trails[i].End.Set(pos->x, 0.0f, pos->z);
-			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
-				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
-				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
-				if (length < GWATER_PLOUF_MIN_SIZE)
-				{
-					length = GWATER_PLOUF_MIN_SIZE;
-				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
-			}
+			createTrail = true;
 			break;
 		case GWATER_STATE_TRAIL:
 			Types[Last] = GWATER_PLOUF_TYPE_TRAIL;
 			Types[i] = GWATER_PLOUF_TYPE_TRAIL_END;
+			createTrail = true;
+			break;
+		}
+		if (createTrail)
+		{
 			Trails[i].Start.Set(LastPos);
 			Trails[i].End.Set(pos->x, 0.0f, pos->z);
+			LHPoint middle(Trails[i].Start);
+			middle.Add(Trails[i].End);
+			middle.Mul(0.5f);
+			Sprites[i].pos.Set(middle);
+			float dz = Trails[i].Start.z - Trails[i].End.z;
+			float dx = Trails[i].Start.x - Trails[i].End.x;
+			float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
+			if (length < GWATER_PLOUF_MIN_SIZE)
 			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
-				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
-				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
-				if (length < GWATER_PLOUF_MIN_SIZE)
-				{
-					length = GWATER_PLOUF_MIN_SIZE;
-				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
+				length = GWATER_PLOUF_MIN_SIZE;
 			}
-			break;
+			Lengths[i] = length;
+			Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
+			Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
 		}
 		Last = i;
 		LastPos.Set(pos->x, 0.0f, pos->z);
