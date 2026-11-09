@@ -807,11 +807,11 @@ void LHTGA::GetARGB(unsigned long* alpha_out, unsigned long* red_out, unsigned l
 {
 	if (format == LHTGA_FORMAT_ARGB4444)
 	{
-		uint16_t      pixel = ((uint16_t*)source_pixels)[pixel_index];
-		unsigned long alpha = (pixel >> 8) & 0xf0;
-		unsigned long green = pixel & 0xf0;
-		unsigned long red = (pixel >> 4) & 0xf0;
-		unsigned long blue = (pixel & 0xf) << 4;
+		uint16_t pixel = ((uint16_t*)source_pixels)[pixel_index];
+		uint32_t alpha = (pixel >> 8) & 0xf0;
+		uint32_t green = pixel & 0xf0;
+		uint32_t red = (pixel >> 4) & 0xf0;
+		uint32_t blue = (pixel & 0xf) << 4;
 		*alpha_out = (uint8_t)alpha;
 		*red_out = (uint8_t)red;
 		*green_out = (uint8_t)green;
@@ -870,7 +870,7 @@ bool32_t LH3DInBuild::g_b_fuck = false;
 
 static inline void AddInBuildTriangle(uint16_t a, uint16_t b, uint16_t c)
 {
-	unsigned long flagsA = LH3DTech::g_cache_flags[a];
+	uint32_t      flagsA = LH3DTech::g_cache_flags[a];
 	unsigned long flagsB = LH3DTech::g_cache_flags[b];
 	unsigned long flagsC = LH3DTech::g_cache_flags[c];
 	if (flagsA | flagsB | flagsC)
@@ -952,10 +952,10 @@ void LH3DInBuild::Draw()
 		return;
 	}
 
-	unsigned long color = LH3D_SCALE_COLOR(LH3DMesh::g_color, LH3D_IN_BUILD_COLOR_SCALE);
-	Vertex3D*     clipVertex = GetListVertex();
-	uint16_t      edgeCount = g_edge_count;
-	uint16_t      vertexCount = edgeCount * 2;
+	uint32_t  color = LH3D_SCALE_COLOR(LH3DMesh::g_color, LH3D_IN_BUILD_COLOR_SCALE);
+	Vertex3D* clipVertex = GetListVertex();
+	uint16_t  edgeCount = g_edge_count;
+	uint16_t  vertexCount = edgeCount * 2;
 	ProjectInBuildVertices(clipVertex, vertexCount, color);
 	LH3DTech::g_index_count = 0;
 	LH3DTech::g_points_count = vertexCount;
@@ -1118,16 +1118,16 @@ bool32_t                 ScriptedScreenShot::g_b_do_it = false;
 static void SampleScreenshot16(uint8_t* destination, const uint16_t* source, long pitch_pixels, unsigned long width,
                                unsigned long height, float scale_x, float scale_y, bool32_t rgb565)
 {
-	unsigned long redShift = rgb565 ? 12 : 11;
-	unsigned long greenShift = rgb565 ? 7 : 6;
-	for (unsigned long y = 0; y < height; y++)
+	uint32_t redShift = rgb565 ? 12 : 11;
+	uint32_t greenShift = rgb565 ? 7 : 6;
+	for (uint32_t y = 0; y < height; y++)
 	{
 		long     rowOffset = (long)(y * scale_y) * pitch_pixels;
 		uint32_t pixel = source[rowOffset];
 		uint32_t previousRed = (pixel >> redShift) & 0xf;
 		uint32_t previousGreen = (pixel >> greenShift) & 0xf;
 		uint32_t previousBlue = (pixel >> 1) & 0xf;
-		for (unsigned long x = 0; x < width; x++)
+		for (uint32_t x = 0; x < width; x++)
 		{
 			pixel = source[rowOffset + (long)(x * scale_x)];
 			uint32_t red = (pixel >> redShift) & 0xf;
@@ -1146,14 +1146,14 @@ static void SampleScreenshot16(uint8_t* destination, const uint16_t* source, lon
 static void SampleScreenshot32(uint8_t* destination, const uint32_t* source, long pitch_pixels, unsigned long width,
                                unsigned long height, float scale_x, float scale_y)
 {
-	for (unsigned long y = 0; y < height; y++)
+	for (uint32_t y = 0; y < height; y++)
 	{
 		long     rowOffset = (long)(y * scale_y) * pitch_pixels;
 		uint32_t pixel = source[rowOffset];
 		uint32_t previousRed = RGBA_GETRED(pixel);
 		uint32_t previousGreen = RGBA_GETGREEN(pixel);
 		uint32_t previousBlue = RGBA_GETBLUE(pixel);
-		for (unsigned long x = 0; x < width; x++)
+		for (uint32_t x = 0; x < width; x++)
 		{
 			pixel = source[rowOffset + (long)(x * scale_x)];
 			uint32_t red = RGBA_GETRED(pixel);
@@ -1171,8 +1171,8 @@ static void SampleScreenshot32(uint8_t* destination, const uint32_t* source, lon
 
 static void BlendScreenshotPixels(uint8_t* pixel)
 {
-	unsigned long x;
-	unsigned long y;
+	uint32_t x;
+	uint32_t y;
 	for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; y++)
 	{
 		for (x = 0; x < CITADEL_TEXTURE_SIZE - 1; x++)
@@ -1197,8 +1197,8 @@ static void BlendScreenshotPixels(uint8_t* pixel)
 
 static void BuildScreenshotThumbnail(uint8_t* thumbnail, const uint8_t* source)
 {
-	unsigned long x;
-	unsigned long y;
+	uint32_t x;
+	uint32_t y;
 	for (y = 0; y < SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT; y++)
 	{
 		for (x = 0; x < SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH; x++)
@@ -1366,7 +1366,7 @@ void LH3DTools::DeteleTexture(int argc, char** argv)
 		}
 		LH3DTexturePackFile* pack = (LH3DTexturePackFile*)malloc(size);
 		LHLoadData(name, pack, size, NULL);
-		unsigned long packSize = pack->Offsets;
+		uint32_t packSize = pack->Offsets;
 		pack->Offsets = LH3D_TEXTURE_PACK_NO_OFFSETS;
 		pack->Count = 0;
 		LHSaveData(name, pack, packSize, NULL);
@@ -1580,8 +1580,8 @@ void LH3DTools::ConvertLoadOnDiscIntoCT(int argc, char** argv)
 		int length = strlen(name);
 		name[length - LH3D_TOOLS_EXTENSION_LENGTH] = '\0';
 		strcat(name, "a.raw");
-		uint32_t      size;
-		unsigned long alpha = 0;
+		uint32_t size;
+		uint32_t alpha = 0;
 		if (LHFileLength(name, &size) == LH_FILE_RESULT_OK)
 		{
 			alpha = LH3D_TOOLS_TEXTURE_ALPHA;
@@ -1639,9 +1639,9 @@ static uint8_t GetLightGridWeight(float grid_coordinate, long& cell_coordinate)
 static unsigned long SampleLightBrush(uint8_t* sample, long size, uint8_t weight_x, uint8_t weight_z,
                                       long intensity_weight)
 {
-	uint8_t*      nextColumn = sample + size;
-	unsigned long columnDarkness = LH3D_BLEND_COLOR(sample[0], sample[1], weight_z);
-	unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weight_z);
+	uint8_t* nextColumn = sample + size;
+	uint32_t columnDarkness = LH3D_BLEND_COLOR(sample[0], sample[1], weight_z);
+	uint32_t nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weight_z);
 	return LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weight_x) * intensity_weight / LH3D_COLOR_CHANNEL_MAX;
 }
 
@@ -1749,7 +1749,7 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 				continue;
 			}
 
-			unsigned long darkness =
+			uint32_t darkness =
 				SampleLightBrush(region.Samples + column * size + row, size, weightX, weightZ, intensityWeight);
 			if (darkness <= (cell->darkness * maxDarkness >> 8))
 			{
@@ -2105,7 +2105,7 @@ void SmokyStuff::Process()
 	{
 		alpha = 255.0f;
 	}
-	unsigned long colour;
+	uint32_t colour;
 	if (Type != 0)
 	{
 		colour = RGBA_SETALPHA(SMOKY_STUFF_BURST_COLOUR, (long)alpha);
@@ -2833,7 +2833,7 @@ void SuperVillager::Draw()
 	LH3DTech::g_current_matrix = &LH3DTech::g_local_to_clipping;
 	bool32_t swimming = strcmp(Object->GetCurrentAnim()->name, SUPER_VILLAGER_SWIM_ANIM) == 0;
 	TransformVillagerAnimation(Object, worldMatrix, swimming, NoSmoothing);
-	unsigned long specular = Object->specular;
+	uint32_t specular = Object->specular;
 	LH3DMesh::g_color = Object->color;
 	LH3DMesh::g_specular = specular;
 	LH3DTech::g_world_to_local.SetInverse(worldMatrix);
@@ -3052,6 +3052,23 @@ LH3DColor        InfluenceCircle::g_players_color[INFLUENCE_CIRCLE_PLAYER_COUNT]
 	LH3DColor(0xff, 0xff, 0xff, 0x00), //
 };
 
+static long* WriteInfluenceCircleStrip(long* indices, long first_vertex)
+{
+	*indices++ = first_vertex;
+	*indices++ = first_vertex + INFLUENCE_CIRCLE_ROW_VERTICES;
+	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+	*indices++ = first_vertex;
+	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+	*indices++ = first_vertex + 1;
+	*indices++ = first_vertex + 1;
+	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
+	*indices++ = first_vertex + 1;
+	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
+	*indices++ = first_vertex + 2;
+	return indices;
+}
+
 InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 {
 	player &= INFLUENCE_CIRCLE_PLAYER_COUNT - 1;
@@ -3119,18 +3136,7 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		}
 		u += uStep;
 		v += vStep;
-		*index++ = rowStartVertex;
-		*index++ = rowStartVertex + INFLUENCE_CIRCLE_ROW_VERTICES;
-		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-		*index++ = rowStartVertex;
-		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-		*index++ = rowStartVertex + 1;
-		*index++ = rowStartVertex + 1;
-		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
-		*index++ = rowStartVertex + 1;
-		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
-		*index++ = rowStartVertex + 2;
+		index = WriteInfluenceCircleStrip(index, rowStartVertex);
 		rowStartVertex += INFLUENCE_CIRCLE_ROW_VERTICES;
 	}
 	for (InfluenceCircle* other = Next; other != NULL; other = other->Next)
@@ -3196,7 +3202,7 @@ void InfluenceCircle::Reset()
 void InfluenceCircle::Draw(bool32_t world_space)
 {
 	InfluenceCircle* circle = g_first;
-	unsigned long    alpha = INFLUENCE_CIRCLE_HIGH_ALPHA;
+	uint32_t         alpha = INFLUENCE_CIRCLE_HIGH_ALPHA;
 	if (world_space)
 	{
 		float height = LH3DTech::g_camera.pos.y;
@@ -3607,9 +3613,9 @@ bool32_t Eureka::Draw()
 	{
 		return true;
 	}
-	float         spriteScale = (ageMilliseconds / EUREKA_LIFE + 1.0f) * Size;
-	long          alpha = 0xff;
-	unsigned long colour = 0xffffffff;
+	float    spriteScale = (ageMilliseconds / EUREKA_LIFE + 1.0f) * Size;
+	long     alpha = 0xff;
+	uint32_t colour = 0xffffffff;
 	if (ageMilliseconds >= EUREKA_FADE_START)
 	{
 		alpha = (long)(((1.0f - (ageMilliseconds - EUREKA_FADE_START) / EUREKA_FADE_TIME) * 255.0f) * Opacity);
@@ -3982,9 +3988,9 @@ bool32_t DansLesNuages::Draw()
 	{
 		alpha = (long)((1.0f - (float)(Time - MIN_TIME_DLN) / (MAX_TIME_DLN - MIN_TIME_DLN)) * 255.0f);
 	}
-	unsigned long colour = RGBA_MAKE(0xff, 0xff, 0xff, alpha);
-	float         step = LH3DTech::GetGameTimeInc() / DANS_LES_NUAGES_FRAME_TIME;
-	LH3DSprite*   sprite = Sprites;
+	uint32_t    colour = RGBA_MAKE(0xff, 0xff, 0xff, alpha);
+	float       step = LH3DTech::GetGameTimeInc() / DANS_LES_NUAGES_FRAME_TIME;
+	LH3DSprite* sprite = Sprites;
 	for (long spriteIndex = 0; spriteIndex < DANS_LES_NUAGES_SPRITES; spriteIndex++, sprite++)
 	{
 		Frames[spriteIndex] += step;
@@ -4259,8 +4265,8 @@ void LH3DArena::ComputeLight()
 	{
 		float light = (float)LHSys::TheSystem.mouse.DefaultPos.Y() / LH3DTech::g_info_transform.resolution.y;
 		g_b_end_sequence_dark = 1.0f - light;
-		long          level = (long)(light * 255.0f);
-		unsigned long colour = RGBA_MAKE(level, level, level, LH3D_COLOR_OPAQUE);
+		long     level = (long)(light * 255.0f);
+		uint32_t colour = RGBA_MAKE(level, level, level, LH3D_COLOR_OPAQUE);
 		for (int darknessIndex = 0; darknessIndex < LAND_CELL_MAX_DARKNESS + 1; darknessIndex++)
 		{
 			LandCell::g_darkness_to_color[darknessIndex] = colour;
@@ -4490,7 +4496,7 @@ void GWater::Process(LHPoint* pos)
 
 void GWater::AddPlouf(LHPoint* pos)
 {
-	for (unsigned long slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
+	for (uint32_t slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
 	{
 		if (Actives[slotIndex])
 		{
@@ -4583,7 +4589,7 @@ void GWater::AddPlouf(LHPoint* pos)
 
 void GWater::Draw()
 {
-	for (unsigned long slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
+	for (uint32_t slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
 	{
 		if (!Actives[slotIndex])
 		{
@@ -4594,7 +4600,7 @@ void GWater::Draw()
 			Sprites[slotIndex].pos.x += g_speed * LH3DTech::g_ambient_wind_direction.x;
 			Sprites[slotIndex].pos.z += g_speed * LH3DTech::g_ambient_wind_direction.z;
 		}
-		unsigned long age = Ages[slotIndex] + LH3DTech::g_game_time_inc;
+		uint32_t age = Ages[slotIndex] + LH3DTech::g_game_time_inc;
 		if (age > GWATER_PLOUF_LIFE)
 		{
 			age = 0;
@@ -4630,7 +4636,7 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 {
 	float maxX = LH3DTech::g_max_screen[0];
 	float maxY = LH3DTech::g_max_screen[1];
-	for (unsigned long vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
+	for (uint32_t vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
 	{
 		CLAMP(vertices[vertexIndex].x, 0.0f, maxX);
 		CLAMP(vertices[vertexIndex].y, 0.0f, maxY);
@@ -4657,7 +4663,7 @@ void __cdecl DrawAndClip2D(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, V
 	LHPoint uPlaneNormal;
 	LHPoint vPlaneNormal;
 	float   vPlaneDistance;
-	for (unsigned long vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
+	for (uint32_t vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
 	{
 		Vertex3D* vertex = &vertices[vertexIndex];
 		if (vertex->x < 0.0f || vertex->y < 0.0f || vertex->x > maxX || vertex->y > maxY)
@@ -4694,7 +4700,7 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 {
 	float maxX = LH3DTech::g_max_screen[0];
 	float maxY = LH3DTech::g_max_screen[1];
-	for (unsigned long vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
+	for (uint32_t vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
 	{
 		CLAMP(vertices[vertexIndex].x, 0.0f, maxX);
 		CLAMP(vertices[vertexIndex].y, 0.0f, maxY);
