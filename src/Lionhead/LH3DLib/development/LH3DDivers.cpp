@@ -712,6 +712,19 @@ void SetVertices(LHPoint* vertices, LHPoint* direction, LHPoint* center)
 	vertices[1] += offset + g_left;
 }
 
+static LHPoint GetShadowFootPosition(long bone_index, const LHMatrix* bone_matrix)
+{
+	LHMatrix matrix = LH3DMesh::g_current_list_matrix[bone_index];
+	matrix.PostMultiply(LH3DTech::g_clipping_to_world);
+	if (bone_matrix != NULL)
+	{
+		matrix.PreMultiply(*bone_matrix);
+	}
+	LHPoint position = matrix.GetPos();
+	position.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+	return position;
+}
+
 void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 {
 	LHPoint up = *normal;
@@ -722,33 +735,17 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 	direction += light;
 	if (bone != NULL)
 	{
-		long     quads = LH3D_FEET_SHADOW_HUMAN_QUADS;
-		LHMatrix matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[0]];
-		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		matrix.PreMultiply(bone->Matrix[0]);
-		LHPoint firstFoot = matrix.GetPos();
-		firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[1]];
-		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		matrix.PreMultiply(bone->Matrix[1]);
-		LHPoint secondFoot = matrix.GetPos();
-		secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		long    quads = LH3D_FEET_SHADOW_HUMAN_QUADS;
+		LHPoint firstFoot = GetShadowFootPosition(bone->BoneIndex[0], &bone->Matrix[0]);
+		LHPoint secondFoot = GetShadowFootPosition(bone->BoneIndex[1], &bone->Matrix[1]);
 		SetVertices(&g_vertex_list[0], &direction, &firstFoot);
 		LHPoint offset = (firstFoot - secondFoot) * 0.5f + direction;
 		SetVertices(&g_vertex_list[LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
 		if (bone->BoneIndex[2] != -1)
 		{
 			quads = LH3D_FEET_SHADOW_QUADS;
-			matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[2]];
-			matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-			matrix.PreMultiply(bone->Matrix[2]);
-			firstFoot = matrix.GetPos();
-			firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-			matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[3]];
-			matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-			matrix.PreMultiply(bone->Matrix[3]);
-			secondFoot = matrix.GetPos();
-			secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+			firstFoot = GetShadowFootPosition(bone->BoneIndex[2], &bone->Matrix[2]);
+			secondFoot = GetShadowFootPosition(bone->BoneIndex[3], &bone->Matrix[3]);
 			SetVertices(&g_vertex_list[2 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &direction, &firstFoot);
 			offset = (firstFoot - secondFoot) * 0.5f + direction;
 			SetVertices(&g_vertex_list[3 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
@@ -759,14 +756,8 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 	}
 	else
 	{
-		LHMatrix matrix = LH3DMesh::g_current_list_matrix[HUMAN_BONE_RIGHT_FOOT];
-		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		LHPoint firstFoot = matrix.GetPos();
-		firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		matrix = LH3DMesh::g_current_list_matrix[HUMAN_BONE_LEFT_FOOT];
-		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		LHPoint secondFoot = matrix.GetPos();
-		secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		LHPoint firstFoot = GetShadowFootPosition(HUMAN_BONE_RIGHT_FOOT, NULL);
+		LHPoint secondFoot = GetShadowFootPosition(HUMAN_BONE_LEFT_FOOT, NULL);
 		LHPoint offset = direction + (secondFoot - firstFoot) * 0.5f;
 		SetVertices(&g_vertex_list[0], &offset, &firstFoot);
 		offset = (firstFoot - secondFoot) * 0.5f + direction;
@@ -1119,6 +1110,108 @@ bool32_t                 ScriptedScreenShot::g_b_fullscreen_ready = false;
 bool32_t                 ScriptedScreenShot::g_b_fullscreen = false;
 bool32_t                 ScriptedScreenShot::g_b_do_it = false;
 
+static void SampleScreenshot16(uint8_t* destination, const uint16_t* source, long pitch_pixels, unsigned long width,
+                               unsigned long height, float scale_x, float scale_y, bool32_t rgb565)
+{
+	unsigned long redShift = rgb565 ? 12 : 11;
+	unsigned long greenShift = rgb565 ? 7 : 6;
+	for (unsigned long y = 0; y < height; y++)
+	{
+		long     rowOffset = (long)(y * scale_y) * pitch_pixels;
+		uint32_t pixel = source[rowOffset];
+		uint32_t previousRed = (pixel >> redShift) & 0xf;
+		uint32_t previousGreen = (pixel >> greenShift) & 0xf;
+		uint32_t previousBlue = (pixel >> 1) & 0xf;
+		for (unsigned long x = 0; x < width; x++)
+		{
+			pixel = source[rowOffset + (long)(x * scale_x)];
+			uint32_t red = (pixel >> redShift) & 0xf;
+			uint32_t green = (pixel >> greenShift) & 0xf;
+			uint32_t blue = (pixel >> 1) & 0xf;
+			*destination++ = (red + previousRed) << 3;
+			previousRed = red;
+			*destination++ = (green + previousGreen) << 3;
+			previousGreen = green;
+			*destination++ = (blue + previousBlue) << 3;
+			previousBlue = blue;
+		}
+	}
+}
+
+static void SampleScreenshot32(uint8_t* destination, const uint32_t* source, long pitch_pixels, unsigned long width,
+                               unsigned long height, float scale_x, float scale_y)
+{
+	for (unsigned long y = 0; y < height; y++)
+	{
+		long     rowOffset = (long)(y * scale_y) * pitch_pixels;
+		uint32_t pixel = source[rowOffset];
+		uint32_t previousRed = RGBA_GETRED(pixel);
+		uint32_t previousGreen = RGBA_GETGREEN(pixel);
+		uint32_t previousBlue = RGBA_GETBLUE(pixel);
+		for (unsigned long x = 0; x < width; x++)
+		{
+			pixel = source[rowOffset + (long)(x * scale_x)];
+			uint32_t red = RGBA_GETRED(pixel);
+			uint32_t green = RGBA_GETGREEN(pixel);
+			uint32_t blue = RGBA_GETBLUE(pixel);
+			*destination++ = (previousRed + red) >> 1;
+			previousRed = red;
+			*destination++ = (previousGreen + green) >> 1;
+			previousGreen = green;
+			*destination++ = (previousBlue + blue) >> 1;
+			previousBlue = blue;
+		}
+	}
+}
+
+static void BlendScreenshotPixels(uint8_t* pixel)
+{
+	unsigned long x;
+	unsigned long y;
+	for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; y++)
+	{
+		for (x = 0; x < CITADEL_TEXTURE_SIZE - 1; x++)
+		{
+			LH3DColor color(pixel[0], pixel[1], pixel[2], LH3D_COLOR_OPAQUE);
+			LH3DColor right(pixel[3], pixel[4], pixel[5], LH3D_COLOR_OPAQUE);
+			LH3DColor below(pixel[CITADEL_TEXTURE_PITCH], pixel[CITADEL_TEXTURE_PITCH + 1],
+			                pixel[CITADEL_TEXTURE_PITCH + 2], LH3D_COLOR_OPAQUE);
+			LH3DColor belowRight(pixel[CITADEL_TEXTURE_PITCH + 3], pixel[CITADEL_TEXTURE_PITCH + 4],
+			                     pixel[CITADEL_TEXTURE_PITCH + 5], LH3D_COLOR_OPAQUE);
+			color.Blend(right, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
+			below.Blend(belowRight, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
+			color.Blend(below, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
+			pixel[0] = color.r;
+			pixel[1] = color.g;
+			pixel[2] = color.b;
+			pixel += 3;
+		}
+		pixel += 3;
+	}
+}
+
+static void BuildScreenshotThumbnail(uint8_t* thumbnail, const uint8_t* source)
+{
+	unsigned long x;
+	unsigned long y;
+	for (y = 0; y < SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT; y++)
+	{
+		for (x = 0; x < SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH; x++)
+		{
+			int red = (source[0] + source[3]) >> 1;
+			int green = (source[1] + source[4]) >> 1;
+			int blue = (source[2] + source[5]) >> 1;
+			thumbnail[0] = red;
+			thumbnail[1] = green;
+			thumbnail[2] = blue;
+			source += 6;
+			thumbnail += 3;
+		}
+		thumbnail += SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH * 3;
+		source += CITADEL_TEXTURE_PITCH;
+	}
+}
+
 void ScriptedScreenShot::TakeFullScreen()
 {
 	if (g_info.FullScreen == NULL)
@@ -1133,93 +1226,24 @@ void ScriptedScreenShot::TakeFullScreen()
 	uint8_t* surfaceBytes = (uint8_t*)surfaceDesc.lpSurface;
 	if (surfaceBytes != NULL)
 	{
-		uint8_t*      capturePixel = g_info.FullScreen;
-		unsigned long column;
-		unsigned long row;
-		float         scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_FULL_HEIGHT;
-		float         scaleX = LHSys::TheSystem.screen.Width() / (float)SCRIPTED_SCREEN_SHOT_FULL_WIDTH;
-		uint32_t      previousRed;
-		uint32_t      previousGreen;
-		uint32_t      previousBlue;
+		uint8_t* capturePixel = g_info.FullScreen;
+
+		float scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_FULL_HEIGHT;
+		float scaleX = LHSys::TheSystem.screen.Width() / (float)SCRIPTED_SCREEN_SHOT_FULL_WIDTH;
+
 		if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
 		{
-			uint16_t* sourcePixels = (uint16_t*)surfaceBytes;
-			long      pitchPixels = surfaceDesc.lPitch / (long)sizeof(*sourcePixels);
-			if (surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
-			{
-				for (row = 0; row < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; row++)
-				{
-					long     rowOffset = (long)(row * scaleY) * pitchPixels;
-					uint32_t sample = sourcePixels[rowOffset];
-					previousRed = (sample >> 12) & 0xf;
-					previousGreen = (sample >> 7) & 0xf;
-					previousBlue = (sample >> 1) & 0xf;
-					for (column = 0; column < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; column++)
-					{
-						sample = sourcePixels[rowOffset + (long)(column * scaleX)];
-						uint32_t nextRed = (sample >> 12) & 0xf;
-						uint32_t nextGreen = (sample >> 7) & 0xf;
-						uint32_t nextBlue = (sample >> 1) & 0xf;
-						*capturePixel++ = (nextRed + previousRed) << 3;
-						previousRed = nextRed;
-						*capturePixel++ = (nextGreen + previousGreen) << 3;
-						previousGreen = nextGreen;
-						*capturePixel++ = (nextBlue + previousBlue) << 3;
-						previousBlue = nextBlue;
-					}
-				}
-			}
-			else
-			{
-				for (row = 0; row < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; row++)
-				{
-					long     rowOffset = (long)(row * scaleY) * pitchPixels;
-					uint32_t sample = sourcePixels[rowOffset];
-					previousRed = (sample >> 11) & 0xf;
-					previousGreen = (sample >> 6) & 0xf;
-					previousBlue = (sample >> 1) & 0xf;
-					for (column = 0; column < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; column++)
-					{
-						sample = sourcePixels[rowOffset + (long)(column * scaleX)];
-						uint32_t nextRed = (sample >> 11) & 0xf;
-						uint32_t nextGreen = (sample >> 6) & 0xf;
-						uint32_t nextBlue = (sample >> 1) & 0xf;
-						*capturePixel++ = (nextRed + previousRed) << 3;
-						previousRed = nextRed;
-						*capturePixel++ = (nextGreen + previousGreen) << 3;
-						previousGreen = nextGreen;
-						*capturePixel++ = (nextBlue + previousBlue) << 3;
-						previousBlue = nextBlue;
-					}
-				}
-			}
+			long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
+			SampleScreenshot16(capturePixel, (const uint16_t*)surfaceDesc.lpSurface, pitchPixels,
+			                   SCRIPTED_SCREEN_SHOT_FULL_WIDTH, SCRIPTED_SCREEN_SHOT_FULL_HEIGHT, scaleX, scaleY,
+			                   surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN);
 		}
 		else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
 		{
-			uint32_t* sourcePixels = (uint32_t*)surfaceDesc.lpSurface;
-			long      pitchPixels = surfaceDesc.lPitch / (long)sizeof(*sourcePixels);
+			long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint32_t);
 			Report3D__FPCce("%d PITCH\n", pitchPixels);
-			for (row = 0; row < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; row++)
-			{
-				long     rowOffset = (long)(row * scaleY) * pitchPixels;
-				uint32_t sample = sourcePixels[rowOffset];
-				previousRed = RGBA_GETRED(sample);
-				previousGreen = RGBA_GETGREEN(sample);
-				previousBlue = RGBA_GETBLUE(sample);
-				for (column = 0; column < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; column++)
-				{
-					sample = sourcePixels[rowOffset + (long)(column * scaleX)];
-					uint32_t nextRed = RGBA_GETRED(sample);
-					uint32_t nextGreen = RGBA_GETGREEN(sample);
-					uint32_t nextBlue = RGBA_GETBLUE(sample);
-					*capturePixel++ = (previousRed + nextRed) >> 1;
-					previousRed = nextRed;
-					*capturePixel++ = (previousGreen + nextGreen) >> 1;
-					previousGreen = nextGreen;
-					*capturePixel++ = (previousBlue + nextBlue) >> 1;
-					previousBlue = nextBlue;
-				}
-			}
+			SampleScreenshot32(capturePixel, (const uint32_t*)surfaceDesc.lpSurface, pitchPixels,
+			                   SCRIPTED_SCREEN_SHOT_FULL_WIDTH, SCRIPTED_SCREEN_SHOT_FULL_HEIGHT, scaleX, scaleY);
 		}
 	}
 	LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
@@ -1251,100 +1275,33 @@ void ScriptedScreenShot::Process()
 	}
 	uint8_t* picturePixels = (uint8_t*)malloc(CITADEL_TEXTURE_BYTES);
 	LoadTextureCitadel(g_info.PictureTexture, picturePixels);
-	uint8_t*      capturePixel = picturePixels;
-	unsigned long column;
-	unsigned long row;
-	float         scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
-	float         scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
-	uint32_t      previousRed;
-	uint32_t      previousGreen;
-	uint32_t      previousBlue;
+	uint8_t* capturePixel = picturePixels;
+
+	float scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
+	float scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
+
 	if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
 	{
-		uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
 		if (g_info.Half != 0)
 		{
 			capturePixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 		}
+
 		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
-		if (surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
-		{
-			for (row = 0; row < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; row++)
-			{
-				long     rowOffset = (long)(row * scaleY) * pitchPixels;
-				uint32_t blendPixel = surfacePixels[rowOffset];
-				previousRed = (blendPixel >> 12) & 0xf;
-				previousGreen = (blendPixel >> 7) & 0xf;
-				previousBlue = (blendPixel >> 1) & 0xf;
-				for (column = 0; column < CITADEL_TEXTURE_SIZE; column++)
-				{
-					blendPixel = surfacePixels[rowOffset + (long)(column * scaleX)];
-					uint32_t nextRed = (blendPixel >> 12) & 0xf;
-					uint32_t nextGreen = (blendPixel >> 7) & 0xf;
-					uint32_t nextBlue = (blendPixel >> 1) & 0xf;
-					*capturePixel++ = (nextRed + previousRed) << 3;
-					previousRed = nextRed;
-					*capturePixel++ = (nextGreen + previousGreen) << 3;
-					previousGreen = nextGreen;
-					*capturePixel++ = (nextBlue + previousBlue) << 3;
-					previousBlue = nextBlue;
-				}
-			}
-		}
-		else
-		{
-			for (row = 0; row < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; row++)
-			{
-				long     rowOffset = (long)(row * scaleY) * pitchPixels;
-				uint32_t blendPixel = surfacePixels[rowOffset];
-				previousRed = (blendPixel >> 11) & 0xf;
-				previousGreen = (blendPixel >> 6) & 0xf;
-				previousBlue = (blendPixel >> 1) & 0xf;
-				for (column = 0; column < CITADEL_TEXTURE_SIZE; column++)
-				{
-					blendPixel = surfacePixels[rowOffset + (long)(column * scaleX)];
-					uint32_t nextRed = (blendPixel >> 11) & 0xf;
-					uint32_t nextGreen = (blendPixel >> 6) & 0xf;
-					uint32_t nextBlue = (blendPixel >> 1) & 0xf;
-					*capturePixel++ = (nextRed + previousRed) << 3;
-					previousRed = nextRed;
-					*capturePixel++ = (nextGreen + previousGreen) << 3;
-					previousGreen = nextGreen;
-					*capturePixel++ = (nextBlue + previousBlue) << 3;
-					previousBlue = nextBlue;
-				}
-			}
-		}
+		SampleScreenshot16(capturePixel, (const uint16_t*)surfaceDesc.lpSurface, pitchPixels, CITADEL_TEXTURE_SIZE,
+		                   SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX, scaleY,
+		                   surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN);
 	}
 	else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
 	{
-		uint32_t* surfacePixels = (uint32_t*)surfaceDesc.lpSurface;
 		if (g_info.Half != 0)
 		{
 			capturePixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 		}
+
 		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint32_t);
-		for (row = 0; row < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; row++)
-		{
-			long     rowOffset = (long)(row * scaleY) * pitchPixels;
-			uint32_t blendPixel = surfacePixels[rowOffset];
-			previousRed = RGBA_GETRED(blendPixel);
-			previousGreen = RGBA_GETGREEN(blendPixel);
-			previousBlue = RGBA_GETBLUE(blendPixel);
-			for (column = 0; column < CITADEL_TEXTURE_SIZE; column++)
-			{
-				blendPixel = surfacePixels[rowOffset + (long)(column * scaleX)];
-				uint32_t nextRed = RGBA_GETRED(blendPixel);
-				uint32_t nextGreen = RGBA_GETGREEN(blendPixel);
-				uint32_t nextBlue = RGBA_GETBLUE(blendPixel);
-				*capturePixel++ = (previousRed + nextRed) >> 1;
-				previousRed = nextRed;
-				*capturePixel++ = (previousGreen + nextGreen) >> 1;
-				previousGreen = nextGreen;
-				*capturePixel++ = (previousBlue + nextBlue) >> 1;
-				previousBlue = nextBlue;
-			}
-		}
+		SampleScreenshot32(capturePixel, (const uint32_t*)surfaceDesc.lpSurface, pitchPixels, CITADEL_TEXTURE_SIZE,
+		                   SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX, scaleY);
 	}
 	LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
 	uint8_t* blendPixel = picturePixels;
@@ -1352,26 +1309,7 @@ void ScriptedScreenShot::Process()
 	{
 		blendPixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 	}
-	for (row = 0; row < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; row++)
-	{
-		for (column = 0; column < CITADEL_TEXTURE_SIZE - 1; column++)
-		{
-			LH3DColor color(blendPixel[0], blendPixel[1], blendPixel[2], LH3D_COLOR_OPAQUE);
-			LH3DColor right(blendPixel[3], blendPixel[4], blendPixel[5], LH3D_COLOR_OPAQUE);
-			LH3DColor below(blendPixel[CITADEL_TEXTURE_PITCH], blendPixel[CITADEL_TEXTURE_PITCH + 1],
-			                blendPixel[CITADEL_TEXTURE_PITCH + 2], LH3D_COLOR_OPAQUE);
-			LH3DColor belowRight(blendPixel[CITADEL_TEXTURE_PITCH + 3], blendPixel[CITADEL_TEXTURE_PITCH + 4],
-			                     blendPixel[CITADEL_TEXTURE_PITCH + 5], LH3D_COLOR_OPAQUE);
-			color.Blend(right, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
-			below.Blend(belowRight, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
-			color.Blend(below, SCRIPTED_SCREEN_SHOT_HALF_BLEND);
-			blendPixel[0] = color.r;
-			blendPixel[1] = color.g;
-			blendPixel[2] = color.b;
-			blendPixel += 3;
-		}
-		blendPixel += 3;
-	}
+	BlendScreenshotPixels(blendPixel);
 	SaveTextureCitadel(g_info.PictureTexture, picturePixels);
 	uint8_t* thumbnails = (uint8_t*)malloc(CITADEL_TEXTURE_BYTES);
 	LoadTextureCitadel(g_info.ThumbnailTexture, thumbnails);
@@ -1383,22 +1321,7 @@ void ScriptedScreenShot::Process()
 	{
 		thumbnailSource = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 	}
-	for (row = 0; row < SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT; row++)
-	{
-		for (column = 0; column < SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH; column++)
-		{
-			int red = (thumbnailSource[0] + thumbnailSource[3]) >> 1;
-			int green = (thumbnailSource[1] + thumbnailSource[4]) >> 1;
-			int blue = (thumbnailSource[2] + thumbnailSource[5]) >> 1;
-			thumbnailPixel[0] = red;
-			thumbnailPixel[1] = green;
-			thumbnailPixel[2] = blue;
-			thumbnailSource += 6;
-			thumbnailPixel += 3;
-		}
-		thumbnailPixel += SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH * 3;
-		thumbnailSource += CITADEL_TEXTURE_PITCH;
-	}
+	BuildScreenshotThumbnail(thumbnailPixel, thumbnailSource);
 	SaveTextureCitadel(g_info.ThumbnailTexture, thumbnails);
 	free(picturePixels);
 	free(thumbnails);
