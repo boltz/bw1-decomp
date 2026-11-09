@@ -817,10 +817,9 @@ void LHTGA::GetARGB(unsigned long* alpha_out, unsigned long* red_out, unsigned l
 
 LHTGA* LHTGA::GetTGA(void* source_pixels, long width, long height, long format, bool32_t premultiply)
 {
-	char   footer[LHTGA_FOOTER_SIZE] = {0,   0,   0,   0,   0,   0,   0,   0,   'T', 'R', 'U', 'E', 'V',
-	                                    'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.', '\0'};
-	long   totalSize = GetSize(width, height);
-	LHTGA* tga = (LHTGA*)malloc(totalSize);
+	static const char footer[LHTGA_FOOTER_SIZE] = "\0\0\0\0\0\0\0\0TRUEVISION-XFILE.";
+	long              totalSize = GetSize(width, height);
+	LHTGA*            tga = (LHTGA*)malloc(totalSize);
 	memset(tga, 0, totalSize);
 	tga->ImageType = LHTGA_IMAGE_TYPE_TRUE_COLOR;
 	tga->Width = width;
@@ -3040,20 +3039,29 @@ LH3DColor        InfluenceCircle::g_players_color[INFLUENCE_CIRCLE_PLAYER_COUNT]
 	LH3DColor(0xff, 0xff, 0xff, 0x00), //
 };
 
-static long* WriteInfluenceCircleStrip(long* indices, long first_vertex)
+static long* WriteInfluenceCircleStrip(long* indices, long bottom_vertex)
 {
-	*indices++ = first_vertex;
-	*indices++ = first_vertex + INFLUENCE_CIRCLE_ROW_VERTICES;
-	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-	*indices++ = first_vertex;
-	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-	*indices++ = first_vertex + 1;
-	*indices++ = first_vertex + 1;
-	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
-	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
-	*indices++ = first_vertex + 1;
-	*indices++ = first_vertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
-	*indices++ = first_vertex + 2;
+	long middleVertex = bottom_vertex + 1;
+	long topVertex = bottom_vertex + 2;
+	long nextBottomVertex = bottom_vertex + INFLUENCE_CIRCLE_ROW_VERTICES;
+	long nextMiddleVertex = nextBottomVertex + 1;
+	long nextTopVertex = nextBottomVertex + 2;
+
+	*indices++ = bottom_vertex;
+	*indices++ = nextBottomVertex;
+	*indices++ = nextMiddleVertex;
+
+	*indices++ = bottom_vertex;
+	*indices++ = nextMiddleVertex;
+	*indices++ = middleVertex;
+
+	*indices++ = middleVertex;
+	*indices++ = nextMiddleVertex;
+	*indices++ = nextTopVertex;
+
+	*indices++ = middleVertex;
+	*indices++ = nextTopVertex;
+	*indices++ = topVertex;
 	return indices;
 }
 
