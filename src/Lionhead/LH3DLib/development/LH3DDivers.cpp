@@ -1685,16 +1685,17 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 	long intensityWeight = (long)(intensity * LH3D_COLOR_CHANNEL_MAX);
 	for (int column = 0; column < clippedWidth - 1; column++)
 	{
-		for (int row = 0; row < clippedDepth - 1; row++, light++, cellZ++)
+		for (int row = 0; row < clippedDepth - 1; row++)
 		{
-			LandCell* cell = LH3DIsland::GetCell(cellX, cellZ);
+			LandCell* cell = LH3DIsland::GetCell(cellX + column, cellZ + row);
 			if (cell == NULL)
 			{
 				continue;
 			}
 
-			uint8_t*      nextColumn = light + size;
-			unsigned long columnDarkness = LH3D_BLEND_COLOR(light[0], light[1], weightZ);
+			uint8_t*      sample = light + column * size + row;
+			uint8_t*      nextColumn = sample + size;
+			unsigned long columnDarkness = LH3D_BLEND_COLOR(sample[0], sample[1], weightZ);
 			unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weightZ);
 			unsigned long darkness = LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weightX) * intensityWeight /
 			                         LH3D_COLOR_CHANNEL_MAX;
@@ -1703,16 +1704,16 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 				darkness = cell->darkness;
 			}
 			LightCell(cell, darkness);
-			if ((cellZ & LAND_BLOCK_MASK) == 0)
+			if (((cellZ + row) & LAND_BLOCK_MASK) == 0)
 			{
-				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX, cellZ - 1);
+				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX + column, cellZ + row - 1);
 				if (boundaryCopy != NULL)
 				{
 					boundaryCopy += 1;
 					LightCell(boundaryCopy, darkness);
-					if ((cellX & LAND_BLOCK_MASK) == 0)
+					if (((cellX + column) & LAND_BLOCK_MASK) == 0)
 					{
-						boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
+						boundaryCopy = LH3DIsland::GetCell(cellX + column - 1, cellZ + row - 1);
 						if (boundaryCopy != NULL)
 						{
 							boundaryCopy += LAND_BLOCK_SIDE_POINTS + 1;
@@ -1721,9 +1722,9 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 					}
 				}
 			}
-			if ((cellX & LAND_BLOCK_MASK) == 0)
+			if (((cellX + column) & LAND_BLOCK_MASK) == 0)
 			{
-				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ);
+				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX + column - 1, cellZ + row);
 				if (boundaryCopy != NULL)
 				{
 					boundaryCopy += LAND_BLOCK_SIDE_POINTS;
@@ -1731,9 +1732,6 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 				}
 			}
 		}
-		light += size - (clippedDepth - 1);
-		cellZ -= clippedDepth - 1;
-		cellX++;
 	}
 }
 
@@ -2682,6 +2680,63 @@ void SuperVillager::DrawAll()
 	LH3DTech::SetSun(savedSun);
 }
 
+static void UpdateVillagerAnimationBlend(SuperVillager* villager, long blend_time)
+{
+	if (villager->LastAnim == NULL)
+	{
+		villager->LastAnim = villager->Object->CurrentAnim;
+	}
+	else if (villager->LastAnim != villager->Object->CurrentAnim)
+	{
+		villager->Object->LastAnim = villager->LastAnim;
+		villager->Object->LastCycleTime = villager->LastCycleTime;
+		villager->Object->BlendTime = blend_time;
+		villager->LastAnim = villager->Object->CurrentAnim;
+		villager->Object->BlendFactor = 1.0f;
+	}
+	else if ((villager->Object->BlendTime -= LH3DTech::g_game_time_inc) < 0)
+	{
+		villager->Object->BlendTime = 0;
+	}
+	else
+	{
+		villager->Object->BlendFactor = (float)villager->Object->BlendTime / blend_time;
+	}
+}
+
+static void TransformVillagerAnimation(LH3DAnimatedObject* object, const LHMatrix& world_matrix, bool32_t swimming,
+                                       bool32_t no_smoothing)
+{
+	LHMatrix localToClip;
+	if (object->BlendTime != 0 && !no_smoothing)
+	{
+		LHMATRIX_MULTIPLY(localToClip, world_matrix, LH3DTech::g_world_to_clipping);
+		object->CurrentAnim->CombineTransform(LH3DMesh::g_current_list_matrix, object->CurrentCycleTime,
+		                                      1.0f - object->BlendFactor, true);
+		object->LastAnim->CombineTransform(LH3DMesh::g_current_list_matrix, object->LastCycleTime, object->BlendFactor,
+		                                   false);
+		LH3DAnim::FinishTransform(LH3DMesh::g_current_list_matrix, object->mesh, localToClip);
+	}
+	else if (swimming)
+	{
+		object->CurrentAnim->SetTransform(LH3DMesh::g_current_list_matrix, object->mesh, object->CurrentCycleTime,
+		                                  object->matrix);
+	}
+	else
+	{
+		LHMATRIX_MULTIPLY(localToClip, world_matrix, LH3DTech::g_world_to_clipping);
+		if (object->CurrentAnim != NULL)
+		{
+			object->CurrentAnim->SetTransform(LH3DMesh::g_current_list_matrix, object->mesh, object->CurrentCycleTime,
+			                                  localToClip);
+		}
+		else
+		{
+			LH3DAnim::SetTransform(LH3DMesh::g_current_list_matrix, object->mesh, localToClip);
+		}
+	}
+}
+
 void SuperVillager::Draw()
 {
 	if (Object == NULL)
@@ -2721,59 +2776,13 @@ void SuperVillager::Draw()
 		}
 	}
 	static long blend_time = SUPER_VILLAGER_BLEND_TIME;
-	if (LastAnim == NULL)
-	{
-		LastAnim = Object->CurrentAnim;
-	}
-	else if (LastAnim != Object->CurrentAnim)
-	{
-		Object->LastAnim = LastAnim;
-		Object->LastCycleTime = LastCycleTime;
-		Object->BlendTime = blend_time;
-		LastAnim = Object->CurrentAnim;
-		Object->BlendFactor = 1.0f;
-	}
-	else if ((Object->BlendTime -= LH3DTech::g_game_time_inc) < 0)
-	{
-		Object->BlendTime = 0;
-	}
-	else
-	{
-		Object->BlendFactor = (float)Object->BlendTime / blend_time;
-	}
+	UpdateVillagerAnimationBlend(this, blend_time);
 	LH3DObject::g_current_object_in_draw = Object;
 	LH3DSubMesh::g_current_status = 0;
 	LH3DPrimitive::g_current_index_primitive = 0;
 	LH3DTech::g_current_matrix = &LH3DTech::g_local_to_clipping;
 	bool32_t swimming = strcmp(Object->GetCurrentAnim()->name, SUPER_VILLAGER_SWIM_ANIM) == 0;
-	LHMatrix localToClip;
-	if (Object->BlendTime != 0 && !NoSmoothing)
-	{
-		LHMATRIX_MULTIPLY(localToClip, worldMatrix, LH3DTech::g_world_to_clipping);
-		Object->CurrentAnim->CombineTransform(LH3DMesh::g_current_list_matrix, Object->CurrentCycleTime,
-		                                      1.0f - Object->BlendFactor, true);
-		Object->LastAnim->CombineTransform(LH3DMesh::g_current_list_matrix, Object->LastCycleTime, Object->BlendFactor,
-		                                   false);
-		LH3DAnim::FinishTransform(LH3DMesh::g_current_list_matrix, Object->mesh, localToClip);
-	}
-	else if (swimming)
-	{
-		Object->CurrentAnim->SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, Object->CurrentCycleTime,
-		                                  Object->matrix);
-	}
-	else
-	{
-		LHMATRIX_MULTIPLY(localToClip, worldMatrix, LH3DTech::g_world_to_clipping);
-		if (Object->CurrentAnim != NULL)
-		{
-			Object->CurrentAnim->SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, Object->CurrentCycleTime,
-			                                  localToClip);
-		}
-		else
-		{
-			LH3DAnim::SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, localToClip);
-		}
-	}
+	TransformVillagerAnimation(Object, worldMatrix, swimming, NoSmoothing);
 	unsigned long specular = Object->specular;
 	LH3DMesh::g_color = Object->color;
 	LH3DMesh::g_specular = specular;
