@@ -116,9 +116,9 @@ void BackgroundBox::DrawAll()
 	LH3DRender::SetMaterial(g_material, 0);
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, false);
-	for (int i = 0; i < g_count; i++)
+	for (int boxIndex = 0; boxIndex < g_count; boxIndex++)
 	{
-		BackgroundBox* box = &g_list_boxes[i];
+		BackgroundBox* box = &g_list_boxes[boxIndex];
 		g_list_vertex[0].x = (float)box->Region.start.X();
 		g_list_vertex[0].y = (float)box->Region.start.Y();
 		g_list_vertex[1].x = (float)box->Region.end.X();
@@ -393,9 +393,9 @@ void LH3DJustFootPrint::DrawDebug()
 	{
 		LH3DMeshFootprint*         footprint = footprintData->First;
 		LH3DMeshFootprintTriangle* triangles = (LH3DMeshFootprintTriangle*)(footprint + 1);
-		for (int i = 0; i < footprint->NumTriangles; i++)
+		for (int triangleIndex = 0; triangleIndex < footprint->NumTriangles; triangleIndex++)
 		{
-			LH3DMeshFootprintTriangle* triangle = &triangles[i];
+			LH3DMeshFootprintTriangle* triangle = &triangles[triangleIndex];
 			LHPoint                    a(triangle->Points[0].x, 0.0f, triangle->Points[0].y);
 			Matrix.TransformPoint(a);
 			LHPoint b(triangle->Points[1].x, 0.0f, triangle->Points[1].y);
@@ -960,13 +960,14 @@ void LH3DInBuild::Draw()
 	LH3DTech::g_index_count = 0;
 	LH3DTech::g_points_count = vertexCount;
 	LH3DTech::g_clip_with_double_sided = true;
+	uint16_t secondRowOffset = edgeCount;
 	for (int stripIndex = 0; stripIndex < edgeCount / 2; stripIndex++)
 	{
-		uint16_t firstVertex = stripIndex * 2;
-		uint16_t nextVertex = firstVertex + 1;
-		uint16_t pairedVertex = firstVertex + edgeCount;
-		AddInBuildTriangle(firstVertex, nextVertex, pairedVertex);
-		AddInBuildTriangle(pairedVertex + 1, nextVertex, pairedVertex);
+		uint16_t firstRowVertex = stripIndex * 2;
+		uint16_t nextFirstRowVertex = firstRowVertex + 1;
+		uint16_t secondRowVertex = firstRowVertex + secondRowOffset;
+		AddInBuildTriangle(firstRowVertex, nextFirstRowVertex, secondRowVertex);
+		AddInBuildTriangle(secondRowVertex + 1, nextFirstRowVertex, secondRowVertex);
 	}
 
 	if (LH3DTech::g_index_count != 0)
@@ -995,9 +996,9 @@ long              LH3DExtraDotLight::g_count = 0;
 
 void LH3DExtraDotLight::Draw()
 {
-	for (int i = 0; i < g_count; i++)
+	for (int lightIndex = 0; lightIndex < g_count; lightIndex++)
 	{
-		LH3DExtraDotLight* light = &g_list[i];
+		LH3DExtraDotLight* light = &g_list[lightIndex];
 		LandCell*          cell = LH3DIsland::GetCell(light->X, light->Z);
 		if (cell != NULL)
 		{
@@ -1008,9 +1009,9 @@ void LH3DExtraDotLight::Draw()
 
 void LH3DExtraDotLight::Clear()
 {
-	for (int i = 0; i < g_count; i++)
+	for (int lightIndex = 0; lightIndex < g_count; lightIndex++)
 	{
-		LandCell* cell = LH3DIsland::GetCell(g_list[i].X, g_list[i].Z);
+		LandCell* cell = LH3DIsland::GetCell(g_list[lightIndex].X, g_list[lightIndex].Z);
 		if (cell != NULL)
 		{
 			*(unsigned long*)cell = cell->SaveColor << 24;
@@ -1354,9 +1355,9 @@ void LH3DTools::ConvertTgaTo16B(int argc, char** argv)
 void LH3DTools::DeteleTexture(int argc, char** argv)
 {
 	char error[LH3D_TOOLS_TEXT_SIZE];
-	for (int i = 1; i < argc; i++)
+	for (int argumentIndex = 1; argumentIndex < argc; argumentIndex++)
 	{
-		char*    name = argv[i];
+		char*    name = argv[argumentIndex];
 		uint32_t size;
 		if (LHFileLength(name, &size) != LH_FILE_RESULT_OK)
 		{
@@ -1385,9 +1386,9 @@ void LH3DTools::ExportTGA(int argc, char** argv)
 		exe++;
 	}
 	*exe = '\0';
-	for (int i = 1; i < argc; i++)
+	for (int argumentIndex = 1; argumentIndex < argc; argumentIndex++)
 	{
-		char*    name = argv[i];
+		char*    name = argv[argumentIndex];
 		uint32_t size;
 		if (LHFileLength(name, &size) != LH_FILE_RESULT_OK)
 		{
@@ -1397,7 +1398,7 @@ void LH3DTools::ExportTGA(int argc, char** argv)
 		LH3DTexturePackFile* pack = (LH3DTexturePackFile*)malloc(size);
 		LHLoadData(name, pack, size, NULL);
 		long offset = 0;
-		for (int j = 0; j < pack->Count; j++, offset += sizeof(long))
+		for (int textureIndex = 0; textureIndex < pack->Count; textureIndex++, offset += sizeof(long))
 		{
 			long* texture = (long*)((uint8_t*)pack + *(long*)((uint8_t*)pack + offset + pack->Offsets));
 			sprintf(file, LH3D_TOOLS_PACK_TEXTURE_PATH, path, texture[0]);
@@ -1852,9 +1853,9 @@ EclairagePublic* EclairagePublic::Create(LHPoint* pos, long type)
 	light->OffsetZ = 0.0f;
 	light->OffsetX = 0.0f;
 	light->Type = type;
-	for (int i = 0; i < ECLAIRAGE_PUBLIC_SPRITES; i++)
+	for (int spriteIndex = 0; spriteIndex < ECLAIRAGE_PUBLIC_SPRITES; spriteIndex++)
 	{
-		LH3DSprite* sprite = &light->Sprites[i];
+		LH3DSprite* sprite = &light->Sprites[spriteIndex];
 		sprite->pos = *pos;
 		if (type == ECLAIRAGE_PUBLIC_TYPE_LOW)
 		{
@@ -1864,7 +1865,7 @@ EclairagePublic* EclairagePublic::Create(LHPoint* pos, long type)
 		{
 			sprite->pos.y += ECLAIRAGE_PUBLIC_HEIGHT;
 		}
-		if (i < ECLAIRAGE_PUBLIC_GLOW)
+		if (spriteIndex < ECLAIRAGE_PUBLIC_GLOW)
 		{
 			sprite->material = g_fire_mat;
 			sprite->SetSize(Random(-ECLAIRAGE_PUBLIC_SIZE_VARIATION, ECLAIRAGE_PUBLIC_SIZE_VARIATION) +
@@ -1879,7 +1880,7 @@ EclairagePublic* EclairagePublic::Create(LHPoint* pos, long type)
 			sprite->colour = ECLAIRAGE_PUBLIC_COLOUR;
 			sprite->Frame = ECLAIRAGE_PUBLIC_GLOW_FRAME;
 		}
-		g_off[i] = (long)Random(0.0f, ECLAIRAGE_PUBLIC_FRAMES - 1);
+		g_off[spriteIndex] = (long)Random(0.0f, ECLAIRAGE_PUBLIC_FRAMES - 1);
 	}
 	return light;
 }
@@ -1948,14 +1949,14 @@ void EclairagePublic::DrawAllFinal()
 	int frame = time * (ECLAIRAGE_PUBLIC_FRAMES - 1) / period;
 	for (EclairagePublic* light = g_first; light != NULL; light = light->Next)
 	{
-		for (int i = 0; i < ECLAIRAGE_PUBLIC_SPRITES; i++)
+		for (int spriteIndex = 0; spriteIndex < ECLAIRAGE_PUBLIC_SPRITES; spriteIndex++)
 		{
-			int         flame = ECLAIRAGE_PUBLIC_FRAMES - 1 - ((frame + g_off[i]) & (ECLAIRAGE_PUBLIC_FRAMES - 1));
-			LH3DSprite* sprite = &light->Sprites[i];
-			if (i < ECLAIRAGE_PUBLIC_GLOW)
+			int flame = ECLAIRAGE_PUBLIC_FRAMES - 1 - ((frame + g_off[spriteIndex]) & (ECLAIRAGE_PUBLIC_FRAMES - 1));
+			LH3DSprite* sprite = &light->Sprites[spriteIndex];
+			if (spriteIndex < ECLAIRAGE_PUBLIC_GLOW)
 			{
 				sprite->colour = RGBA_SETALPHA(ECLAIRAGE_PUBLIC_COLOUR, (long)g_alpha);
-				sprite->Frame = (flame + i * ECLAIRAGE_PUBLIC_FRAME_STEP) & (ECLAIRAGE_PUBLIC_FRAMES - 1);
+				sprite->Frame = (flame + spriteIndex * ECLAIRAGE_PUBLIC_FRAME_STEP) & (ECLAIRAGE_PUBLIC_FRAMES - 1);
 			}
 			else
 			{
@@ -1979,14 +1980,15 @@ void EclairagePublic::DrawAllPost()
 		LHFileLength(ECLAIRAGE_PUBLIC_DIFFUSE_PATH, &size);
 		diffuse = (uint8_t*)LH3DMem::Alloc(size);
 		LHLoadData(ECLAIRAGE_PUBLIC_DIFFUSE_PATH, diffuse, size, NULL);
-		for (uint32_t i = 0; i < ECLAIRAGE_PUBLIC_LIGHT_SIZE * ECLAIRAGE_PUBLIC_LIGHT_SIZE; i++)
+		for (uint32_t texelIndex = 0; texelIndex < ECLAIRAGE_PUBLIC_LIGHT_SIZE * ECLAIRAGE_PUBLIC_LIGHT_SIZE;
+		     texelIndex++)
 		{
-			float darkness = diffuse[i] * ECLAIRAGE_PUBLIC_DARKNESS / 255.0f + 0.5f;
+			float darkness = diffuse[texelIndex] * ECLAIRAGE_PUBLIC_DARKNESS / 255.0f + 0.5f;
 			if (darkness >= ECLAIRAGE_PUBLIC_DARKNESS)
 			{
 				darkness = ECLAIRAGE_PUBLIC_DARKNESS - 1.0f;
 			}
-			diffuse[i] = (uint8_t)darkness;
+			diffuse[texelIndex] = (uint8_t)darkness;
 		}
 	}
 	for (EclairagePublic* light = g_first; light != NULL; light = light->Next)
@@ -2017,21 +2019,21 @@ SmokyStuff* SmokyStuff::Create(const LHPoint* pos, long type, float size, LH3DCo
 	smoke->Type = type;
 	smoke->Size = size;
 	smoke->Color = color;
-	for (int i = 0; i < SMOKY_STUFF_PUFFS; i++)
+	for (int puffIndex = 0; puffIndex < SMOKY_STUFF_PUFFS; puffIndex++)
 	{
-		LH3DSprite* sprite = &smoke->Sprites[i];
+		LH3DSprite* sprite = &smoke->Sprites[puffIndex];
 		sprite->material = g_smoke_mat;
 		sprite->Frame = SMOKY_STUFF_FRAME;
 		sprite->pos.Set(Random(-size, size), Random(-size, size), Random(-size, size));
 		sprite->SetRotation(Random(0.0f, TWO_PI));
-		smoke->Directions[i].Set(Random(-size, size), size, Random(-size, size));
+		smoke->Directions[puffIndex].Set(Random(-size, size), size, Random(-size, size));
 		if (smoke->Type != 0)
 		{
-			SetLength(smoke->Directions[i], size * SMOKY_STUFF_BURST_SPEED);
+			SetLength(smoke->Directions[puffIndex], size * SMOKY_STUFF_BURST_SPEED);
 		}
 		else
 		{
-			SetLength(smoke->Directions[i], Random(SMOKY_STUFF_MIN_SPEED, 1.0f) * size);
+			SetLength(smoke->Directions[puffIndex], Random(SMOKY_STUFF_MIN_SPEED, 1.0f) * size);
 		}
 		sprite->pos += LHPoint(pos);
 	}
@@ -2096,13 +2098,14 @@ void SmokyStuff::Process()
 	{
 		colour = RGBA_SETALPHA(Color.GetColor(), RGBA_GETALPHA(colour));
 	}
-	for (int i = 0; i < SMOKY_STUFF_PUFFS; i++)
+	for (int puffIndex = 0; puffIndex < SMOKY_STUFF_PUFFS; puffIndex++)
 	{
-		LH3DSprite* sprite = &Sprites[i];
+		LH3DSprite* sprite = &Sprites[puffIndex];
 		sprite->colour = colour;
-		sprite->angle = (Directions[i].x > Directions[i].z ? -1 : 1) * Life * SMOKY_STUFF_SPIN + Directions[i].x;
+		sprite->angle = (Directions[puffIndex].x > Directions[puffIndex].z ? -1 : 1) * Life * SMOKY_STUFF_SPIN +
+		                Directions[puffIndex].x;
 		sprite->SetSize(((1.0f - Life) * 2.0f + 1.0f) * Size * 0.5f);
-		sprite->pos += Directions[i] * g_dt;
+		sprite->pos += Directions[puffIndex] * g_dt;
 		sprite->Frame = (long)(Life * SMOKY_STUFF_FRAMES);
 		sprite->AddDrawing();
 	}
@@ -2146,11 +2149,11 @@ void GlowVillager::AddGlow(LHPoint* pos, float size)
 	if (g_sprite == NULL)
 	{
 		g_sprite = LH3DSprite::Create(GLOW_VILLAGER_MAX_GLOWS, true);
-		for (int i = 0; i < GLOW_VILLAGER_MAX_GLOWS; i++)
+		for (int spriteIndex = 0; spriteIndex < GLOW_VILLAGER_MAX_GLOWS; spriteIndex++)
 		{
-			g_sprite[i].Frame = g_offset;
-			g_sprite[i].material = g_smoke_additif_mat;
-			g_sprite[i].colour = GLOW_VILLAGER_COLOUR;
+			g_sprite[spriteIndex].Frame = g_offset;
+			g_sprite[spriteIndex].material = g_smoke_additif_mat;
+			g_sprite[spriteIndex].colour = GLOW_VILLAGER_COLOUR;
 		}
 		g_material = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_ALPHA_TEXTURED_ALPHA_NZ,
 		                                        Leash::GetTexture());
@@ -2214,8 +2217,9 @@ void LH3DTools::BuildPaginationFromRawFile(int argc, char** argv)
 	int tileIndex = 0;
 	while (true)
 	{
-		int pageOffset = ((tileIndex / LH3D_TOOLS_PAGE_TILES) & (LH3D_TOOLS_PAGE_TILES - 1)) * LH3D_TOOLS_PAGE_SIZE +
-		                 (tileIndex & (LH3D_TOOLS_PAGE_TILES - 1));
+		int      tileRow = (tileIndex / LH3D_TOOLS_PAGE_TILES) & (LH3D_TOOLS_PAGE_TILES - 1);
+		int      tileColumn = tileIndex & (LH3D_TOOLS_PAGE_TILES - 1);
+		int      pageOffset = tileRow * LH3D_TOOLS_PAGE_SIZE + tileColumn;
 		uint8_t* pageAlpha = alphaPage + pageOffset * LH3D_TOOLS_TILE_SIZE;
 		uint8_t* pageRgb = rgbPage + pageOffset * LH3D_TOOLS_TILE_SIZE * 3;
 		strcpy(baseName, inputName);
@@ -2741,6 +2745,28 @@ static void TransformVillagerAnimation(LH3DAnimatedObject* object, const LHMatri
 	}
 }
 
+static void DrawVillagerMesh(LH3DAnimatedObject* object, bool32_t swimming)
+{
+	if (swimming)
+	{
+		LH3DMesh* mesh = object->Meshes[0];
+		LH3DMesh::InitMatrixDrawing();
+		for (int submeshIndex = 0; submeshIndex < mesh->SubmeshCount; submeshIndex++)
+		{
+			LH3DSubMesh* submesh = mesh->submeshes[submeshIndex];
+			if (submesh->GetLod() & LH3DMesh::g_current_lod)
+			{
+				submesh->DrawCutByPlane();
+				LH3DMesh::UpdateMatrixDrawing(submesh->NumBones);
+			}
+		}
+	}
+	else
+	{
+		object->Meshes[0]->Draw(true);
+	}
+}
+
 void SuperVillager::Draw()
 {
 	if (Object == NULL)
@@ -2791,24 +2817,7 @@ void SuperVillager::Draw()
 	LH3DMesh::g_color = Object->color;
 	LH3DMesh::g_specular = specular;
 	LH3DTech::g_world_to_local.SetInverse(worldMatrix);
-	if (swimming)
-	{
-		LH3DMesh* mesh = Object->Meshes[0];
-		LH3DMesh::InitMatrixDrawing();
-		for (int submeshIndex = 0; submeshIndex < mesh->SubmeshCount; submeshIndex++)
-		{
-			LH3DSubMesh* submesh = mesh->submeshes[submeshIndex];
-			if (submesh->GetLod() & LH3DMesh::g_current_lod)
-			{
-				submesh->DrawCutByPlane();
-				LH3DMesh::UpdateMatrixDrawing(submesh->NumBones);
-			}
-		}
-	}
-	else
-	{
-		Object->Meshes[0]->Draw(true);
-	}
+	DrawVillagerMesh(Object, swimming);
 	LH3DRender::g_b_need_tilling = false;
 	LH3DRender::g_b_need_anim_uv = false;
 	if (Eyes != NULL)
@@ -3056,18 +3065,18 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 	float          top = altitude + INFLUENCE_CIRCLE_TOP_HEIGHT;
 	float          vStep = (float)min(INFLUENCE_CIRCLE_MAX_V, (long)(radius / INFLUENCE_CIRCLE_V_RADIUS)) / Segments;
 	long           rowStartVertex = 0;
-	for (long i = 0; i <= Segments; i++)
+	for (long rowIndex = 0; rowIndex <= Segments; rowIndex++)
 	{
 		float x;
 		float z;
-		if (i == Segments)
+		if (rowIndex == Segments)
 		{
 			x = Radius + pos.x;
 			z = pos.z;
 		}
 		else
 		{
-			float angle = i * TWO_PI / Segments;
+			float angle = rowIndex * TWO_PI / Segments;
 			x = (float)cos(angle) * Radius + pos.x;
 			z = (float)sin(angle) * Radius + pos.z;
 		}
@@ -3084,7 +3093,7 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		*uv++ = v + INFLUENCE_CIRCLE_MIDDLE_V;
 		*uv++ = u;
 		*uv++ = v + INFLUENCE_CIRCLE_TOP_V;
-		if (i == Segments)
+		if (rowIndex == Segments)
 		{
 			break;
 		}
@@ -3215,12 +3224,12 @@ void InfluenceCircle::Draw(bool32_t world_space)
 		if (circle->Alpha != alpha && g_b_valid[circle->Player])
 		{
 			circle->Alpha = alpha;
-			for (long i = 0; i < circle->Segments + 1; i++)
+			for (long rowIndex = 0; rowIndex < circle->Segments + 1; rowIndex++)
 			{
-				if (!circle->Hidden[i])
+				if (!circle->Hidden[rowIndex])
 				{
-					circle->Colours[i * INFLUENCE_CIRCLE_ROW_VERTICES + 1] =
-						RGBA_SETALPHA(circle->Colours[i * INFLUENCE_CIRCLE_ROW_VERTICES + 1], 0) | alpha;
+					circle->Colours[rowIndex * INFLUENCE_CIRCLE_ROW_VERTICES + 1] =
+						RGBA_SETALPHA(circle->Colours[rowIndex * INFLUENCE_CIRCLE_ROW_VERTICES + 1], 0) | alpha;
 				}
 			}
 		}
@@ -3275,9 +3284,9 @@ void InfluenceCircle::HideContact(InfluenceCircle* other)
 {
 	unsigned long* colour = Colours;
 	bool32_t*      hidden = Hidden;
-	for (long i = 0; i < Segments; i++)
+	for (long segmentIndex = 0; segmentIndex < Segments; segmentIndex++)
 	{
-		float angle = i * TWO_PI / Segments;
+		float angle = segmentIndex * TWO_PI / Segments;
 		float x = (float)cos(angle) * Radius + Pos.x;
 		float z = (float)sin(angle) * Radius + Pos.z;
 		if (other->Contains(x, z))
@@ -3326,14 +3335,14 @@ TouchMyEdge::TouchMyEdge(LHPoint* pos, LH3DColor colour, float angle)
 	Next = g_first;
 	g_first = this;
 	Sprites = LH3DSprite::Create(TOUCH_MY_EDGE_RINGS, true);
-	for (long i = 0; i < TOUCH_MY_EDGE_RINGS; i++)
+	for (long ringIndex = 0; ringIndex < TOUCH_MY_EDGE_RINGS; ringIndex++)
 	{
-		FirstGrowth[i] = true;
-		Sprites[i].pos = position;
-		Sprites[i].material = g_smoke_mat;
-		Sprites[i].SetFrame(TOUCH_MY_EDGE_RING_FRAME);
-		Sprites[i].SetSize(i * TOUCH_MY_EDGE_RING_SPACING);
-		Sprites[i].angle = Random(0.0f, TWO_PI);
+		FirstGrowth[ringIndex] = true;
+		Sprites[ringIndex].pos = position;
+		Sprites[ringIndex].material = g_smoke_mat;
+		Sprites[ringIndex].SetFrame(TOUCH_MY_EDGE_RING_FRAME);
+		Sprites[ringIndex].SetSize(ringIndex * TOUCH_MY_EDGE_RING_SPACING);
+		Sprites[ringIndex].angle = Random(0.0f, TWO_PI);
 	}
 	Matrix._43 = 0.0f;
 	Matrix._42 = 0.0f;
@@ -3400,19 +3409,19 @@ void TouchMyEdge::PostDraw()
 	LHMatrix matrix = Matrix;
 	matrix.PostMultiply(LH3DTech::g_world_to_clipping);
 	growth *= TOUCH_MY_EDGE_GROWTH;
-	for (long i = 0; i < TOUCH_MY_EDGE_RINGS; i++)
+	for (long ringIndex = 0; ringIndex < TOUCH_MY_EDGE_RINGS; ringIndex++)
 	{
-		LH3DSprite* sprite = &Sprites[i];
+		LH3DSprite* sprite = &Sprites[ringIndex];
 		float       size = sprite->Size + growth;
 		if (size > TOUCH_MY_EDGE_MAX_SIZE)
 		{
-			FirstGrowth[i] = false;
+			FirstGrowth[ringIndex] = false;
 			size -= (long)(size / TOUCH_MY_EDGE_MAX_SIZE) * TOUCH_MY_EDGE_MAX_SIZE;
 		}
 		Colour.a = (uint8_t)((1.0f - size / TOUCH_MY_EDGE_MAX_SIZE) * fade * 255.0f);
-		Sprites[i].SetSize(size);
-		Sprites[i].colour = Colour;
-		Sprites[i].DrawSpecial1(&matrix);
+		Sprites[ringIndex].SetSize(size);
+		Sprites[ringIndex].colour = Colour;
+		Sprites[ringIndex].DrawSpecial1(&matrix);
 	}
 }
 
@@ -3477,14 +3486,14 @@ void TouchMyEdge::Check(LHPoint& pos)
 	}
 	if (g_b_init)
 	{
-		for (long i = 0; i < INFLUENCE_CIRCLE_PLAYER_COUNT; i++)
+		for (long playerIndex = 0; playerIndex < INFLUENCE_CIRCLE_PLAYER_COUNT; playerIndex++)
 		{
-			if (inside[i] == g_player_inside[i])
+			if (inside[playerIndex] == g_player_inside[playerIndex])
 			{
 				continue;
 			}
-			g_player_inside[i] = inside[i];
-			InfluenceCircle* circle = GetCircle(&g_last_pos, &position, i);
+			g_player_inside[playerIndex] = inside[playerIndex];
+			InfluenceCircle* circle = GetCircle(&g_last_pos, &position, playerIndex);
 			if (circle == NULL || !InfluenceCircle::g_b_valid[circle->Player])
 			{
 				continue;
@@ -3501,7 +3510,7 @@ void TouchMyEdge::Check(LHPoint& pos)
 			float angle = LH3DMath::GetYAngle(&circle->Pos, &edge) + HALF_PI_F;
 			float altitude = LH3DIsland::GetAltitude(LH3DMapCoords(edge.x, edge.z));
 			edge.y = max(pos.y, altitude);
-			new TouchMyEdge(&edge, InfluenceCircle::g_players_color[i], angle);
+			new TouchMyEdge(&edge, InfluenceCircle::g_players_color[playerIndex], angle);
 			g_b_collide = true;
 		}
 	}
@@ -3644,35 +3653,36 @@ CheveauxDeFeu::CheveauxDeFeu(LHPoint* pos, LHPoint* dir, LH3DMaterial* material)
 	Start += LHPoint(pos);
 	Pos = Start;
 	Sprites = LH3DSprite::Create(CHEVEAUX_DE_FEU_SPRITES, true);
-	for (long i = 0; i < CHEVEAUX_DE_FEU_SPRITES; i++)
+	for (long spriteIndex = 0; spriteIndex < CHEVEAUX_DE_FEU_SPRITES; spriteIndex++)
 	{
-		Sprites[i].material = material;
-		Sprites[i].pos = Pos;
+		Sprites[spriteIndex].material = material;
+		Sprites[spriteIndex].pos = Pos;
 		LHPoint offset(Dir);
-		offset *= -i * CHEVEAUX_DE_FEU_SPACING;
-		Sprites[i].pos += offset;
-		if (i > CHEVEAUX_DE_FEU_LAST_FLAME)
+		offset *= -spriteIndex * CHEVEAUX_DE_FEU_SPACING;
+		Sprites[spriteIndex].pos += offset;
+		if (spriteIndex > CHEVEAUX_DE_FEU_LAST_FLAME)
 		{
-			Sprites[i].SetFrame(CHEVEAUX_DE_FEU_SMOKE_FRAME);
-			Sprites[i].SetSize(
-				((CHEVEAUX_DE_FEU_STREAK - i) * CHEVEAUX_DE_FEU_SIZE_RANGE / (float)CHEVEAUX_DE_FEU_SPRITES +
+			Sprites[spriteIndex].SetFrame(CHEVEAUX_DE_FEU_SMOKE_FRAME);
+			Sprites[spriteIndex].SetSize(
+				((CHEVEAUX_DE_FEU_STREAK - spriteIndex) * CHEVEAUX_DE_FEU_SIZE_RANGE / (float)CHEVEAUX_DE_FEU_SPRITES +
 			     CHEVEAUX_DE_FEU_MIN_SIZE) *
 				CHEVEAUX_DE_FEU_SMOKE_SCALE);
 		}
 		else
 		{
-			Sprites[i].SetFrame(CHEVEAUX_DE_FEU_FLAME_FRAME);
-			Sprites[i].SetSize((CHEVEAUX_DE_FEU_STREAK - i) * CHEVEAUX_DE_FEU_SIZE_RANGE /
-			                       (float)CHEVEAUX_DE_FEU_SPRITES +
-			                   CHEVEAUX_DE_FEU_MIN_SIZE);
+			Sprites[spriteIndex].SetFrame(CHEVEAUX_DE_FEU_FLAME_FRAME);
+			Sprites[spriteIndex].SetSize((CHEVEAUX_DE_FEU_STREAK - spriteIndex) * CHEVEAUX_DE_FEU_SIZE_RANGE /
+			                                 (float)CHEVEAUX_DE_FEU_SPRITES +
+			                             CHEVEAUX_DE_FEU_MIN_SIZE);
 		}
-		Sprites[i].angle = Random(0.0f, TWO_PI);
-		Sprites[i].colour = RGBA_MAKE(0xff, 0xff, 0xff, (CHEVEAUX_DE_FEU_STREAK - i) * 0xff / CHEVEAUX_DE_FEU_SPRITES);
-		if (i == CHEVEAUX_DE_FEU_GLOW)
+		Sprites[spriteIndex].angle = Random(0.0f, TWO_PI);
+		Sprites[spriteIndex].colour =
+			RGBA_MAKE(0xff, 0xff, 0xff, (CHEVEAUX_DE_FEU_STREAK - spriteIndex) * 0xff / CHEVEAUX_DE_FEU_SPRITES);
+		if (spriteIndex == CHEVEAUX_DE_FEU_GLOW)
 		{
-			Sprites[i].colour = RGBA_MAKE(0xff, 0xff, 0xff, CHEVEAUX_DE_FEU_GLOW_ALPHA);
-			Sprites[i].SetSize(CHEVEAUX_DE_FEU_GLOW_SIZE);
-			Sprites[i].pos = Pos;
+			Sprites[spriteIndex].colour = RGBA_MAKE(0xff, 0xff, 0xff, CHEVEAUX_DE_FEU_GLOW_ALPHA);
+			Sprites[spriteIndex].SetSize(CHEVEAUX_DE_FEU_GLOW_SIZE);
+			Sprites[spriteIndex].pos = Pos;
 		}
 	}
 	Sprites[CHEVEAUX_DE_FEU_STREAK].pos = Pos;
@@ -3748,61 +3758,59 @@ void CheveauxDeFeu::Draw()
 		Sprites->angle = Random(0.0f, TWO_PI);
 		Sprites->Draw();
 		LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+		return;
 	}
-	else
+	ComputePos(&Pos);
+	if (Arrived)
 	{
-		ComputePos(&Pos);
-		if (Arrived)
+		State = CHEVEAUX_DE_FEU_STATE_STOPPED;
+		timer = stopTime;
+	}
+	long spriteIndex;
+	for (spriteIndex = 0; spriteIndex < CHEVEAUX_DE_FEU_SPRITES; spriteIndex++)
+	{
+		if (spriteIndex == CHEVEAUX_DE_FEU_STREAK)
 		{
-			State = CHEVEAUX_DE_FEU_STATE_STOPPED;
-			timer = stopTime;
+			Sprites[spriteIndex].angle +=
+				LH3DTech::GetGameTimeInc() / CHEVEAUX_DE_FEU_STREAK_SPIN_TIME * PI_F * CHEVEAUX_DE_FEU_STREAK_SPIN;
 		}
-		long i;
-		for (i = 0; i < CHEVEAUX_DE_FEU_SPRITES; i++)
+		Sprites[spriteIndex].pos = Pos;
+		if (spriteIndex < CHEVEAUX_DE_FEU_GLOW)
 		{
-			if (i == CHEVEAUX_DE_FEU_STREAK)
+			LHPoint offset(Dir);
+			offset *= -spriteIndex * CHEVEAUX_DE_FEU_SPACING;
+			Sprites[spriteIndex].pos += offset;
+			if (LH3DTech::g_game_time_inc != 0)
 			{
-				Sprites[i].angle +=
-					LH3DTech::GetGameTimeInc() / CHEVEAUX_DE_FEU_STREAK_SPIN_TIME * PI_F * CHEVEAUX_DE_FEU_STREAK_SPIN;
-			}
-			Sprites[i].pos = Pos;
-			if (i < CHEVEAUX_DE_FEU_GLOW)
-			{
-				LHPoint offset(Dir);
-				offset *= -i * CHEVEAUX_DE_FEU_SPACING;
-				Sprites[i].pos += offset;
-				if (LH3DTech::g_game_time_inc != 0)
+				Sprites[spriteIndex].angle = Random(0.0f, TWO_PI);
+				if (spriteIndex < CHEVEAUX_DE_FEU_LAST_FLAME)
 				{
-					Sprites[i].angle = Random(0.0f, TWO_PI);
-					if (i < CHEVEAUX_DE_FEU_LAST_FLAME)
-					{
-						Sprites[i].SetSize(Random(-CHEVEAUX_DE_FEU_FLAME_JITTER, CHEVEAUX_DE_FEU_FLAME_JITTER) +
-						                   (CHEVEAUX_DE_FEU_STREAK - i) * CHEVEAUX_DE_FEU_SIZE_RANGE /
-						                       (float)CHEVEAUX_DE_FEU_SPRITES +
-						                   CHEVEAUX_DE_FEU_MIN_SIZE);
-					}
+					Sprites[spriteIndex].SetSize(Random(-CHEVEAUX_DE_FEU_FLAME_JITTER, CHEVEAUX_DE_FEU_FLAME_JITTER) +
+					                             (CHEVEAUX_DE_FEU_STREAK - spriteIndex) * CHEVEAUX_DE_FEU_SIZE_RANGE /
+					                                 (float)CHEVEAUX_DE_FEU_SPRITES +
+					                             CHEVEAUX_DE_FEU_MIN_SIZE);
 				}
 			}
 		}
-		if (Time > CHEVEAUX_DE_FEU_NO_Z_TEST_TIME)
-		{
-			LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
-		}
-		for (i = 0; i < CHEVEAUX_DE_FEU_SPRITES; i++)
-		{
-			Sprites[i].Draw();
-		}
-		if (Time > CHEVEAUX_DE_FEU_NO_Z_TEST_TIME)
-		{
-			LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
-		}
-		Time += LH3DTech::g_game_time_inc;
-		ComputePos(&grosse_merde_pos);
-		LHPoint back(Dir);
-		back *= CHEVEAUX_DE_FEU_CAMERA_DISTANCE;
-		grosse_merde_pos -= back;
-		grosse_merde_pos.y += CHEVEAUX_DE_FEU_CAMERA_HEIGHT;
 	}
+	if (Time > CHEVEAUX_DE_FEU_NO_Z_TEST_TIME)
+	{
+		LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
+	}
+	for (spriteIndex = 0; spriteIndex < CHEVEAUX_DE_FEU_SPRITES; spriteIndex++)
+	{
+		Sprites[spriteIndex].Draw();
+	}
+	if (Time > CHEVEAUX_DE_FEU_NO_Z_TEST_TIME)
+	{
+		LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
+	}
+	Time += LH3DTech::g_game_time_inc;
+	ComputePos(&grosse_merde_pos);
+	LHPoint back(Dir);
+	back *= CHEVEAUX_DE_FEU_CAMERA_DISTANCE;
+	grosse_merde_pos -= back;
+	grosse_merde_pos.y += CHEVEAUX_DE_FEU_CAMERA_HEIGHT;
 }
 
 void CheveauxDeFeu::GetSittingPos(LHPoint* pos)
@@ -3957,17 +3965,17 @@ bool32_t DansLesNuages::Draw()
 	unsigned long colour = RGBA_MAKE(0xff, 0xff, 0xff, alpha);
 	float         step = LH3DTech::GetGameTimeInc() / DANS_LES_NUAGES_FRAME_TIME;
 	LH3DSprite*   sprite = Sprites;
-	for (long i = 0; i < DANS_LES_NUAGES_SPRITES; i++, sprite++)
+	for (long spriteIndex = 0; spriteIndex < DANS_LES_NUAGES_SPRITES; spriteIndex++, sprite++)
 	{
-		Frames[i] += step;
-		if (Frames[i] > DANS_LES_NUAGES_FRAMES - 1)
+		Frames[spriteIndex] += step;
+		if (Frames[spriteIndex] > DANS_LES_NUAGES_FRAMES - 1)
 		{
-			Frames[i] = 0.0f;
+			Frames[spriteIndex] = 0.0f;
 		}
 		sprite->SetSize((LH3DTech::GetNearClipping() + DANS_LES_NUAGES_DISTANCE) * DANS_LES_NUAGES_SIZE);
 		sprite->pos = pos;
-		sprite->pos += Offsets[i];
-		sprite->Frame = (long)Frames[i] & (DANS_LES_NUAGES_FRAMES - 1);
+		sprite->pos += Offsets[spriteIndex];
+		sprite->Frame = (long)Frames[spriteIndex] & (DANS_LES_NUAGES_FRAMES - 1);
 		sprite->colour = colour;
 		sprite->AddDrawing();
 	}
@@ -3980,11 +3988,11 @@ DansLesNuages::DansLesNuages()
 	Next = g_first;
 	g_first = this;
 	Sprites = LH3DSprite::Create(DANS_LES_NUAGES_SPRITES, true);
-	for (long i = 0; i < DANS_LES_NUAGES_SPRITES; i++)
+	for (long spriteIndex = 0; spriteIndex < DANS_LES_NUAGES_SPRITES; spriteIndex++)
 	{
-		Offsets[i].SetNull();
-		Frames[i] = Random(0.0f, DANS_LES_NUAGES_FRAMES - 1);
-		Sprites[i].material = g_smoke_mat;
+		Offsets[spriteIndex].SetNull();
+		Frames[spriteIndex] = Random(0.0f, DANS_LES_NUAGES_FRAMES - 1);
+		Sprites[spriteIndex].material = g_smoke_mat;
 	}
 }
 
@@ -4151,9 +4159,9 @@ NewCollide::List::~List()
 {
 	if (objs != NULL)
 	{
-		for (int i = 0; i < count; i++)
+		for (int objectIndex = 0; objectIndex < count; objectIndex++)
 		{
-			delete objs[i];
+			delete objs[objectIndex];
 		}
 		LH3DMem::Free(objs);
 		objs = NULL;
@@ -4233,9 +4241,9 @@ void LH3DArena::ComputeLight()
 		g_b_end_sequence_dark = 1.0f - light;
 		long          level = (long)(light * 255.0f);
 		unsigned long colour = RGBA_MAKE(level, level, level, LH3D_COLOR_OPAQUE);
-		for (int i = 0; i < LAND_CELL_MAX_DARKNESS + 1; i++)
+		for (int darknessIndex = 0; darknessIndex < LAND_CELL_MAX_DARKNESS + 1; darknessIndex++)
 		{
-			LandCell::g_darkness_to_color[i] = colour;
+			LandCell::g_darkness_to_color[darknessIndex] = colour;
 		}
 	}
 }
@@ -4323,30 +4331,30 @@ void HowManyPeople::Draw(long max_people, long people, LHPoint* pos)
 		}
 		g_sprites = LH3DSprite::Create(max_people, true);
 		g_count = max_people;
-		for (int i = 0; i < g_count; i++)
+		for (int spriteIndex = 0; spriteIndex < g_count; spriteIndex++)
 		{
-			g_sprites[i].material = g_material;
-			g_sprites[i].SetFrame(HOW_MANY_PEOPLE_FRAME);
-			g_sprites[i].SetSize(HOW_MANY_PEOPLE_SIZE);
+			g_sprites[spriteIndex].material = g_material;
+			g_sprites[spriteIndex].SetFrame(HOW_MANY_PEOPLE_FRAME);
+			g_sprites[spriteIndex].SetSize(HOW_MANY_PEOPLE_SIZE);
 		}
 	}
 	static float spacing = HOW_MANY_PEOPLE_SPACING;
 	LHPoint      start = g_dir;
 	start *= -max_people * 0.5f;
 	start += LHPoint(pos);
-	for (int i = 0; i < max_people; i++)
+	for (int spriteIndex = 0; spriteIndex < max_people; spriteIndex++)
 	{
 		LHPoint offset = g_dir;
-		offset *= i / spacing;
-		LH3DSprite* sprite = &g_sprites[i];
+		offset *= spriteIndex / spacing;
+		LH3DSprite* sprite = &g_sprites[spriteIndex];
 		if (people == HOW_MANY_PEOPLE_ALL)
 		{
-			g_sprites[i].colour = HOW_MANY_PEOPLE_COLOUR_ALL;
-			g_sprites[i].SetSize(1.0f / spacing);
+			g_sprites[spriteIndex].colour = HOW_MANY_PEOPLE_COLOUR_ALL;
+			g_sprites[spriteIndex].SetSize(1.0f / spacing);
 		}
 		else
 		{
-			if (i < people)
+			if (spriteIndex < people)
 			{
 				sprite->colour = HOW_MANY_PEOPLE_COLOUR_IN;
 			}
@@ -4354,7 +4362,7 @@ void HowManyPeople::Draw(long max_people, long people, LHPoint* pos)
 			{
 				sprite->colour = HOW_MANY_PEOPLE_COLOUR_OUT;
 			}
-			g_sprites[i].SetSize(caca_scale / spacing);
+			g_sprites[spriteIndex].SetSize(caca_scale / spacing);
 		}
 		sprite->pos = start;
 		sprite->pos += offset;
@@ -4370,12 +4378,12 @@ FishRush::PaulNet::PaulNet(LHPoint* pos, float radius)
 	Object->SetDynamicLighting(true);
 	Object->SetMesh(Mesh, NULL, NULL);
 	Phase = 0.0f;
-	for (long i = 0; i < FISH_RUSH_NET_SEGMENTS; i++)
+	for (long segmentIndex = 0; segmentIndex < FISH_RUSH_NET_SEGMENTS; segmentIndex++)
 	{
-		float angle = i * TWO_PI / FISH_RUSH_NET_SEGMENTS;
-		Points[i].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
-		Points[i] += LHPoint(pos);
-		Bob[i] = 0.0f;
+		float angle = segmentIndex * TWO_PI / FISH_RUSH_NET_SEGMENTS;
+		Points[segmentIndex].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
+		Points[segmentIndex] += LHPoint(pos);
+		Bob[segmentIndex] = 0.0f;
 	}
 	Caught = false;
 	Size = 1.0f;
@@ -4391,10 +4399,10 @@ FishRush::PaulNet::~PaulNet()
 
 void FishRush::PaulNet::Draw()
 {
-	for (long i = 0; i < FISH_RUSH_NET_SEGMENTS; i++)
+	for (long segmentIndex = 0; segmentIndex < FISH_RUSH_NET_SEGMENTS; segmentIndex++)
 	{
-		LHPoint pos = Points[i];
-		pos.y += (float)cos(i * i + Phase) * FISH_RUSH_NET_BOB;
+		LHPoint pos = Points[segmentIndex];
+		pos.y += (float)cos(segmentIndex * segmentIndex + Phase) * FISH_RUSH_NET_BOB;
 		Object->SetPosition(pos, 0.0f, 1.0f);
 		Object->DrawCutByPlane();
 	}
@@ -4411,12 +4419,12 @@ void FishRush::PaulNet::PreDraw()
 			Size = 0.0f;
 		}
 		float radius = Size * FISH_RUSH_NET_RADIUS + 1.0f;
-		for (long i = 0; i < FISH_RUSH_NET_SEGMENTS; i++)
+		for (long segmentIndex = 0; segmentIndex < FISH_RUSH_NET_SEGMENTS; segmentIndex++)
 		{
-			float angle = i * TWO_PI / FISH_RUSH_NET_SEGMENTS;
-			Points[i].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
-			Points[i] += Pos;
-			Bob[i] = 0.0f;
+			float angle = segmentIndex * TWO_PI / FISH_RUSH_NET_SEGMENTS;
+			Points[segmentIndex].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
+			Points[segmentIndex] += Pos;
+			Bob[segmentIndex] = 0.0f;
 		}
 	}
 	Phase += dt * FISH_RUSH_NET_SPEED;
@@ -4424,12 +4432,12 @@ void FishRush::PaulNet::PreDraw()
 	plane.Normal.Set(0.0f, -1.0f, 0.0f);
 	plane.Distance = 0.0f;
 	UpdateClippingPlane(&plane);
-	for (long j = 0; j < FISH_RUSH_NET_SEGMENTS; j++)
+	for (long drawSegmentIndex = 0; drawSegmentIndex < FISH_RUSH_NET_SEGMENTS; drawSegmentIndex++)
 	{
-		LHPoint pos = Points[j];
-		float   bob = (float)cos(j * j + Phase) * FISH_RUSH_NET_BOB;
+		LHPoint pos = Points[drawSegmentIndex];
+		float   bob = (float)cos(drawSegmentIndex * drawSegmentIndex + Phase) * FISH_RUSH_NET_BOB;
 		pos.y += bob;
-		Bob[j] = bob;
+		Bob[drawSegmentIndex] = bob;
 		Object->SetPosition(pos, 0.0f, 1.0f);
 		Object->DrawCutByPlane();
 	}
@@ -4555,42 +4563,42 @@ void GWater::AddPlouf(LHPoint* pos)
 
 void GWater::Draw()
 {
-	for (unsigned long i = 0; i < GWATER_MAX_PLOUFS; i++)
+	for (unsigned long slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
 	{
-		if (!Actives[i])
+		if (!Actives[slotIndex])
 		{
 			continue;
 		}
 		if (Wind)
 		{
-			Sprites[i].pos.x += g_speed * LH3DTech::g_ambient_wind_direction.x;
-			Sprites[i].pos.z += g_speed * LH3DTech::g_ambient_wind_direction.z;
+			Sprites[slotIndex].pos.x += g_speed * LH3DTech::g_ambient_wind_direction.x;
+			Sprites[slotIndex].pos.z += g_speed * LH3DTech::g_ambient_wind_direction.z;
 		}
-		unsigned long age = Ages[i] + LH3DTech::g_game_time_inc;
+		unsigned long age = Ages[slotIndex] + LH3DTech::g_game_time_inc;
 		if (age > GWATER_PLOUF_LIFE)
 		{
 			age = 0;
-			Actives[i] = false;
+			Actives[slotIndex] = false;
 		}
-		Ages[i] = age;
-		switch (Types[i])
+		Ages[slotIndex] = age;
+		switch (Types[slotIndex])
 		{
 		case GWATER_PLOUF_TYPE_SPLASH:
-			Sprites[i].Size = GetSize(age);
+			Sprites[slotIndex].Size = GetSize(age);
 			break;
 		case GWATER_PLOUF_TYPE_TRAIL: {
 			float size = GetSize(age);
-			Sprites[i].SetShapeOnly(Lengths[i], size / Lengths[i]);
+			Sprites[slotIndex].SetShapeOnly(Lengths[slotIndex], size / Lengths[slotIndex]);
 			break;
 		}
 		default:
-			Sprites[i].SetShapeOnly(1.0f, 1.0f);
-			Sprites[i].Size = GetSize(age);
+			Sprites[slotIndex].SetShapeOnly(1.0f, 1.0f);
+			Sprites[slotIndex].Size = GetSize(age);
 			break;
 		}
-		Sprites[i].SetFrame(Types[i] + GWATER_PLOUF_FRAME);
-		Sprites[i].colour = GetColor(age);
-		Sprites[i].Draw();
+		Sprites[slotIndex].SetFrame(Types[slotIndex] + GWATER_PLOUF_FRAME);
+		Sprites[slotIndex].colour = GetColor(age);
+		Sprites[slotIndex].Draw();
 	}
 }
 
@@ -4602,10 +4610,10 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 {
 	float maxX = LH3DTech::g_max_screen[0];
 	float maxY = LH3DTech::g_max_screen[1];
-	for (unsigned long i = 0; i < vertex_count; i++)
+	for (unsigned long vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
 	{
-		CLAMP(vertices[i].x, 0.0f, maxX);
-		CLAMP(vertices[i].y, 0.0f, maxY);
+		CLAMP(vertices[vertexIndex].x, 0.0f, maxX);
+		CLAMP(vertices[vertexIndex].y, 0.0f, maxY);
 	}
 	LH3DRender::D3DDevice->DrawIndexedPrimitive(primitive_type, fvf, vertices, vertex_count, indices, index_count, 0);
 }
@@ -4663,10 +4671,10 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 {
 	float maxX = LH3DTech::g_max_screen[0];
 	float maxY = LH3DTech::g_max_screen[1];
-	for (unsigned long i = 0; i < vertex_count; i++)
+	for (unsigned long vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
 	{
-		CLAMP(vertices[i].x, 0.0f, maxX);
-		CLAMP(vertices[i].y, 0.0f, maxY);
+		CLAMP(vertices[vertexIndex].x, 0.0f, maxX);
+		CLAMP(vertices[vertexIndex].y, 0.0f, maxY);
 	}
 	LH3DRender::D3DDevice->DrawIndexedPrimitive(primitive_type, fvf, vertices, vertex_count, indices, index_count, 0);
 }
@@ -4906,9 +4914,9 @@ void ExportTexturePackTGA(int argc, char** argv)
 {
 	char file[LH3D_TOOLS_FILE_SIZE];
 	char path[LH3D_TOOLS_TEXT_SIZE];
-	for (int i = 1; i < argc; i++)
+	for (int argumentIndex = 1; argumentIndex < argc; argumentIndex++)
 	{
-		char*    name = argv[i];
+		char*    name = argv[argumentIndex];
 		uint32_t size;
 		if (LHFileLength(name, &size) != LH_FILE_RESULT_OK)
 		{
@@ -4918,7 +4926,7 @@ void ExportTexturePackTGA(int argc, char** argv)
 		LH3DTexturePackFile* pack = (LH3DTexturePackFile*)malloc(size);
 		LHLoadData(name, pack, size, NULL);
 		long offset = 0;
-		for (int j = 0; j < pack->Count; j++, offset += sizeof(long))
+		for (int textureIndex = 0; textureIndex < pack->Count; textureIndex++, offset += sizeof(long))
 		{
 			long* texture = (long*)((uint8_t*)pack + *(long*)((uint8_t*)pack + offset + pack->Offsets));
 			long  textureId = texture[0];
