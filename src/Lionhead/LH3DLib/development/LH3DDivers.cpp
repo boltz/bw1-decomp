@@ -1217,6 +1217,23 @@ static void BuildScreenshotThumbnail(uint8_t* thumbnail, const uint8_t* source)
 	}
 }
 
+static void SampleScreenshotSurface(uint8_t* destination, const DDSURFACEDESC2& surface, long width, long height,
+                                    float scale_x, float scale_y)
+{
+	if (surface.ddpfPixelFormat.dwRGBBitCount == 16)
+	{
+		long pitchPixels = surface.lPitch / (long)sizeof(uint16_t);
+		SampleScreenshot16(destination, (const uint16_t*)surface.lpSurface, pitchPixels, width, height, scale_x,
+		                   scale_y, surface.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN);
+	}
+	else if (surface.ddpfPixelFormat.dwRGBBitCount == 32)
+	{
+		long pitchPixels = surface.lPitch / (long)sizeof(uint32_t);
+		SampleScreenshot32(destination, (const uint32_t*)surface.lpSurface, pitchPixels, width, height, scale_x,
+		                   scale_y);
+	}
+}
+
 void ScriptedScreenShot::TakeFullScreen()
 {
 	if (g_info.FullScreen == NULL)
@@ -1232,24 +1249,15 @@ void ScriptedScreenShot::TakeFullScreen()
 	if (surfaceBytes != NULL)
 	{
 		uint8_t* capturePixel = g_info.FullScreen;
-
-		float scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_FULL_HEIGHT;
-		float scaleX = LHSys::TheSystem.screen.Width() / (float)SCRIPTED_SCREEN_SHOT_FULL_WIDTH;
-
-		if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
-		{
-			long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
-			SampleScreenshot16(capturePixel, (const uint16_t*)surfaceDesc.lpSurface, pitchPixels,
-			                   SCRIPTED_SCREEN_SHOT_FULL_WIDTH, SCRIPTED_SCREEN_SHOT_FULL_HEIGHT, scaleX, scaleY,
-			                   surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN);
-		}
-		else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
+		float    scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_FULL_HEIGHT;
+		float    scaleX = LHSys::TheSystem.screen.Width() / (float)SCRIPTED_SCREEN_SHOT_FULL_WIDTH;
+		if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
 		{
 			long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint32_t);
 			Report3D__FPCce("%d PITCH\n", pitchPixels);
-			SampleScreenshot32(capturePixel, (const uint32_t*)surfaceDesc.lpSurface, pitchPixels,
-			                   SCRIPTED_SCREEN_SHOT_FULL_WIDTH, SCRIPTED_SCREEN_SHOT_FULL_HEIGHT, scaleX, scaleY);
 		}
+		SampleScreenshotSurface(capturePixel, surfaceDesc, SCRIPTED_SCREEN_SHOT_FULL_WIDTH,
+		                        SCRIPTED_SCREEN_SHOT_FULL_HEIGHT, scaleX, scaleY);
 	}
 	LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
 	g_b_fullscreen_ready = true;
@@ -1281,33 +1289,14 @@ void ScriptedScreenShot::Process()
 	uint8_t* picturePixels = (uint8_t*)malloc(CITADEL_TEXTURE_BYTES);
 	LoadTextureCitadel(g_info.PictureTexture, picturePixels);
 	uint8_t* capturePixel = picturePixels;
-
-	float scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
-	float scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
-
-	if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
+	float    scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
+	float    scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
+	if (g_info.Half != 0)
 	{
-		if (g_info.Half != 0)
-		{
-			capturePixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
-		}
-
-		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
-		SampleScreenshot16(capturePixel, (const uint16_t*)surfaceDesc.lpSurface, pitchPixels, CITADEL_TEXTURE_SIZE,
-		                   SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX, scaleY,
-		                   surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN);
+		capturePixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 	}
-	else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
-	{
-		if (g_info.Half != 0)
-		{
-			capturePixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
-		}
-
-		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint32_t);
-		SampleScreenshot32(capturePixel, (const uint32_t*)surfaceDesc.lpSurface, pitchPixels, CITADEL_TEXTURE_SIZE,
-		                   SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX, scaleY);
-	}
+	SampleScreenshotSurface(capturePixel, surfaceDesc, CITADEL_TEXTURE_SIZE, SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX,
+	                        scaleY);
 	LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
 	uint8_t* blendPixel = picturePixels;
 	if (g_info.Half != 0)
