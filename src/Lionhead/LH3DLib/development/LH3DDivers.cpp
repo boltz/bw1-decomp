@@ -653,7 +653,7 @@ static inline void SetLength(LHPoint& point, float size)
 void LH3DFeetShadow::Open()
 {
 	static bool32_t s_first = true;
-	static float    s_uv[4][2] = {
+	static float    s_uv[LH3D_FEET_SHADOW_VERTICES_PER_QUAD][2] = {
 		{0.0f, 0.0f},
 		{1.0f, 0.0f},
 		{1.0f, 1.0f},
@@ -671,12 +671,12 @@ void LH3DFeetShadow::Open()
 
 	for (int quad = 0; quad < LH3D_FEET_SHADOW_QUADS; quad++)
 	{
-		int first = quad * 4;
-		for (int corner = 0; corner < 4; corner++)
+		int first = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD;
+		for (int corner = 0; corner < LH3D_FEET_SHADOW_VERTICES_PER_QUAD; corner++)
 		{
 			int vertex = first + corner;
 			g_vertex_list[vertex].SetNull();
-			if (corner > 1)
+			if (corner > LH3D_FEET_SHADOW_SOLID_CORNERS - 1)
 			{
 				g_list_color[vertex] = LH3DColor(0);
 			}
@@ -687,12 +687,12 @@ void LH3DFeetShadow::Open()
 			g_list_uv[vertex * 2] = s_uv[corner][0];
 			g_list_uv[vertex * 2 + 1] = s_uv[corner][1];
 		}
-		g_list_index[quad * 6 + 0] = quad * 4 + 0;
-		g_list_index[quad * 6 + 1] = quad * 4 + 1;
-		g_list_index[quad * 6 + 2] = quad * 4 + 2;
-		g_list_index[quad * 6 + 3] = quad * 4 + 0;
-		g_list_index[quad * 6 + 4] = quad * 4 + 2;
-		g_list_index[quad * 6 + 5] = quad * 4 + 3;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 0] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 0;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 1] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 1;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 2] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 2;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 3] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 0;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 4] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 2;
+		g_list_index[quad * LH3D_FEET_SHADOW_INDICES_PER_QUAD + 5] = quad * LH3D_FEET_SHADOW_VERTICES_PER_QUAD + 3;
 	}
 
 	TextureFormat format;
@@ -764,57 +764,60 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 	direction += light;
 	if (bone != NULL)
 	{
-		long     quads = 2;
+		long     quads = LH3D_FEET_SHADOW_HUMAN_QUADS;
 		LHMatrix matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[0]];
 		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
 		matrix.PreMultiply(bone->Matrix[0]);
-		LHPoint left = matrix.GetPos();
-		left.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		LHPoint firstFoot = matrix.GetPos();
+		firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
 		matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[1]];
 		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
 		matrix.PreMultiply(bone->Matrix[1]);
-		LHPoint right = matrix.GetPos();
-		right.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		LHPoint offset = direction + (right - left) * 0.5f;
-		SetVertices(&g_vertex_list[0], &direction, &left);
-		offset = (left - right) * 0.5f + direction;
-		SetVertices(&g_vertex_list[4], &offset, &right);
+		LHPoint secondFoot = matrix.GetPos();
+		secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		LHPoint offset = direction + (secondFoot - firstFoot) * 0.5f;
+		SetVertices(&g_vertex_list[0], &direction, &firstFoot);
+		offset = (firstFoot - secondFoot) * 0.5f + direction;
+		SetVertices(&g_vertex_list[LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
 		if (bone->BoneIndex[2] != -1)
 		{
-			quads = 4;
+			quads = LH3D_FEET_SHADOW_QUADS;
 			matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[2]];
 			matrix.PostMultiply(LH3DTech::g_clipping_to_world);
 			matrix.PreMultiply(bone->Matrix[2]);
-			left = matrix.GetPos();
-			left.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+			firstFoot = matrix.GetPos();
+			firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
 			matrix = LH3DMesh::g_current_list_matrix[bone->BoneIndex[3]];
 			matrix.PostMultiply(LH3DTech::g_clipping_to_world);
 			matrix.PreMultiply(bone->Matrix[3]);
-			right = matrix.GetPos();
-			right.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-			offset = direction + (right - left) * 0.5f;
-			SetVertices(&g_vertex_list[8], &direction, &left);
-			offset = (left - right) * 0.5f + direction;
-			SetVertices(&g_vertex_list[12], &offset, &right);
+			secondFoot = matrix.GetPos();
+			secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+			offset = direction + (secondFoot - firstFoot) * 0.5f;
+			SetVertices(&g_vertex_list[2 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &direction, &firstFoot);
+			offset = (firstFoot - secondFoot) * 0.5f + direction;
+			SetVertices(&g_vertex_list[3 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
 		}
-		LH3DTech::Draw3DWorldTriangle(quads * 4, g_vertex_list, g_list_color, g_list_uv, quads * 2, g_list_index,
+		LH3DTech::Draw3DWorldTriangle(quads * LH3D_FEET_SHADOW_VERTICES_PER_QUAD, g_vertex_list, g_list_color,
+		                              g_list_uv, quads * LH3D_FEET_SHADOW_TRIANGLES_PER_QUAD, g_list_index,
 		                              g_material_shadow_feet, false);
 	}
 	else
 	{
-		LHMatrix matrix = LH3DMesh::g_current_list_matrix[21];
+		LHMatrix matrix = LH3DMesh::g_current_list_matrix[HUMAN_BONE_RIGHT_FOOT];
 		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		LHPoint left = matrix.GetPos();
-		left.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		matrix = LH3DMesh::g_current_list_matrix[18];
+		LHPoint firstFoot = matrix.GetPos();
+		firstFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		matrix = LH3DMesh::g_current_list_matrix[HUMAN_BONE_LEFT_FOOT];
 		matrix.PostMultiply(LH3DTech::g_clipping_to_world);
-		LHPoint right = matrix.GetPos();
-		right.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		LHPoint offset = direction + (right - left) * 0.5f;
-		SetVertices(&g_vertex_list[0], &offset, &left);
-		offset = (left - right) * 0.5f + direction;
-		SetVertices(&g_vertex_list[4], &offset, &right);
-		LH3DTech::Draw3DWorldTriangle(2 * 4, g_vertex_list, g_list_color, g_list_uv, 2 * 2, g_list_index,
+		LHPoint secondFoot = matrix.GetPos();
+		secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
+		LHPoint offset = direction + (secondFoot - firstFoot) * 0.5f;
+		SetVertices(&g_vertex_list[0], &offset, &firstFoot);
+		offset = (firstFoot - secondFoot) * 0.5f + direction;
+		SetVertices(&g_vertex_list[LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
+		LH3DTech::Draw3DWorldTriangle(LH3D_FEET_SHADOW_HUMAN_QUADS * LH3D_FEET_SHADOW_VERTICES_PER_QUAD, g_vertex_list,
+		                              g_list_color, g_list_uv,
+		                              LH3D_FEET_SHADOW_HUMAN_QUADS * LH3D_FEET_SHADOW_TRIANGLES_PER_QUAD, g_list_index,
 		                              g_material_shadow_feet, false);
 	}
 }
@@ -3160,7 +3163,7 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 	float          middle = altitude + INFLUENCE_CIRCLE_MIDDLE_HEIGHT;
 	float          top = altitude + INFLUENCE_CIRCLE_TOP_HEIGHT;
 	float          vStep = (float)min(INFLUENCE_CIRCLE_MAX_V, (long)(radius / INFLUENCE_CIRCLE_V_RADIUS)) / Segments;
-	long           vertex = 0;
+	long           rowStartVertex = 0;
 	for (long i = 0; i < Segments; i++)
 	{
 		float angle = i * TWO_PI / Segments;
@@ -3181,19 +3184,19 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		*uv++ = v + INFLUENCE_CIRCLE_TOP_V;
 		u += uStep;
 		v += vStep;
-		*index++ = vertex;
-		*index++ = vertex + 3;
-		*index++ = vertex + 4;
-		*index++ = vertex;
-		*index++ = vertex + 4;
-		*index++ = vertex + 1;
-		*index++ = vertex + 1;
-		*index++ = vertex + 4;
-		*index++ = vertex + 5;
-		*index++ = vertex + 1;
-		*index++ = vertex + 5;
-		*index++ = vertex + 2;
-		vertex += INFLUENCE_CIRCLE_ROW_VERTICES;
+		*index++ = rowStartVertex;
+		*index++ = rowStartVertex + INFLUENCE_CIRCLE_ROW_VERTICES;
+		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+		*index++ = rowStartVertex;
+		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+		*index++ = rowStartVertex + 1;
+		*index++ = rowStartVertex + 1;
+		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 1);
+		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
+		*index++ = rowStartVertex + 1;
+		*index++ = rowStartVertex + (INFLUENCE_CIRCLE_ROW_VERTICES + 2);
+		*index++ = rowStartVertex + 2;
+		rowStartVertex += INFLUENCE_CIRCLE_ROW_VERTICES;
 	}
 	float x = Radius + pos.x;
 	float z = pos.z;
@@ -3707,16 +3710,16 @@ bool32_t Eureka::Draw()
 		{
 			Colour.a = alpha > 0 ? (min(alpha, 0xff)) : 0;
 			screenY -= EUREKA_TEXT_OFFSET;
-			screenX -= GatheringText::GetGameFont(GAME_FONT_DEFAULT)
-			               ->GetStringWidth((char16_t*)Text, wcslen(Text), EUREKA_TEXT_SIZE) *
-			           0.5f;
+			screenX -=
+				GatheringText::GetGameFont(GAME_FONT_DEFAULT)->GetStringWidth(Text, wcslen(Text), EUREKA_TEXT_SIZE) *
+				0.5f;
 			LH3DColor shadow(0, 0, 0, alpha);
 			GatheringText::GetGameFont(GAME_FONT_DEFAULT)
-				->DrawTextRaw((char16_t*)Text, wcslen(Text), screenX + 1.0f, screenY + 1.0f, screenDepth,
-			                  EUREKA_TEXT_SIZE, &shadow, true, NULL, 0.0f, EUREKA_TEXT_DEPTH);
+				->DrawTextRaw(Text, wcslen(Text), screenX + 1.0f, screenY + 1.0f, screenDepth, EUREKA_TEXT_SIZE,
+			                  &shadow, true, NULL, 0.0f, EUREKA_TEXT_DEPTH);
 			GatheringText::GetGameFont(GAME_FONT_DEFAULT)
-				->DrawTextRaw((char16_t*)Text, wcslen(Text), screenX, screenY, screenDepth, EUREKA_TEXT_SIZE, &Colour,
-			                  true, NULL, 0.0f, EUREKA_TEXT_DEPTH);
+				->DrawTextRaw(Text, wcslen(Text), screenX, screenY, screenDepth, EUREKA_TEXT_SIZE, &Colour, true, NULL,
+			                  0.0f, EUREKA_TEXT_DEPTH);
 		}
 	}
 	static LH3DObject* bulb = NULL;
