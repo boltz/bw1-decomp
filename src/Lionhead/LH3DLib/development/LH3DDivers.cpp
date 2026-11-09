@@ -729,9 +729,9 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 	up *= -up.DotProductInline(light);
 	LHPoint direction = up;
 	direction += light;
+	long quads = LH3D_FEET_SHADOW_HUMAN_QUADS;
 	if (bone != NULL)
 	{
-		long    quads = LH3D_FEET_SHADOW_HUMAN_QUADS;
 		LHPoint firstFoot = GetShadowFootPosition(bone->BoneIndex[0], &bone->Matrix[0]);
 		LHPoint secondFoot = GetShadowFootPosition(bone->BoneIndex[1], &bone->Matrix[1]);
 		SetVertices(&g_vertex_list[0], &direction, &firstFoot);
@@ -746,9 +746,6 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 			offset = (firstFoot - secondFoot) * 0.5f + direction;
 			SetVertices(&g_vertex_list[3 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
 		}
-		LH3DTech::Draw3DWorldTriangle(quads * LH3D_FEET_SHADOW_VERTICES_PER_QUAD, g_vertex_list, g_list_color,
-		                              g_list_uv, quads * LH3D_FEET_SHADOW_TRIANGLES_PER_QUAD, g_list_index,
-		                              g_material_shadow_feet, false);
 	}
 	else
 	{
@@ -758,11 +755,10 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 		SetVertices(&g_vertex_list[0], &offset, &firstFoot);
 		offset = (firstFoot - secondFoot) * 0.5f + direction;
 		SetVertices(&g_vertex_list[LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
-		LH3DTech::Draw3DWorldTriangle(LH3D_FEET_SHADOW_HUMAN_QUADS * LH3D_FEET_SHADOW_VERTICES_PER_QUAD, g_vertex_list,
-		                              g_list_color, g_list_uv,
-		                              LH3D_FEET_SHADOW_HUMAN_QUADS * LH3D_FEET_SHADOW_TRIANGLES_PER_QUAD, g_list_index,
-		                              g_material_shadow_feet, false);
 	}
+	LH3DTech::Draw3DWorldTriangle(quads * LH3D_FEET_SHADOW_VERTICES_PER_QUAD, g_vertex_list, g_list_color, g_list_uv,
+	                              quads * LH3D_FEET_SHADOW_TRIANGLES_PER_QUAD, g_list_index, g_material_shadow_feet,
+	                              false);
 }
 
 LHTGA* LHTGA::CreateFromHD(char* name)
@@ -1164,14 +1160,14 @@ static void SampleScreenshot32(uint8_t* destination, const uint32_t* source, lon
 	}
 }
 
-static void BlendScreenshotPixels(uint8_t* pixel)
+static void BlendScreenshotPixels(uint8_t* pixels)
 {
-	uint32_t x;
-	uint32_t y;
-	for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; y++)
+	for (uint32_t y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; y++)
 	{
-		for (x = 0; x < CITADEL_TEXTURE_SIZE - 1; x++)
+		uint8_t* row = pixels + y * CITADEL_TEXTURE_PITCH;
+		for (uint32_t x = 0; x < CITADEL_TEXTURE_SIZE - 1; x++)
 		{
+			uint8_t*  pixel = row + x * 3;
 			LH3DColor color(pixel[0], pixel[1], pixel[2], LH3D_COLOR_OPAQUE);
 			LH3DColor right(pixel[3], pixel[4], pixel[5], LH3D_COLOR_OPAQUE);
 			LH3DColor below(pixel[CITADEL_TEXTURE_PITCH], pixel[CITADEL_TEXTURE_PITCH + 1],
@@ -1184,9 +1180,7 @@ static void BlendScreenshotPixels(uint8_t* pixel)
 			pixel[0] = color.r;
 			pixel[1] = color.g;
 			pixel[2] = color.b;
-			pixel += 3;
 		}
-		pixel += 3;
 	}
 }
 
@@ -1658,12 +1652,12 @@ struct LightBrushRegion
 	long     CellZ;
 	long     Width;
 	long     Depth;
-	uint8_t* Samples;
+	uint8_t* FirstSample;
 };
 
-static bool32_t ClipLightBrush(LightBrushRegion& region, long size)
+static bool32_t ClipLightBrush(LightBrushRegion& region, long brush_size)
 {
-	if (region.CellX > LAND_MAP_SIZE - size)
+	if (region.CellX > LAND_MAP_SIZE - brush_size)
 	{
 		if (region.CellX >= LAND_MAP_SIZE)
 		{
@@ -1673,11 +1667,12 @@ static bool32_t ClipLightBrush(LightBrushRegion& region, long size)
 	}
 	else if (region.CellX < 0)
 	{
-		region.Width = region.CellX + size;
-		region.Samples -= region.CellX * size;
+		region.Width = region.CellX + brush_size;
+		long skippedColumns = -region.CellX;
+		region.FirstSample += skippedColumns * brush_size;
 		region.CellX = 0;
 	}
-	if (region.CellZ > LAND_MAP_SIZE - size)
+	if (region.CellZ > LAND_MAP_SIZE - brush_size)
 	{
 		if (region.CellZ >= LAND_MAP_SIZE)
 		{
@@ -1687,8 +1682,9 @@ static bool32_t ClipLightBrush(LightBrushRegion& region, long size)
 	}
 	else if (region.CellZ < 0)
 	{
-		region.Depth = region.CellZ + size;
-		region.Samples -= region.CellZ;
+		region.Depth = region.CellZ + brush_size;
+		long skippedRows = -region.CellZ;
+		region.FirstSample += skippedRows;
 		region.CellZ = 0;
 	}
 	return true;
@@ -1725,7 +1721,7 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 			}
 
 			uint32_t darkness =
-				SampleLightBrush(region.Samples + column * size + row, size, weightX, weightZ, intensityWeight);
+				SampleLightBrush(region.FirstSample + column * size + row, size, weightX, weightZ, intensityWeight);
 			if (darkness <= (cell->darkness * maxDarkness >> 8))
 			{
 				darkness = cell->darkness;
