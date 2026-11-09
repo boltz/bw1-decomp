@@ -888,6 +888,61 @@ static inline void AddInBuildTriangle(uint16_t a, uint16_t b, uint16_t c)
 	}
 }
 
+static void ProjectInBuildVertices(Vertex3D* clip_vertices, uint16_t vertex_count, unsigned long color)
+{
+	Vertex3D*      screenVertex = LH3DTech::g_cache_t_points;
+	unsigned long* clipFlags = LH3DTech::g_cache_flags;
+	for (int vertexIndex = 0; vertexIndex < vertex_count; vertexIndex++)
+	{
+		if (clip_vertices->rhw < LH3DTech::g_info_transform.NearClip)
+		{
+			*clipFlags = LH3DTech::CLIP_CODE_NEAR;
+		}
+		else
+		{
+			*clipFlags = LH3DTech::CLIP_CODE_NONE;
+		}
+		if (clip_vertices->x > clip_vertices->rhw)
+		{
+			*clipFlags |= LH3DTech::CLIP_CODE_RIGHT;
+		}
+		else if (-clip_vertices->rhw > clip_vertices->x)
+		{
+			*clipFlags |= LH3DTech::CLIP_CODE_LEFT;
+		}
+		if (clip_vertices->y > clip_vertices->rhw)
+		{
+			*clipFlags |= LH3DTech::CLIP_CODE_TOP;
+		}
+		else if (-clip_vertices->rhw > clip_vertices->y)
+		{
+			*clipFlags |= LH3DTech::CLIP_CODE_BOTTOM;
+		}
+		if (*clipFlags == LH3DTech::CLIP_CODE_NONE)
+		{
+			screenVertex->rhw = 1.0f / clip_vertices->rhw;
+			screenVertex->x = (screenVertex->rhw * clip_vertices->x + 1.0f) * LH3DTech::g_info_transform.HalfRes.x;
+			CLAMP(screenVertex->x, 0.0f, LH3DTech::g_max_screen[0]);
+			screenVertex->y = (1.0f - screenVertex->rhw * clip_vertices->y) * LH3DTech::g_info_transform.HalfRes.y;
+			CLAMP(screenVertex->y, 0.0f, LH3DTech::g_max_screen[1]);
+			screenVertex->rhw = LH3DTech::g_info_transform.NearClip * screenVertex->rhw;
+			screenVertex->z = 1.0f - screenVertex->rhw;
+		}
+		else
+		{
+			screenVertex->x = clip_vertices->x;
+			screenVertex->y = clip_vertices->y;
+			screenVertex->rhw = clip_vertices->rhw;
+		}
+		screenVertex->uv = clip_vertices->uv;
+		screenVertex->color = color;
+		screenVertex->specular = clip_vertices->specular;
+		clipFlags++;
+		screenVertex++;
+		clip_vertices++;
+	}
+}
+
 void LH3DInBuild::Draw()
 {
 	if (g_b_fuck)
@@ -897,62 +952,11 @@ void LH3DInBuild::Draw()
 		return;
 	}
 
-	unsigned long  color = LH3D_SCALE_COLOR(LH3DMesh::g_color, LH3D_IN_BUILD_COLOR_SCALE);
-	Vertex3D*      clipVertex = GetListVertex();
-	Vertex3D*      screenVertex = LH3DTech::g_cache_t_points;
-	unsigned long* clipFlags = LH3DTech::g_cache_flags;
-	uint16_t       edgeCount = g_edge_count;
-	uint16_t       vertexCount = edgeCount * 2;
-	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-	{
-		if (clipVertex->rhw < LH3DTech::g_info_transform.NearClip)
-		{
-			*clipFlags = LH3DTech::CLIP_CODE_NEAR;
-		}
-		else
-		{
-			*clipFlags = LH3DTech::CLIP_CODE_NONE;
-		}
-		if (clipVertex->x > clipVertex->rhw)
-		{
-			*clipFlags |= LH3DTech::CLIP_CODE_RIGHT;
-		}
-		else if (-clipVertex->rhw > clipVertex->x)
-		{
-			*clipFlags |= LH3DTech::CLIP_CODE_LEFT;
-		}
-		if (clipVertex->y > clipVertex->rhw)
-		{
-			*clipFlags |= LH3DTech::CLIP_CODE_TOP;
-		}
-		else if (-clipVertex->rhw > clipVertex->y)
-		{
-			*clipFlags |= LH3DTech::CLIP_CODE_BOTTOM;
-		}
-		if (*clipFlags == LH3DTech::CLIP_CODE_NONE)
-		{
-			screenVertex->rhw = 1.0f / clipVertex->rhw;
-			screenVertex->x = (screenVertex->rhw * clipVertex->x + 1.0f) * LH3DTech::g_info_transform.HalfRes.x;
-			CLAMP(screenVertex->x, 0.0f, LH3DTech::g_max_screen[0]);
-			screenVertex->y = (1.0f - screenVertex->rhw * clipVertex->y) * LH3DTech::g_info_transform.HalfRes.y;
-			CLAMP(screenVertex->y, 0.0f, LH3DTech::g_max_screen[1]);
-			screenVertex->rhw = LH3DTech::g_info_transform.NearClip * screenVertex->rhw;
-			screenVertex->z = 1.0f - screenVertex->rhw;
-		}
-		else
-		{
-			screenVertex->x = clipVertex->x;
-			screenVertex->y = clipVertex->y;
-			screenVertex->rhw = clipVertex->rhw;
-		}
-		screenVertex->uv = clipVertex->uv;
-		screenVertex->color = color;
-		screenVertex->specular = clipVertex->specular;
-		clipFlags++;
-		screenVertex++;
-		clipVertex++;
-	}
-
+	unsigned long color = LH3D_SCALE_COLOR(LH3DMesh::g_color, LH3D_IN_BUILD_COLOR_SCALE);
+	Vertex3D*     clipVertex = GetListVertex();
+	uint16_t      edgeCount = g_edge_count;
+	uint16_t      vertexCount = edgeCount * 2;
+	ProjectInBuildVertices(clipVertex, vertexCount, color);
 	LH3DTech::g_index_count = 0;
 	LH3DTech::g_points_count = vertexCount;
 	LH3DTech::g_clip_with_double_sided = true;
@@ -3052,11 +3056,21 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 	float          top = altitude + INFLUENCE_CIRCLE_TOP_HEIGHT;
 	float          vStep = (float)min(INFLUENCE_CIRCLE_MAX_V, (long)(radius / INFLUENCE_CIRCLE_V_RADIUS)) / Segments;
 	long           rowStartVertex = 0;
-	for (long i = 0; i < Segments; i++)
+	for (long i = 0; i <= Segments; i++)
 	{
-		float angle = i * TWO_PI / Segments;
-		float x = (float)cos(angle) * Radius + pos.x;
-		float z = (float)sin(angle) * Radius + pos.z;
+		float x;
+		float z;
+		if (i == Segments)
+		{
+			x = Radius + pos.x;
+			z = pos.z;
+		}
+		else
+		{
+			float angle = i * TWO_PI / Segments;
+			x = (float)cos(angle) * Radius + pos.x;
+			z = (float)sin(angle) * Radius + pos.z;
+		}
 		float height = LH3DIsland::GetAltitude(LH3DMapCoords(x, z)) - altitude;
 		*point++ = LHPoint(x, height + altitude, z);
 		*point++ = LHPoint(x, height + middle, z);
@@ -3070,6 +3084,10 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		*uv++ = v + INFLUENCE_CIRCLE_MIDDLE_V;
 		*uv++ = u;
 		*uv++ = v + INFLUENCE_CIRCLE_TOP_V;
+		if (i == Segments)
+		{
+			break;
+		}
 		u += uStep;
 		v += vStep;
 		*index++ = rowStartVertex;
@@ -3086,21 +3104,6 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		*index++ = rowStartVertex + 2;
 		rowStartVertex += INFLUENCE_CIRCLE_ROW_VERTICES;
 	}
-	float x = Radius + pos.x;
-	float z = pos.z;
-	float height = LH3DIsland::GetAltitude(LH3DMapCoords(x, z)) - altitude;
-	*point++ = LHPoint(x, height + altitude, z);
-	*point++ = LHPoint(x, height + middle, z);
-	*point = LHPoint(x, height + top, z);
-	*colour++ = g_players_color[player].GetColor();
-	*colour++ = g_players_color[player].GetColor();
-	*colour = g_players_color[player].GetColor();
-	*uv++ = u;
-	*uv++ = v;
-	*uv++ = u;
-	*uv++ = v + INFLUENCE_CIRCLE_MIDDLE_V;
-	*uv++ = u;
-	*uv = v + INFLUENCE_CIRCLE_TOP_V;
 	for (InfluenceCircle* other = Next; other != NULL; other = other->Next)
 	{
 		DeleteContact(this, other);
