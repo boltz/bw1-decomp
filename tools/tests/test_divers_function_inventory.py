@@ -37,7 +37,7 @@ class DiversInventoryTests(unittest.TestCase):
         fixture = Path(__file__).resolve().parents[1] / 'divers_readability_candidate.json'
         source = json.loads(fixture.read_text())['files']['src/Lionhead/LH3DLib/development/LH3DDivers.cpp']
         actual = function_inventory(source)
-        helpers = ('SampleScreenshot16', 'SampleScreenshot32', 'BlendScreenshotPixels', 'BuildScreenshotThumbnail', 'UpdateVillagerAnimationBlend', 'TransformVillagerAnimation', 'ProjectInBuildVertices')
+        helpers = ('SampleScreenshot16', 'SampleScreenshot32', 'BlendScreenshotPixels', 'BuildScreenshotThumbnail', 'UpdateVillagerAnimationBlend', 'TransformVillagerAnimation', 'ProjectInBuildVertices', 'DrawVillagerMesh')
         added = sum('static void ' + name + '(' in source for name in helpers)
         shadow = 'static LHPoint GetShadowFootPosition('
         added += shadow in source
