@@ -230,7 +230,7 @@ def comment_signatures(path, text):
     return [comment["signature"] for comment in comments], complete
 
 
-def inventory(files, source_context, file_list_truncated=False, base_context_required=False):
+def inventory(files, source_context, file_list_truncated=False, base_context_required=False, scored_ranges=None):
     sources = {source["path"]: source for source in source_context}
     result = {
         "scope": "Added/edited owned C/C++, Python tooling, and GitHub YAML values/comments; excludes vendored code, documentation, strings/docstrings, and embedded scripts",
@@ -244,6 +244,8 @@ def inventory(files, source_context, file_list_truncated=False, base_context_req
         "eligible_files": 0,
         "comments_complete": True,
     }
+    if scored_ranges is not None:
+        result["scope"] = "Complete matched-contribution ranges, with supporting code folded into parents; comments checked only where added/edited"
     if file_list_truncated:
         result["limitations"].append("Changed-file list was truncated")
         result["comments_complete"] = False
@@ -252,7 +254,9 @@ def inventory(files, source_context, file_list_truncated=False, base_context_req
         if not owned_source(path) or item.get("status") == "removed":
             continue
         result["eligible_files"] += 1
-        if item.get("additions") == 0:
+        if scored_ranges is not None and path not in scored_ranges:
+            continue
+        if scored_ranges is None and item.get("additions") == 0:
             continue
         source = sources.get(path)
         patch = item.get("patch")
@@ -260,8 +264,9 @@ def inventory(files, source_context, file_list_truncated=False, base_context_req
             result["limitations"].append(path + ": source or patch unavailable")
             result["comments_complete"] = False
             continue
-        changed = added_lines(patch)
-        if len(changed) != item.get("additions", len(changed)):
+        added = added_lines(patch)
+        changed = set(scored_ranges.get(path, ())) if scored_ranges is not None else added
+        if len(added) != item.get("additions", len(added)):
             result["limitations"].append(path + ": patch additions are incomplete")
             result["comments_complete"] = False
         if source.get("status") != "complete":
@@ -282,6 +287,8 @@ def inventory(files, source_context, file_list_truncated=False, base_context_req
             if not complete:
                 result["limitations"].append(path + ": C/C++ tokenization was incomplete")
                 result["comments_complete"] = False
+        if scored_ranges is not None:
+            comments = [comment for comment in comments if comment["line"] in added]
         if "base_comment_signatures" in source and source.get("base_comments_complete"):
             head_signatures, head_complete = comment_signatures(path, source.get("text", ""))
             remaining = Counter(head_signatures) - Counter(source["base_comment_signatures"])

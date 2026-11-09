@@ -1239,6 +1239,8 @@ def main():
             changed_text,
             readability_review.precedent_sources(reposcout_evidence),
         )
+        quality["advisory"] = True
+        quality["acceptance_metric"] = False
         quality["scope_limited"] = bool(limited_files or file_list_truncated or limited_source_files)
         quality_report_path.write_text(json.dumps(quality, indent=2), encoding="utf-8")
         quality_incomplete = bool(quality["invalid"] or not quality["numbers_complete"])
