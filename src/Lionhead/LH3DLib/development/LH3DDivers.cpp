@@ -175,14 +175,10 @@ bool32_t BackgroundBox::Open()
 	{
 		g_material = LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_SMOOTH_ALPHA, NULL);
 	}
-	g_list_vertex[0].uv.x = 0.0f;
-	g_list_vertex[0].uv.y = 0.0f;
-	g_list_vertex[1].uv.x = BACKGROUND_BOX_UV;
-	g_list_vertex[1].uv.y = 0.0f;
-	g_list_vertex[2].uv.x = BACKGROUND_BOX_UV;
-	g_list_vertex[2].uv.y = BACKGROUND_BOX_UV;
-	g_list_vertex[3].uv.x = 0.0f;
-	g_list_vertex[3].uv.y = BACKGROUND_BOX_UV;
+	g_list_vertex[0].uv.Set(0.0f, 0.0f);
+	g_list_vertex[1].uv.Set(BACKGROUND_BOX_UV, 0.0f);
+	g_list_vertex[2].uv.Set(BACKGROUND_BOX_UV, BACKGROUND_BOX_UV);
+	g_list_vertex[3].uv.Set(0.0f, BACKGROUND_BOX_UV);
 	LH3DRender::RegisterFinishFrameCallback(BACKGROUND_BOX_FINISH_PRIORITY, true, drawallcb, NULL);
 	return true;
 }
@@ -2207,12 +2203,29 @@ void GlowVillager::SetNewFrame()
 	g_offset = (long)(time * (GLOW_VILLAGER_FRAMES / period));
 }
 
+static void CopyPaginationTile(uint8_t* alpha_output, uint8_t* rgb_output, const uint8_t* tile_pixels)
+{
+	for (int y = 0; y < LH3D_TOOLS_TILE_SIZE; y++)
+	{
+		for (int x = 0; x < LH3D_TOOLS_TILE_SIZE; x++)
+		{
+			*alpha_output++ = tile_pixels[3];
+			rgb_output[0] = tile_pixels[0];
+			rgb_output[1] = tile_pixels[1];
+			rgb_output[2] = tile_pixels[2];
+			rgb_output += 3;
+			tile_pixels += 4;
+		}
+		alpha_output += LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE;
+		rgb_output += (LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE) * 3;
+	}
+}
+
 void LH3DTools::BuildPaginationFromRawFile(int argc, char** argv)
 {
 	uint8_t* alphaPage = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE);
 	uint8_t* rgbPage = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE * 3);
 	uint8_t* tilePixels = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4);
-	uint8_t* sourcePixel = tilePixels;
 	char*    inputName = argv[1];
 	uint32_t size;
 	char     baseName[LH3D_TOOLS_TEXT_SIZE];
@@ -2240,21 +2253,7 @@ void LH3DTools::BuildPaginationFromRawFile(int argc, char** argv)
 			break;
 		}
 		LHLoadData(tilePath, tilePixels, LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4, NULL);
-		for (int y = 0; y < LH3D_TOOLS_TILE_SIZE; y++)
-		{
-			for (int x = 0; x < LH3D_TOOLS_TILE_SIZE; x++)
-			{
-				*pageAlpha++ = sourcePixel[3];
-				pageRgb[0] = sourcePixel[0];
-				pageRgb[1] = sourcePixel[1];
-				pageRgb[2] = sourcePixel[2];
-				pageRgb += 3;
-				sourcePixel += 4;
-			}
-			pageAlpha += LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE;
-			pageRgb += (LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE) * 3;
-		}
-		sourcePixel = tilePixels;
+		CopyPaginationTile(pageAlpha, pageRgb, tilePixels);
 		tileIndex++;
 	}
 	strcpy(baseName, inputName);
