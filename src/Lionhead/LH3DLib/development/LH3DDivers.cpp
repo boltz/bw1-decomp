@@ -1429,7 +1429,7 @@ Bitmap16B* Bitmap16B::CreateFromHD(char* name, bool32_t keep_format)
 				uint16_t pixel = bitmap->Data[(bitmap->Width * y + x) * 2];
 				if (convertTo565)
 				{
-					pixel = ((pixel & BITMAP_16B_555_HIGH) << 1) | (pixel & BITMAP_16B_555_BLUE);
+					pixel = ((pixel & 0xffe0) << 1) | (pixel & 0x1f);
 				}
 				lowRes->Data[lowRes->Width * y + x] = pixel;
 			}
@@ -1444,7 +1444,7 @@ Bitmap16B* Bitmap16B::CreateFromHD(char* name, bool32_t keep_format)
 			for (int x = 0; x < bitmap->Width; x++)
 			{
 				uint16_t* pixel = &bitmap->Data[bitmap->Width * y + x];
-				*pixel = ((*pixel & BITMAP_16B_555_HIGH) << 1) | (*pixel & BITMAP_16B_555_BLUE);
+				*pixel = ((*pixel & 0xffe0) << 1) | (*pixel & 0x1f);
 			}
 		}
 	}
