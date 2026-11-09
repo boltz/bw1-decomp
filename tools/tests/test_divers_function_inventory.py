@@ -32,22 +32,31 @@ class DiversInventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Unsupported top-level scope'):
             definitions('namespace nested {void Hidden() {}}')
 
+    def test_plain_data_struct_preserves_surrounding_function_coverage(self):
+        source = 'void Before() {}\nstruct Region {long X; uint8_t* Pixels;};\nvoid After() {}'
+        self.assertEqual([x['signature'] for x in function_inventory(source)],
+                         ['void Before()', 'void After()'])
+
+    def test_type_methods_and_nested_types_fail_instead_of_being_skipped(self):
+        for source in ['struct S {void Hidden() {}};', 'struct S {S() {}};',
+                       'struct S {struct Inner {int x;};};', 'struct S {void (*callback)();};']:
+            with self.subTest(source=source):
+                with self.assertRaisesRegex(ValueError, 'cannot omit possible methods'):
+                    definitions(source)
+
     def test_full_divers_fixture_has_one_entry_for_every_definition(self):
         import json
         fixture = Path(__file__).resolve().parents[1] / 'divers_readability_candidate.json'
         source = json.loads(fixture.read_text())['files']['src/Lionhead/LH3DLib/development/LH3DDivers.cpp']
         actual = function_inventory(source)
-        helpers = ('SampleScreenshot16', 'SampleScreenshot32', 'BlendScreenshotPixels', 'BuildScreenshotThumbnail', 'UpdateVillagerAnimationBlend', 'TransformVillagerAnimation', 'ProjectInBuildVertices', 'DrawVillagerMesh')
-        added = sum('static void ' + name + '(' in source for name in helpers)
-        shadow = 'static LHPoint GetShadowFootPosition('
-        added += shadow in source
-        if shadow in source:
-            self.assertEqual(sum(x['signature'].startswith(shadow) for x in actual), 1)
+        helper_signatures = ('static void SampleScreenshot16(', 'static void SampleScreenshot32(', 'static void BlendScreenshotPixels(', 'static void BuildScreenshotThumbnail(', 'static void UpdateVillagerAnimationBlend(', 'static void TransformVillagerAnimation(', 'static void ProjectInBuildVertices(', 'static void DrawVillagerMesh(', 'static void LightCellAndCopies(', 'static void CalculateClipTexturePlane(', 'static LHPoint GetShadowFootPosition(', 'static uint8_t GetLightGridWeight(', 'static unsigned long SampleLightBrush(', 'static bool32_t ClipLightBrush(')
+        added = 0
+        for signature in helper_signatures:
+            if signature in source:
+                added += 1
+                self.assertEqual(sum(x['signature'].startswith(signature) for x in actual), 1)
         expected_count = 177 + added
         self.assertEqual(len(actual), expected_count)
-        for name in helpers:
-            if 'static void ' + name + '(' in source:
-                self.assertEqual(sum(x['signature'].startswith('static void ' + name + '(') for x in actual), 1)
         self.assertEqual(sum(x['signature'] == 'void UnidentifiedDiversRoutine()' for x in actual), 1)
         self.assertEqual(sum('operator==' in x['signature'] for x in actual), 1)
         self.assertEqual(len({x['line'] for x in actual}), len(actual))

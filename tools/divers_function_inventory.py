@@ -37,6 +37,13 @@ def definitions(source):
                 active = (start, offset)
             elif header.endswith("="):
                 active = None
+            elif re.fullmatch(r"struct\s+[A-Za-z_]\w*", header):
+                closing = masked.find("}", offset + 1)
+                members = masked[offset + 1:closing] if closing >= 0 else ""
+                field = r"\s*[A-Za-z_]\w*(?:\s*\*)*\s+[A-Za-z_]\w*\s*;"
+                if closing < 0 or not re.fullmatch(r"(?:" + field + r")*\s*", members):
+                    raise ValueError("Unsupported type body; cannot omit possible methods")
+                active = None
             else:
                 raise ValueError("Unsupported top-level scope at line %d: %s" %
                                  (source.count("\n", 0, start) + 1, header[:120]))
