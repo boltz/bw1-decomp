@@ -7,7 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from matched_source_manifest import collect, sha256
-from test_readability_scope import coff_with_relocations
+from test_readability_scope import coff_with_relocations, extent_spec
 
 
 class ManifestTests(unittest.TestCase):
@@ -42,8 +42,8 @@ class ManifestTests(unittest.TestCase):
                          inputs=self.inputs, entities=[dict(identity="BW1W120:runblack:00800000", version="BW1W120",
                              module="runblack", address=0x800000, logical_id="clear()", context_sha256="support context",
                              ownership_complete=True, ranges=[dict(path="a.cpp", start=1, end=1, role="definition")],
-                             parts=[dict(reference=dict(path="original.o", section=1, start=0, size=10),
-                                         candidate=dict(path="compiled.o", section=1, start=0, size=10))])])
+                             parts=[dict(reference=dict(path="original.o", **extent_spec()),
+                                         candidate=dict(path="compiled.o", **extent_spec()))])])
 
     def collect(self):
         return collect(self.plan, self.repo, self.artifacts, self.revision, self.tree)

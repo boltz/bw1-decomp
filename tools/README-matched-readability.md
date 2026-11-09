@@ -52,7 +52,11 @@ artifact bundle. Paths are relative and traversal is forbidden.
 Every entity has version/module/original address identity, a stable `logical_id`,
 `linked`, a context hash, complete definition/support `ranges`, and all associated
 binary `parts`. Each part specifies reference/candidate path, section index, start
-and size. Compiler-generated helpers belong in their source entity's parts, not as
+and size, plus a reviewed `bindings` map keyed by COFF symbol index. Each binding
+pins the actual symbol record (`name`, `section`, `value`, `storage`, `type`) to
+its original version/module/address identity. Equal reconstructed symbol names
+alone do not establish equal original bindings. Missing bindings remain unverified.
+Compiler-generated helpers belong in their source entity's parts, not as
 separate readability items. Standalone matched data gets a logical data entity.
 Ranges include signatures, constructor initializers, conditional branches and
 required supporting headers. Duplicate filenames must use full repository paths.

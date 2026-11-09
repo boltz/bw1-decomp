@@ -187,19 +187,34 @@ def coff_with_relocations(two=True):
                 + symbols + struct.pack("<I", 4))
 
 
+def extent_spec():
+    return dict(section=1, start=0, size=10, bindings={str(index): dict(
+        record=dict(name=name, section=0, value=0, storage=2, type=0),
+        original_identity="BW1W120:runblack:" + address) for index, name, address in
+        ((0, "dest", "00ea9ea0"), (1, "pointer", "00ea9e10"))})
+
+
 class BinaryProofTests(unittest.TestCase):
     def test_secondary_relocation_cannot_disappear_behind_100_display(self):
-        spec = dict(section=1, start=0, size=10)
+        spec = extent_spec()
         reference = extent(coff_with_relocations(), spec)
         missing_second = extent(coff_with_relocations(False), spec)
         self.assertEqual(len(reference["relocations"]), 2)
         self.assertNotEqual(reference, missing_second)
 
     def test_exact_operand_extent_preserved(self):
-        spec = dict(section=1, start=0, size=10)
+        spec = extent_spec()
         self.assertEqual(extent(coff_with_relocations(), spec), extent(coff_with_relocations(), spec))
         self.assertNotEqual(digest(extent(coff_with_relocations(), spec)),
                             digest(extent(coff_with_relocations(False), spec)))
+
+    def test_matching_names_without_original_binding_do_not_qualify(self):
+        from decomp_binary import Unresolved
+        with self.assertRaises(Unresolved):
+            extent(coff_with_relocations(), dict(section=1, start=0, size=10))
+        reference, candidate = extent_spec(), extent_spec()
+        candidate["bindings"]["1"]["original_identity"] = "BW1W120:runblack:00000000"
+        self.assertNotEqual(extent(coff_with_relocations(), reference), extent(coff_with_relocations(), candidate))
 
     def test_no_basename_or_traversal_path_guessing(self):
         self.assertNotEqual(safe_path("src/one/a.cpp"), safe_path("src/two/a.cpp"))

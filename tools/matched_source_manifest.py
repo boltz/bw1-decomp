@@ -51,13 +51,23 @@ def extent(coff, spec):
             if left < start or right > start + size:
                 raise Unresolved("Relocation crosses entity boundary")
             symbol = coff.symbols[relocation.symbol_index]
-            # Preserve the full decorated identity AND addend. Section-relative
-            # targets require a reviewed binding; do not guess from .text names.
+            # A name is not original identity. The independently approved receipt
+            # must bind each actual COFF symbol record to an original target.
+            # Keep the decorated name too: renamed equivalents need a separate
+            # resolved-byte proof, not an automatic alias normalization.
+            binding = spec.get("bindings", {}).get(str(symbol.index))
+            actual = dict(name=symbol.name, section=symbol.section, value=symbol.value,
+                          storage=symbol.storage, type=symbol.type)
+            if (not isinstance(binding, dict) or binding.get("record") != actual
+                    or not isinstance(binding.get("original_identity"), str)
+                    or not binding["original_identity"]):
+                raise Unresolved("Relocation has no reviewed original binding: " + symbol.name)
             if symbol.storage == 3 or symbol.section == -2:
-                raise Unresolved("Section/static relocation requires original binding proof")
+                raise Unresolved("Section/static relocation requires resolved-byte proof")
             offset = left - start
             relocations.append(dict(offset=offset, type=relocation.type,
-                                    symbol=symbol.name, addend=bytes(code[offset:offset + relocation.width]).hex()))
+                                    symbol=symbol.name, original_identity=binding["original_identity"],
+                                    addend=bytes(code[offset:offset + relocation.width]).hex()))
             code[offset:offset + relocation.width] = bytes(relocation.width)
     return dict(size=size, bytes=code.hex(), relocations=sorted(relocations, key=lambda r: r["offset"]))
 
@@ -150,8 +160,9 @@ def collect(plan, repo, artifact_root, revision, tree):
             if not proofs:
                 raise ValueError("No binary parts for logical entity")
             item["reference_sha256"] = digest([
-                dict(extent=part["reference"], input_sha256=inputs[part["reference"]["path"]][0]["sha256"])
-                for part in entity["parts"]])
+                dict(extent=part["reference"], input_sha256=inputs[part["reference"]["path"]][0]["sha256"],
+                     proof=proof["reference"])
+                for part, proof in zip(entity["parts"], proofs)])
             item["proof_sha256"] = digest(proofs)
             item["match"] = "matched" if all(p["reference"] == p["candidate"] for p in proofs) else "unmatched"
             item["ownership_complete"] = entity.get("ownership_complete") is True
