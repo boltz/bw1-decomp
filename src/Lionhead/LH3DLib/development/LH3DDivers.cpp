@@ -68,260 +68,6 @@
 #include "TouchMyEdge.h"        /* For class TouchMyEdge */
 #include "TemporaryShadow.h"    /* For class TemporaryShadow */
 
-#define LH3D_FEET_SHADOW_TEXTURE_SIZE         32
-#define LH3D_FEET_SHADOW_TEXTURE_FLAGS        0x44
-#define LH3D_FEET_SHADOW_TEXTURE_FORMAT       2
-#define LH3D_FEET_SHADOW_SIDE_SIZE            0.2f
-#define LH3D_FEET_SHADOW_LIGHT_SIZE           2.0f
-#define LH3D_FEET_SHADOW_SOLID_CORNERS        2
-#define LH3D_FEET_SHADOW_BACK_OFFSET          -0.02f
-#define LH3D_FEET_SHADOW_TEXTURE_PATH         ".\\Data\\Textures\\human_shadow.raw"
-#define LH3D_IN_BUILD_MAX_EDGES               1000
-#define LH3D_IN_BUILD_COLOR_SCALE             0xc0
-#define LHTGA_IMAGE_TYPE_TRUE_COLOR           2
-#define LHTGA_PIXEL_DEPTH                     32
-#define LHTGA_DESCRIPTOR_TOP_LEFT             0x20
-#define LHTGA_DESCRIPTOR                      (LHTGA_DESCRIPTOR_TOP_LEFT | 8)
-#define LHTGA_HD_SIZE                         256
-#define LHTGA_CHANNEL_MAX                     255
-#define LH3D_TOOLS_TEXT_SIZE                  0x400
-#define LH3D_TOOLS_FILE_SIZE                  0x100
-#define LH3D_TEXTURE_PACK_SIZE                256
-#define LH3D_TEXTURE_PACK_NO_OFFSETS          0xffffffff
-#define BITMAP_16B_LOW_RES_SIZE               128
-#define BITMAP_16B_RAW_SIZE                   256
-#define BITMAP_16B_555_HIGH                   0xffe0
-#define BITMAP_16B_555_BLUE                   0x1f
-#define LH3D_TOOLS_SCREEN_SIZE                50
-#define LH3D_TOOLS_SCREEN_DEPTH               16
-#define LH3D_TOOLS_EXTENSION_LENGTH           4
-#define LH3D_TOOLS_TEXTURE_FLAGS              1
-#define LH3D_TOOLS_TEXTURE_ALPHA              0x40
-#define LIGHT_LIKE_HAND_CELLS_PER_UNIT        0.1f
-#define ECLAIRAGE_PUBLIC_OFFSET               50.0f
-#define ECLAIRAGE_PUBLIC_PERIOD               30.0f
-#define ECLAIRAGE_PUBLIC_TYPE_LOW             1
-#define ECLAIRAGE_PUBLIC_LOW_HEIGHT           1.0f
-#define ECLAIRAGE_PUBLIC_HEIGHT               5.0f
-#define ECLAIRAGE_PUBLIC_GLOW                 2
-#define ECLAIRAGE_PUBLIC_SIZE_VARIATION       0.1f
-#define ECLAIRAGE_PUBLIC_FLAME_SIZE           1.0f
-#define ECLAIRAGE_PUBLIC_GLOW_SIZE            3.0f
-#define ECLAIRAGE_PUBLIC_COLOUR               0xfff38421
-#define ECLAIRAGE_PUBLIC_GLOW_FRAME           56
-#define ECLAIRAGE_PUBLIC_FRAMES               32
-#define ECLAIRAGE_PUBLIC_FRAME_STEP           10
-#define ECLAIRAGE_PUBLIC_FRAME_PERIOD         700
-#define ECLAIRAGE_PUBLIC_FLICKER              0.5f
-#define ECLAIRAGE_PUBLIC_LIGHT_SIZE           14
-#define ECLAIRAGE_PUBLIC_SPECULAR_SIZE        (ECLAIRAGE_PUBLIC_LIGHT_SIZE * ECLAIRAGE_PUBLIC_LIGHT_SIZE * 3)
-#define ECLAIRAGE_PUBLIC_DARKNESS             48.0f
-#define ECLAIRAGE_PUBLIC_SPECULAR_PATH        "Data\\Textures\\village_specular.raw"
-#define ECLAIRAGE_PUBLIC_DIFFUSE_PATH         "Data\\Textures\\village_diffuse.raw"
-#define SCRIPTED_SCREEN_SHOT_LOCK             (DDLOCK_WAIT | DDLOCK_READONLY | DDLOCK_NOSYSLOCK)
-#define SCRIPTED_SCREEN_SHOT_565_GREEN        0x7e0
-#define SCRIPTED_SCREEN_SHOT_FULL_WIDTH       400
-#define SCRIPTED_SCREEN_SHOT_FULL_HEIGHT      300
-#define SCRIPTED_SCREEN_SHOT_HALF_HEIGHT      128
-#define SCRIPTED_SCREEN_SHOT_HALF_BLEND       0x80
-#define SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH  128
-#define SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT 64
-#define SCRIPTED_SCREEN_SHOT_THUMBNAILS       8
-#define CITADEL_TEXTURE_SIZE                  256
-#define CITADEL_TEXTURE_DESC_FLAGS       (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT)
-#define CITADEL_TEXTURE_CAPS             (DDSCAPS_COMPLEX | DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)
-#define CITADEL_TEXTURE_LOCK             (DDLOCK_WAIT | DDLOCK_WRITEONLY | DDLOCK_NOSYSLOCK)
-#define CITADEL_TEXTURE_PIXEL_FORMAT     1
-#define CITADEL_TEXTURE_555_OPAQUE       0x8000
-#define CITADEL_TEXTURE_PITCH            (CITADEL_TEXTURE_SIZE * 3)
-#define CITADEL_TEXTURE_BYTES            (CITADEL_TEXTURE_SIZE * CITADEL_TEXTURE_PITCH)
-#define SMOKY_STUFF_FRAME                16
-#define SMOKY_STUFF_BURST_SPEED          1.5f
-#define SMOKY_STUFF_MIN_SPEED            0.3f
-#define SMOKY_STUFF_BURST_LIFE           1.5f
-#define SMOKY_STUFF_LIFE                 3.0f
-#define SMOKY_STUFF_FADE_LIFE            0.7f
-#define SMOKY_STUFF_BURST_COLOUR         0x68503d
-#define SMOKY_STUFF_ALPHA                100.0f
-#define SMOKY_STUFF_COLOUR               0x808080
-#define SMOKY_STUFF_DEFAULT_COLOUR       0xffffffff
-#define SMOKY_STUFF_SPIN                 5.0f
-#define SMOKY_STUFF_FRAMES               15.0f
-#define GLOW_VILLAGER_COLOUR             0x80c18119
-#define GLOW_VILLAGER_HALO_FRAME         32
-#define GLOW_VILLAGER_HALO_COLOUR        0xffffff00
-#define GLOW_VILLAGER_HALO_SCALE         16.0f
-#define GLOW_VILLAGER_HALO_HEIGHT        2.5f
-#define GLOW_VILLAGER_FRAME_PERIOD       500
-#define GLOW_VILLAGER_FRAMES             15.0f
-#define LH3D_TOOLS_PAGE_SIZE             256
-#define LH3D_TOOLS_TILE_SIZE             32
-#define LH3D_TOOLS_PAGE_TILES            (LH3D_TOOLS_PAGE_SIZE / LH3D_TOOLS_TILE_SIZE)
-#define LH3D_TOOLS_RAW_EXTENSION_LENGTH  5
-#define LH3D_TOOLS_PACK_TEXTURE_PATH     "%s\\PAK%x.tga"
-#define FISH_MIN_SIZE                    0.8f
-#define FISH_MAX_SIZE                    1.2f
-#define FISH_SPRITE_FRAMES               15.5f
-#define FISH_FRAMES                      15.0f
-#define FISH_SPREAD                      5.0f
-#define FISH_DEPTH                       1.0f
-#define FISH_MIN_SPEED                   0.5f
-#define FISH_MAX_SPEED                   1.5f
-#define FISH_TURN_VARIATION              0.1f
-#define FISH_TURN_SPEED                  (TWO_PI / 10.0f)
-#define FISH_FEAR_SPEED                  4.0f
-#define FISH_MAX_STEP                    0.1f
-#define FISH_ANIMATION_SPEED             25.0f
-#define FISH_FRAME_MASK                  0xf
-#define FISH_FIRST_FRAME                 8
-#define FISH_RUSH_COLLIDE_RADIUS         2.0f
-#define FISH_RUSH_FEAR_RADIUS            8.0f
-#define FISH_RUSH_FEAR_TIME              2.0f
-#define FISH_RUSH_FADE_DIST              200.0f
-#define FISH_RUSH_FADE_RANGE             100.0f
-#define FISH_RUSH_DRAW_DIST              300.0f
-#define FISH_RUSH_TARGET_TIME            0.5f
-#define FISH_RUSH_ESCAPE_DIST            2.0f
-#define FISH_RUSH_SPLASH_GROWTH          2.0f
-#define FISH_RUSH_SPLASH_FRAME           48
-#define FISH_RUSH_SPLASH_COLOUR          0xffffffff
-#define FISH_RUSH_NET_BOB                0.5f
-#define FISH_RUSH_NET_SHRINK_SPEED       2.0f
-#define FISH_RUSH_NET_RADIUS             10.0f
-#define FISH_RUSH_NET_SPEED              2.0f
-#define FISH_RUSH_NET_MESH_PATH          "Data\\MISC\\Fishplot.l3d"
-#define SMOKY_STUFF_TYPE_BURST           1
-#define ROOTS_PILE_LIFE                  15000
-#define ROOTS_PILE_FADE_TIME             1000
-#define ROOTS_PILE_SIZE                  0.3f
-#define FALLING_ROOT_SIZE                0.15f
-#define FALLING_ROOT_GRAVITY             20.0f
-#define FALLING_ROOT_LIFE                20.0f
-#define FALLING_ROOT_FADE_START          18.0f
-#define FALLING_ROOT_FADE_TIME           2.0f
-#define FALLING_ROOT_ALPHA_REFERENCE     10
-#define INFLUENCE_CIRCLE_HIDDEN_COLOUR   RGBA_MAKE(0xff, 0xff, 0xff, 0)
-#define INFLUENCE_CIRCLE_SEGMENT_LENGTH  20.0f
-#define INFLUENCE_CIRCLE_MIN_SEGMENTS    8
-#define INFLUENCE_CIRCLE_MAX_SEGMENTS    250
-#define INFLUENCE_CIRCLE_ROW_VERTICES    3
-#define INFLUENCE_CIRCLE_SEGMENT_INDICES 24
-#define INFLUENCE_CIRCLE_U_LENGTH        -111.0f
-#define INFLUENCE_CIRCLE_V_RADIUS        60.0f
-#define INFLUENCE_CIRCLE_MAX_V           6
-#define INFLUENCE_CIRCLE_MIDDLE_HEIGHT   20.0f
-#define INFLUENCE_CIRCLE_TOP_HEIGHT      40.0f
-#define INFLUENCE_CIRCLE_MIDDLE_V        0.2f
-#define INFLUENCE_CIRCLE_TOP_V           0.4f
-#define INFLUENCE_CIRCLE_LOW_HEIGHT      100.0f
-#define INFLUENCE_CIRCLE_HIGH_HEIGHT     200.0f
-#define INFLUENCE_CIRCLE_HIGH_ALPHA      120
-#define INFLUENCE_CIRCLE_CITADEL_ALPHA   255
-#define INFLUENCE_CIRCLE_ANIM_PERIOD     10000
-#define INFLUENCE_CIRCLE_U_SPEED         10000.0f
-#define INFLUENCE_CIRCLE_V_SPEED         5000.0f
-#define TOUCH_MY_EDGE_LIFE               2000
-#define TOUCH_MY_EDGE_FADE_TIME          1000
-#define TOUCH_MY_EDGE_RING_SPACING       2.0f
-#define TOUCH_MY_EDGE_RING_FRAME         63
-#define TOUCH_MY_EDGE_GROWTH             10.0f
-#define TOUCH_MY_EDGE_MAX_SIZE           14.0f
-#define TOUCH_MY_EDGE_PRECISION          1.0f
-#define EUREKA_FRAME                     32
-#define EUREKA_LIFE                      6000.0f
-#define EUREKA_FADE_START                2500.0f
-#define EUREKA_FADE_TIME                 3500.0f
-#define EUREKA_RISE_SPEED                0.003f
-#define EUREKA_TEXT_HEIGHT               1.5f
-#define EUREKA_TEXT_OFFSET               7.5f
-#define EUREKA_TEXT_SIZE                 15.0f
-#define EUREKA_TEXT_DEPTH                4096.0f
-#define EUREKA_BULB_HEIGHT               2.6f
-#define EUREKA_BULB_SCALE                3.0f
-#define EUREKA_BLINKS                    6.0f
-
-#define CHEVEAUX_DE_FEU_RUN_UP           4000.0f
-#define CHEVEAUX_DE_FEU_STOP_SHORT       10.0f
-#define CHEVEAUX_DE_FEU_SPEED            450.0f
-#define CHEVEAUX_DE_FEU_MS_PER_SECOND    1000.0f
-#define CHEVEAUX_DE_FEU_SPACING          6.0f
-#define CHEVEAUX_DE_FEU_LAST_FLAME       5
-#define CHEVEAUX_DE_FEU_FLAME_FRAME      48
-#define CHEVEAUX_DE_FEU_STREAK_FRAME     49
-#define CHEVEAUX_DE_FEU_SMOKE_FRAME      50
-#define CHEVEAUX_DE_FEU_SIZE_RANGE       15
-#define CHEVEAUX_DE_FEU_MIN_SIZE         3.0f
-#define CHEVEAUX_DE_FEU_SMOKE_SCALE      2.0f
-#define CHEVEAUX_DE_FEU_FLAME_JITTER     2.0f
-#define CHEVEAUX_DE_FEU_GLOW             (CHEVEAUX_DE_FEU_SPRITES - 2)
-#define CHEVEAUX_DE_FEU_GLOW_ALPHA       0x28
-#define CHEVEAUX_DE_FEU_GLOW_SIZE        80.0f
-#define CHEVEAUX_DE_FEU_STREAK           (CHEVEAUX_DE_FEU_SPRITES - 1)
-#define CHEVEAUX_DE_FEU_STREAK_ALPHA     0x0e
-#define CHEVEAUX_DE_FEU_STREAK_SIZE      350.0f
-#define CHEVEAUX_DE_FEU_STREAK_ASPECT    0.05f
-#define CHEVEAUX_DE_FEU_STREAK_SPIN_TIME 5000.0f
-#define CHEVEAUX_DE_FEU_STREAK_SPIN      0.25f
-#define CHEVEAUX_DE_FEU_NO_Z_TEST_TIME   8237
-#define CHEVEAUX_DE_FEU_CAMERA_DISTANCE  150.0f
-#define CHEVEAUX_DE_FEU_CAMERA_HEIGHT    30.0f
-
-#define EVIL_OR_ANGEL_VISAGE       1
-#define EVIL_OR_ANGEL_ANGEL_CHANCE 50.0f
-#define EVIL_OR_ANGEL_END_MARGIN   110
-#define EVIL_OR_ANGEL_FADE_TIME    500
-#define EVIL_OR_ANGEL_ALPHA        105
-
-#define DANS_LES_NUAGES_MAX_TIME   500
-#define DANS_LES_NUAGES_DISTANCE   1.0f
-#define DANS_LES_NUAGES_SIZE       10.0f
-#define DANS_LES_NUAGES_FRAMES     16
-#define DANS_LES_NUAGES_FRAME_TIME 100.0f
-
-#define LH3D_TOOLS_VIEWER_SIZE  400
-#define LH3D_TOOLS_VIEWER_DEPTH 16
-
-#define DRAW_AND_CLIP_QUAD_VERTICES 4
-#define DRAW_AND_CLIP_EPSILON       0.00001f
-
-#define SUPER_VILLAGER_LOD              1
-#define SUPER_VILLAGER_TURN_SPEED       (1.25f * PI_F)
-#define SUPER_VILLAGER_BLEND_TIME       300
-#define SUPER_VILLAGER_SWIM_ANIM        "M_P_Swim2"
-#define NEW_COLLIDE_MIN_SIZE            1.0f
-#define NEW_COLLIDE_MAX_RATIO           1.4f
-#define HOW_MANY_PEOPLE_TIME            8000
-#define HOW_MANY_PEOPLE_FADE_OUT        7000
-#define HOW_MANY_PEOPLE_FADE_TIME       1000
-#define HOW_MANY_PEOPLE_ALL             -1
-#define HOW_MANY_PEOPLE_FRAME           57
-#define HOW_MANY_PEOPLE_ALPHA_REFERENCE 5
-#define HOW_MANY_PEOPLE_SIZE            0.9f
-#define HOW_MANY_PEOPLE_SPACING         1.3f
-#define HOW_MANY_PEOPLE_COLOUR_IN       0xfff8d235
-#define HOW_MANY_PEOPLE_COLOUR_OUT      0xff5c822f
-#define HOW_MANY_PEOPLE_COLOUR_ALL      0xff4995a9
-
-#define BACKGROUND_BOX_FVF                (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX1)
-#define BACKGROUND_BOX_FINISH_PRIORITY    10000
-#define BACKGROUND_BOX_UV                 0.125f
-#define LH3D_DIVERS_WEATHER_TEXTURE_FLAGS 0x41
-#define LH3D_DIVERS_SUN_TEXTURE_FORMAT    1
-#define LH3D_DIVERS_WEATHER_TEXTURE_PATH  "Data\\Textures\\Weather.raw"
-#define LH3D_DIVERS_SUN_TEXTURE_PATH      "Data\\Textures\\Sun.raw"
-#define LH3D_WIDE_SCREEN_ASPECT           (9.0f / 16.0f)
-#define LH3D_JUST_FOOT_PRINT_TO_BLOCK     (1.0f / 160.0f)
-#define LH3D_WET_FEET_CORNER              0.3f
-#define LH3D_WET_FEET_SPRITE_SIZE         0.125f
-#define LH3D_WET_FEET_HEIGHT              0.15f
-#define LH3D_WET_FEET_FADE_PERIOD         200
-#define LH3D_WET_FEET_FADE_SPEED          25.0f
-#define LH3D_WET_FEET_FADE_TIME           1000.0f
-#define LH3D_WET_FEET_ALPHA               0x80
-#define LH3D_WET_FEET_APRIL_FOOL_TYPE     17
-#define LH3D_WET_FEET_APRIL_FOOL_DAY      1
-#define LH3D_WET_FEET_APRIL_FOOL_MONTH    3
-
 BackgroundBox BackgroundBox::g_list_boxes[BACKGROUND_BOX_MAX];
 
 Vertex3D BackgroundBox::g_list_vertex[BACKGROUND_BOX_VERTICES] = {
@@ -335,6 +81,11 @@ float    DEFAULT_TRANS_TO_ADD = 0.2f;
 float    TRANS_TO_ADD = DEFAULT_TRANS_TO_ADD;
 
 LH3DCitadelLevelOfDetail LH3DLevelOfDetail::g_citadellod = {false, true, true, true, true, {0, 0, 0}};
+bool32_t                 LH3DLevelOfDetail::g_b_draw_dynamic_shadow = true;
+bool32_t                 LH3DLevelOfDetail::g_b_objects_cast_shadow = true;
+bool32_t                 LH3DLevelOfDetail::g_b_dynamic_lighting_on_objects = true;
+float                    LH3DLevelOfDetail::g_water_tilling = 1.0f;
+long                     LH3DLevelOfDetail::g_num_rainsplash = 0;
 long                     g_bulb_index = 0;
 int                      BackgroundBox::g_count = 0;
 float                    LH3DWideScreen::g_fvalue = 0.0f;
@@ -376,7 +127,7 @@ void BackgroundBox::DrawAll()
 		g_list_vertex[2].y = (float)box->Region.end.Y();
 		g_list_vertex[3].x = (float)box->Region.start.X();
 		g_list_vertex[3].y = (float)box->Region.end.Y();
-		g_list_vertex[3].color = g_list_vertex[2].color = g_list_vertex[1].color = g_list_vertex[0].color =
+		g_list_vertex[0].color = g_list_vertex[1].color = g_list_vertex[2].color = g_list_vertex[3].color =
 			box->Color.GetColor();
 		DrawAndClip2D(D3DPT_TRIANGLELIST, BACKGROUND_BOX_FVF, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
 		              BACKGROUND_BOX_INDICES);
@@ -407,7 +158,7 @@ void BackgroundBox::Draw(LHRegion* region, LH3DColor* color, bool32_t keep_z)
 	g_list_vertex[2].y = (float)region->end.Y();
 	g_list_vertex[3].x = (float)region->start.X();
 	g_list_vertex[3].y = (float)region->end.Y();
-	g_list_vertex[3].color = g_list_vertex[2].color = g_list_vertex[1].color = g_list_vertex[0].color =
+	g_list_vertex[0].color = g_list_vertex[1].color = g_list_vertex[2].color = g_list_vertex[3].color =
 		drawColor.GetColor();
 	DrawAndClip2D(D3DPT_TRIANGLELIST, BACKGROUND_BOX_FVF, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
 	              BACKGROUND_BOX_INDICES);
@@ -515,9 +266,9 @@ static inline bool operator==(const LHMatrix& a, const LHMatrix& b)
 	       a.m[10] == b.m[10] && a.m[11] == b.m[11];
 }
 
-static LandBlock* GetLandBlock(long x, long z)
+static LandBlock* GetLandBlock(long block_x, long block_z)
 {
-	int index = LH3DIsland::GetIndex(x, z);
+	int index = LH3DIsland::GetIndex(block_x, block_z);
 	return index != 0 ? LH3DIsland::g_ptr_blocks[index] : NULL;
 }
 
@@ -536,10 +287,10 @@ LH3DJustFootPrint* LH3DJustFootPrint::Create(LH3DObject* object)
 	footPrint->Matrix = object->matrix;
 	footPrint->UseAlpha = false;
 	footPrint->Opacity = LH3D_JUST_FOOT_PRINT_OPAQUE;
-	LH3DMeshFootprintData* data = (LH3DMeshFootprintData*)footPrint->Mesh->GetFootprintData();
-	if (data != NULL && data->Count != 0)
+	LH3DMeshFootprintData* footprintData = (LH3DMeshFootprintData*)footPrint->Mesh->GetFootprintData();
+	if (footprintData != NULL && footprintData->Count != 0)
 	{
-		LH3DMeshFootprint*         footprint = data->First;
+		LH3DMeshFootprint*         footprint = footprintData->First;
 		LH3DMeshFootprintTriangle* triangles = (LH3DMeshFootprintTriangle*)(footprint + 1);
 		bool32_t                   first = true;
 		for (int i = 0; i < footprint->NumTriangles; i++)
@@ -681,10 +432,10 @@ void LH3DJustFootPrint::DrawDebug()
 	from.y = LH3DIsland::GetAltitude(from);
 	to.y = LH3DIsland::GetAltitude(to);
 	LH3DLine::AddLine(from, to, &red, NULL);
-	LH3DMeshFootprintData* data = (LH3DMeshFootprintData*)Mesh->GetFootprintData();
-	if (data != NULL && data->Count != 0)
+	LH3DMeshFootprintData* footprintData = (LH3DMeshFootprintData*)Mesh->GetFootprintData();
+	if (footprintData != NULL && footprintData->Count != 0)
 	{
-		LH3DMeshFootprint*         footprint = data->First;
+		LH3DMeshFootprint*         footprint = footprintData->First;
 		LH3DMeshFootprintTriangle* triangles = (LH3DMeshFootprintTriangle*)(footprint + 1);
 		for (int i = 0; i < footprint->NumTriangles; i++)
 		{
@@ -831,44 +582,44 @@ void LH3DWetFeet::Draw()
 	}
 	float fade = g_wet_feet_time * LH3D_WET_FEET_FADE_SPEED / LH3D_WET_FEET_FADE_TIME;
 	g_wet_feet_time = 0;
-	int        dead = 0;
+	int        expiredFeet = 0;
 	LH3DColor* color = g_list_color;
-	for (int i = 0; i < g_feet_count; i++, color += LH3D_WET_FEET_VERTICES_PER_FOOT)
+	for (int fadeFoot = 0; fadeFoot < g_feet_count; fadeFoot++, color += LH3D_WET_FEET_VERTICES_PER_FOOT)
 	{
 		float alpha = color[0].a - fade;
 		if (alpha <= 0.0f)
 		{
-			dead++;
+			expiredFeet++;
 			alpha = 0.0f;
 		}
 		color[0].a = color[1].a = color[2].a = color[3].a = (uint8_t)alpha;
 	}
-	int foot = 0;
-	while (dead != 0)
+	int footIndex = 0;
+	while (expiredFeet != 0)
 	{
-		if (g_list_color[foot].a == 0)
+		if (g_list_color[footIndex].a == 0)
 		{
-			if (foot != g_feet_count - 1)
+			if (footIndex != g_feet_count - 1)
 			{
-				for (int i = foot; i < g_feet_count - 1; i++)
+				for (int copyFoot = footIndex; copyFoot < g_feet_count - 1; copyFoot++)
 				{
-					for (int k = 0; k < LH3D_WET_FEET_VERTICES_PER_FOOT; k++)
+					for (int corner = 0; corner < LH3D_WET_FEET_VERTICES_PER_FOOT; corner++)
 					{
-						int to = i * LH3D_WET_FEET_VERTICES_PER_FOOT + k;
-						int from = to + LH3D_WET_FEET_VERTICES_PER_FOOT;
-						g_vertex_list[to] = g_vertex_list[from];
-						g_list_color[to] = g_list_color[from];
-						g_list_uv[to * 2] = g_list_uv[from * 2];
-						g_list_uv[to * 2 + 1] = g_list_uv[from * 2 + 1];
+						int destinationVertex = copyFoot * LH3D_WET_FEET_VERTICES_PER_FOOT + corner;
+						int sourceVertex = destinationVertex + LH3D_WET_FEET_VERTICES_PER_FOOT;
+						g_vertex_list[destinationVertex] = g_vertex_list[sourceVertex];
+						g_list_color[destinationVertex] = g_list_color[sourceVertex];
+						g_list_uv[destinationVertex * 2] = g_list_uv[sourceVertex * 2];
+						g_list_uv[destinationVertex * 2 + 1] = g_list_uv[sourceVertex * 2 + 1];
 					}
 				}
 			}
 			g_feet_count--;
-			dead--;
+			expiredFeet--;
 		}
 		else
 		{
-			foot++;
+			footIndex++;
 		}
 	}
 }
@@ -1081,11 +832,11 @@ LHTGA* LHTGA::CreateFromHD(char* name)
 	LHLoadData(name, tga, length, NULL);
 	if (!(tga->ImageDescriptor & LHTGA_DESCRIPTOR_TOP_LEFT))
 	{
-		uint32_t* last_line = (uint32_t*)(tga + 1) + (LHTGA_HD_SIZE - 1) * LHTGA_HD_SIZE;
+		uint32_t* lastLine = (uint32_t*)(tga + 1) + (LHTGA_HD_SIZE - 1) * LHTGA_HD_SIZE;
 		for (int x = 0; x < LHTGA_HD_SIZE; x++)
 		{
-			uint32_t* top = last_line - (LHTGA_HD_SIZE - 1) * LHTGA_HD_SIZE;
-			uint32_t* bottom = last_line;
+			uint32_t* top = lastLine - (LHTGA_HD_SIZE - 1) * LHTGA_HD_SIZE;
+			uint32_t* bottom = lastLine;
 			for (int y = 0; y < LHTGA_HD_SIZE / 2; y++)
 			{
 				uint32_t pixel = *top;
@@ -1094,43 +845,42 @@ LHTGA* LHTGA::CreateFromHD(char* name)
 				top += LHTGA_HD_SIZE;
 				bottom -= LHTGA_HD_SIZE;
 			}
-			last_line++;
+			lastLine++;
 		}
 		tga->ImageDescriptor |= LHTGA_DESCRIPTOR_TOP_LEFT;
 	}
 	return tga;
 }
 
-void LHTGA::GetARGB(unsigned long* a, unsigned long* r, unsigned long* g, unsigned long* b, void* data, long index,
-                    long format)
+void LHTGA::GetARGB(unsigned long* alpha_out, unsigned long* red_out, unsigned long* green_out, unsigned long* blue_out,
+                    void* source_pixels, long pixel_index, long format)
 {
 	if (format == LHTGA_FORMAT_ARGB4444)
 	{
-		uint16_t pixel = ((uint16_t*)data)[index];
-		uint8_t  alpha = (pixel >> 8) & 0xf0;
-		uint8_t  red = (pixel >> 4) & 0xf0;
-		uint8_t  green = pixel & 0xf0;
-		uint8_t  blue = (pixel & 0xf) << 4;
-		*a = alpha;
-		*r = red;
-		*g = green;
-		*b = blue;
+		uint16_t      pixel = ((uint16_t*)source_pixels)[pixel_index];
+		unsigned long alpha = (pixel >> 8) & 0xf0;
+		unsigned long green = pixel & 0xf0;
+		unsigned long red = (pixel >> 4) & 0xf0;
+		unsigned long blue = (pixel & 0xf) << 4;
+		*alpha_out = (uint8_t)alpha;
+		*red_out = (uint8_t)red;
+		*green_out = (uint8_t)green;
+		*blue_out = (uint8_t)blue;
 	}
 }
 
-LHTGA* LHTGA::GetTGA(void* data, long width, long height, long format, bool32_t premultiply)
+LHTGA* LHTGA::GetTGA(void* source_pixels, long width, long height, long format, bool32_t premultiply)
 {
 	char   footer[LHTGA_FOOTER_SIZE] = {0,   0,   0,   0,   0,   0,   0,   0,   'T', 'R', 'U', 'E', 'V',
 	                                    'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.', '\0'};
-	long   size = GetSize(width, height);
-	LHTGA* tga = (LHTGA*)malloc(size);
-	memset(tga, 0, size);
+	long   totalSize = GetSize(width, height);
+	LHTGA* tga = (LHTGA*)malloc(totalSize);
+	memset(tga, 0, totalSize);
 	tga->ImageType = LHTGA_IMAGE_TYPE_TRUE_COLOR;
 	tga->Width = width;
 	tga->Height = height;
 	tga->PixelDepth = LHTGA_PIXEL_DEPTH;
 	tga->ImageDescriptor = LHTGA_DESCRIPTOR;
-	uint8_t* pixels = (uint8_t*)(tga + 1);
 	for (long y = 0; y < height; y++)
 	{
 		for (long x = 0; x < width; x++)
@@ -1139,22 +889,22 @@ LHTGA* LHTGA::GetTGA(void* data, long width, long height, long format, bool32_t 
 			unsigned long red;
 			unsigned long green;
 			unsigned long blue;
-			long          index = y * width + x;
-			GetARGB(&alpha, &red, &green, &blue, data, index, format);
+			long          pixelIndex = y * width + x;
+			GetARGB(&alpha, &red, &green, &blue, source_pixels, pixelIndex, format);
 			if (premultiply)
 			{
-				red = red * alpha / LHTGA_CHANNEL_MAX;
-				green = green * alpha / LHTGA_CHANNEL_MAX;
-				blue = blue * alpha / LHTGA_CHANNEL_MAX;
+				red = red * alpha / LH3D_COLOR_CHANNEL_MAX;
+				green = green * alpha / LH3D_COLOR_CHANNEL_MAX;
+				blue = blue * alpha / LH3D_COLOR_CHANNEL_MAX;
 			}
-			uint8_t* pixel = &pixels[index * sizeof(uint32_t)];
-			pixel[3] = alpha;
-			pixel[0] = blue;
-			pixel[1] = green;
-			pixel[2] = red;
+			uint8_t* outputPixel = (uint8_t*)(tga + 1) + pixelIndex * sizeof(uint32_t);
+			outputPixel[3] = alpha;
+			outputPixel[0] = blue;
+			outputPixel[1] = green;
+			outputPixel[2] = red;
 		}
 	}
-	memcpy((char*)tga + size - LHTGA_FOOTER_SIZE, footer, LHTGA_FOOTER_SIZE);
+	memcpy((char*)tga + totalSize - LHTGA_FOOTER_SIZE, footer, LHTGA_FOOTER_SIZE);
 	return tga;
 }
 
@@ -1170,12 +920,12 @@ bool32_t LH3DInBuild::g_b_fuck = false;
 
 static inline void AddInBuildTriangle(uint16_t a, uint16_t b, uint16_t c)
 {
-	unsigned long flags_c = LH3DTech::g_cache_flags[c];
-	unsigned long flags_b = LH3DTech::g_cache_flags[b];
-	unsigned long flags_a = LH3DTech::g_cache_flags[a];
-	if (flags_a | flags_b | flags_c)
+	unsigned long flagsA = LH3DTech::g_cache_flags[a];
+	unsigned long flagsB = LH3DTech::g_cache_flags[b];
+	unsigned long flagsC = LH3DTech::g_cache_flags[c];
+	if (flagsA | flagsB | flagsC)
 	{
-		if (!(flags_a & flags_b & flags_c))
+		if (!(flagsA & flagsB & flagsC))
 		{
 			LH3DTech::ClipTriangle(a, b, c, LH3DTech::CLIP_CODE_NEAR);
 		}
@@ -1198,83 +948,83 @@ void LH3DInBuild::Draw()
 	}
 
 	unsigned long  color = LH3D_SCALE_COLOR(LH3DMesh::g_color, LH3D_IN_BUILD_COLOR_SCALE);
-	Vertex3D*      src = GetListVertex();
-	Vertex3D*      dst = LH3DTech::g_cache_t_points;
-	unsigned long* flags = LH3DTech::g_cache_flags;
-	uint16_t       edge_count = g_edge_count;
-	uint16_t       count = edge_count * 2;
-	for (int i = 0; i < count; i++)
+	Vertex3D*      clipVertex = GetListVertex();
+	Vertex3D*      screenVertex = LH3DTech::g_cache_t_points;
+	unsigned long* clipFlags = LH3DTech::g_cache_flags;
+	uint16_t       edgeCount = g_edge_count;
+	uint16_t       vertexCount = edgeCount * 2;
+	for (int i = 0; i < vertexCount; i++)
 	{
-		if (src->rhw < LH3DTech::g_info_transform.NearClip)
+		if (clipVertex->rhw < LH3DTech::g_info_transform.NearClip)
 		{
-			*flags = LH3DTech::CLIP_CODE_NEAR;
+			*clipFlags = LH3DTech::CLIP_CODE_NEAR;
 		}
 		else
 		{
-			*flags = LH3DTech::CLIP_CODE_NONE;
+			*clipFlags = LH3DTech::CLIP_CODE_NONE;
 		}
-		if (src->x > src->rhw)
+		if (clipVertex->x > clipVertex->rhw)
 		{
-			*flags |= LH3DTech::CLIP_CODE_RIGHT;
+			*clipFlags |= LH3DTech::CLIP_CODE_RIGHT;
 		}
-		else if (-src->rhw > src->x)
+		else if (-clipVertex->rhw > clipVertex->x)
 		{
-			*flags |= LH3DTech::CLIP_CODE_LEFT;
+			*clipFlags |= LH3DTech::CLIP_CODE_LEFT;
 		}
-		if (src->y > src->rhw)
+		if (clipVertex->y > clipVertex->rhw)
 		{
-			*flags |= LH3DTech::CLIP_CODE_TOP;
+			*clipFlags |= LH3DTech::CLIP_CODE_TOP;
 		}
-		else if (-src->rhw > src->y)
+		else if (-clipVertex->rhw > clipVertex->y)
 		{
-			*flags |= LH3DTech::CLIP_CODE_BOTTOM;
+			*clipFlags |= LH3DTech::CLIP_CODE_BOTTOM;
 		}
-		if (*flags == LH3DTech::CLIP_CODE_NONE)
+		if (*clipFlags == LH3DTech::CLIP_CODE_NONE)
 		{
-			dst->rhw = 1.0f / src->rhw;
-			dst->x = (dst->rhw * src->x + 1.0f) * LH3DTech::g_info_transform.HalfRes.x;
-			if (dst->x < 0.0f)
+			screenVertex->rhw = 1.0f / clipVertex->rhw;
+			screenVertex->x = (screenVertex->rhw * clipVertex->x + 1.0f) * LH3DTech::g_info_transform.HalfRes.x;
+			if (screenVertex->x < 0.0f)
 			{
-				dst->x = 0.0f;
+				screenVertex->x = 0.0f;
 			}
-			else if (dst->x > LH3DTech::g_max_screen[0])
+			else if (screenVertex->x > LH3DTech::g_max_screen[0])
 			{
-				dst->x = LH3DTech::g_max_screen[0];
+				screenVertex->x = LH3DTech::g_max_screen[0];
 			}
-			dst->y = (1.0f - dst->rhw * src->y) * LH3DTech::g_info_transform.HalfRes.y;
-			if (dst->y < 0.0f)
+			screenVertex->y = (1.0f - screenVertex->rhw * clipVertex->y) * LH3DTech::g_info_transform.HalfRes.y;
+			if (screenVertex->y < 0.0f)
 			{
-				dst->y = 0.0f;
+				screenVertex->y = 0.0f;
 			}
-			else if (dst->y > LH3DTech::g_max_screen[1])
+			else if (screenVertex->y > LH3DTech::g_max_screen[1])
 			{
-				dst->y = LH3DTech::g_max_screen[1];
+				screenVertex->y = LH3DTech::g_max_screen[1];
 			}
-			dst->rhw = LH3DTech::g_info_transform.NearClip * dst->rhw;
-			dst->z = 1.0f - dst->rhw;
+			screenVertex->rhw = LH3DTech::g_info_transform.NearClip * screenVertex->rhw;
+			screenVertex->z = 1.0f - screenVertex->rhw;
 		}
 		else
 		{
-			dst->x = src->x;
-			dst->y = src->y;
-			dst->rhw = src->rhw;
+			screenVertex->x = clipVertex->x;
+			screenVertex->y = clipVertex->y;
+			screenVertex->rhw = clipVertex->rhw;
 		}
-		dst->uv = src->uv;
-		dst->color = color;
-		dst->specular = src->specular;
-		flags++;
-		dst++;
-		src++;
+		screenVertex->uv = clipVertex->uv;
+		screenVertex->color = color;
+		screenVertex->specular = clipVertex->specular;
+		clipFlags++;
+		screenVertex++;
+		clipVertex++;
 	}
 
 	LH3DTech::g_index_count = 0;
-	LH3DTech::g_points_count = count;
+	LH3DTech::g_points_count = vertexCount;
 	LH3DTech::g_clip_with_double_sided = true;
-	for (int j = 0; j < edge_count / 2; j++)
+	for (int j = 0; j < edgeCount / 2; j++)
 	{
 		uint16_t a = j * 2;
 		uint16_t b = a + 1;
-		uint16_t c = a + edge_count;
+		uint16_t c = a + edgeCount;
 		AddInBuildTriangle(a, b, c);
 		AddInBuildTriangle(c + 1, b, c);
 	}
@@ -1353,18 +1103,18 @@ void LH3DCameraChecker::AdjustCameraPosTarget(LHPoint* pos, LHPoint* target)
 	}
 
 	LH3DCameraChecker* checker = closest->Next;
-	float              smallest_dist = LH3DMath::GetDistance(&closest->Point, LH3DTech::GetCameraPosition());
+	float              closestDistance = LH3DMath::GetDistance(&closest->Point, LH3DTech::GetCameraPosition());
 	for (; checker != NULL; checker = checker->Next)
 	{
-		float dist = LH3DMath::GetDistance(&checker->Point, LH3DTech::GetCameraPosition());
-		if (dist < smallest_dist)
+		float distance = LH3DMath::GetDistance(&checker->Point, LH3DTech::GetCameraPosition());
+		if (distance < closestDistance)
 		{
-			smallest_dist = dist;
+			closestDistance = distance;
 			closest = checker;
 		}
 	}
 
-	if (smallest_dist < closest->MaxDistance)
+	if (closestDistance < closest->MaxDistance)
 	{
 		float amplitude = (float)closest->TimeLeft / closest->Duration * closest->Amplitude;
 		if (closest->YOnly)
@@ -1431,42 +1181,46 @@ void ScriptedScreenShot::TakeFullScreen()
 		return;
 	}
 	Report3D__FPCce("Request Snapshot.\n");
-	DDSURFACEDESC2 desc;
-	memset(&desc, 0, sizeof(desc));
-	desc.dwSize = sizeof(desc);
-	LHSys::TheSystem.screen.PPrimarySurface->Lock(NULL, &desc, SCRIPTED_SCREEN_SHOT_LOCK, NULL);
-	uint8_t* surface = (uint8_t*)desc.lpSurface;
-	if (surface != NULL)
+	DDSURFACEDESC2 surfaceDesc;
+	memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+	surfaceDesc.dwSize = sizeof(surfaceDesc);
+	LHSys::TheSystem.screen.PPrimarySurface->Lock(NULL, &surfaceDesc, SCRIPTED_SCREEN_SHOT_LOCK, NULL);
+	uint8_t* surfacePixels = (uint8_t*)surfaceDesc.lpSurface;
+	if (surfacePixels != NULL)
 	{
-		uint8_t*      out = g_info.FullScreen;
+		uint8_t*      outputPixels = g_info.FullScreen;
 		unsigned long x;
 		unsigned long y;
 		float         scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_FULL_HEIGHT;
 		float         scaleX = LHSys::TheSystem.screen.Width() / (float)SCRIPTED_SCREEN_SHOT_FULL_WIDTH;
-		if (desc.ddpfPixelFormat.dwRGBBitCount == 16)
+		uint32_t      previousRed;
+		uint32_t      previousGreen;
+		uint32_t      previousBlue;
+		if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
 		{
-			long pitch = desc.lPitch / 2;
-			if (desc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
+			uint16_t* pixels = (uint16_t*)surfacePixels;
+			long      pitchPixels = surfaceDesc.lPitch / (long)sizeof(*pixels);
+			if (surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
 			{
 				for (y = 0; y < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; y++)
 				{
-					long     row = (long)(y * scaleY) * pitch;
-					uint32_t pixel = ((uint16_t*)surface)[row];
-					uint32_t red = (pixel >> 12) & 0xf;
-					uint32_t green = (pixel >> 7) & 0xf;
-					uint32_t blue = (pixel >> 1) & 0xf;
+					long     rowOffset = (long)(y * scaleY) * pitchPixels;
+					uint32_t pixel = pixels[rowOffset];
+					previousRed = (pixel >> 12) & 0xf;
+					previousGreen = (pixel >> 7) & 0xf;
+					previousBlue = (pixel >> 1) & 0xf;
 					for (x = 0; x < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; x++)
 					{
-						pixel = ((uint16_t*)surface)[row + (long)(x * scaleX)];
+						pixel = pixels[rowOffset + (long)(x * scaleX)];
 						uint32_t nextRed = (pixel >> 12) & 0xf;
 						uint32_t nextGreen = (pixel >> 7) & 0xf;
 						uint32_t nextBlue = (pixel >> 1) & 0xf;
-						*out++ = (nextRed + red) << 3;
-						red = nextRed;
-						*out++ = (nextGreen + green) << 3;
-						green = nextGreen;
-						*out++ = (nextBlue + blue) << 3;
-						blue = nextBlue;
+						*outputPixels++ = (nextRed + previousRed) << 3;
+						previousRed = nextRed;
+						*outputPixels++ = (nextGreen + previousGreen) << 3;
+						previousGreen = nextGreen;
+						*outputPixels++ = (nextBlue + previousBlue) << 3;
+						previousBlue = nextBlue;
 					}
 				}
 			}
@@ -1474,50 +1228,51 @@ void ScriptedScreenShot::TakeFullScreen()
 			{
 				for (y = 0; y < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; y++)
 				{
-					long     row = (long)(y * scaleY) * pitch;
-					uint32_t pixel = ((uint16_t*)surface)[row];
-					uint32_t red = (pixel >> 11) & 0xf;
-					uint32_t green = (pixel >> 6) & 0xf;
-					uint32_t blue = (pixel >> 1) & 0xf;
+					long     rowOffset = (long)(y * scaleY) * pitchPixels;
+					uint32_t pixel = pixels[rowOffset];
+					previousRed = (pixel >> 11) & 0xf;
+					previousGreen = (pixel >> 6) & 0xf;
+					previousBlue = (pixel >> 1) & 0xf;
 					for (x = 0; x < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; x++)
 					{
-						pixel = ((uint16_t*)surface)[row + (long)(x * scaleX)];
+						pixel = pixels[rowOffset + (long)(x * scaleX)];
 						uint32_t nextRed = (pixel >> 11) & 0xf;
 						uint32_t nextGreen = (pixel >> 6) & 0xf;
 						uint32_t nextBlue = (pixel >> 1) & 0xf;
-						*out++ = (nextRed + red) << 3;
-						red = nextRed;
-						*out++ = (nextGreen + green) << 3;
-						green = nextGreen;
-						*out++ = (nextBlue + blue) << 3;
-						blue = nextBlue;
+						*outputPixels++ = (nextRed + previousRed) << 3;
+						previousRed = nextRed;
+						*outputPixels++ = (nextGreen + previousGreen) << 3;
+						previousGreen = nextGreen;
+						*outputPixels++ = (nextBlue + previousBlue) << 3;
+						previousBlue = nextBlue;
 					}
 				}
 			}
 		}
-		else if (desc.ddpfPixelFormat.dwRGBBitCount == 32)
+		else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
 		{
-			long pitch = desc.lPitch / 4;
-			Report3D__FPCce("%d PITCH\n", pitch);
+			uint32_t* pixels = (uint32_t*)surfaceDesc.lpSurface;
+			long      pitchPixels = surfaceDesc.lPitch / (long)sizeof(*pixels);
+			Report3D__FPCce("%d PITCH\n", pitchPixels);
 			for (y = 0; y < SCRIPTED_SCREEN_SHOT_FULL_HEIGHT; y++)
 			{
-				long      row = (long)(y * scaleY) * pitch;
-				LH3DColor pixel = ((LH3DColor*)surface)[row];
-				uint32_t  red = pixel.r;
-				uint32_t  green = pixel.g;
-				uint32_t  blue = pixel.b;
+				long     rowOffset = (long)(y * scaleY) * pitchPixels;
+				uint32_t pixel = pixels[rowOffset];
+				previousRed = RGBA_GETRED(pixel);
+				previousGreen = RGBA_GETGREEN(pixel);
+				previousBlue = RGBA_GETBLUE(pixel);
 				for (x = 0; x < SCRIPTED_SCREEN_SHOT_FULL_WIDTH; x++)
 				{
-					pixel = ((LH3DColor*)surface)[row + (long)(x * scaleX)];
-					uint32_t nextRed = pixel.r;
-					uint32_t nextGreen = pixel.g;
-					uint32_t nextBlue = pixel.b;
-					*out++ = (red + nextRed) >> 1;
-					*out++ = (green + nextGreen) >> 1;
-					*out++ = (blue + nextBlue) >> 1;
-					red = nextRed;
-					green = nextGreen;
-					blue = nextBlue;
+					pixel = pixels[rowOffset + (long)(x * scaleX)];
+					uint32_t nextRed = RGBA_GETRED(pixel);
+					uint32_t nextGreen = RGBA_GETGREEN(pixel);
+					uint32_t nextBlue = RGBA_GETBLUE(pixel);
+					*outputPixels++ = (previousRed + nextRed) >> 1;
+					previousRed = nextRed;
+					*outputPixels++ = (previousGreen + nextGreen) >> 1;
+					previousGreen = nextGreen;
+					*outputPixels++ = (previousBlue + nextBlue) >> 1;
+					previousBlue = nextBlue;
 				}
 			}
 		}
@@ -1540,104 +1295,109 @@ void ScriptedScreenShot::Process()
 		return;
 	}
 	Report3D__FPCce("Request Snapshot.\n");
-	DDSURFACEDESC2 desc;
-	memset(&desc, 0, sizeof(desc));
-	desc.dwSize = sizeof(desc);
-	LHSys::TheSystem.screen.PPrimarySurface->Lock(NULL, &desc, SCRIPTED_SCREEN_SHOT_LOCK, NULL);
-	if (desc.lpSurface == NULL)
+	DDSURFACEDESC2 surfaceDesc;
+	memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+	surfaceDesc.dwSize = sizeof(surfaceDesc);
+	LHSys::TheSystem.screen.PPrimarySurface->Lock(NULL, &surfaceDesc, SCRIPTED_SCREEN_SHOT_LOCK, NULL);
+	if (surfaceDesc.lpSurface == NULL)
 	{
 		LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
 		return;
 	}
 	uint8_t* picture = (uint8_t*)malloc(CITADEL_TEXTURE_BYTES);
 	LoadTextureCitadel(g_info.PictureTexture, picture);
-	uint8_t* out = picture;
-	float    scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
-	float    scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
-	if (desc.ddpfPixelFormat.dwRGBBitCount == 16)
+	uint8_t*      outputPixels = picture;
+	unsigned long x;
+	unsigned long y;
+	float         scaleY = LHSys::TheSystem.screen.Height() / (float)SCRIPTED_SCREEN_SHOT_HALF_HEIGHT;
+	float         scaleX = LHSys::TheSystem.screen.Width() / (float)CITADEL_TEXTURE_SIZE;
+	uint32_t      previousRed;
+	uint32_t      previousGreen;
+	uint32_t      previousBlue;
+	if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
 	{
-		uint8_t* surface = (uint8_t*)desc.lpSurface;
+		uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
 		if (g_info.Half != 0)
 		{
-			out = picture + CITADEL_TEXTURE_BYTES / 2;
+			outputPixels = picture + CITADEL_TEXTURE_BYTES / 2;
 		}
-		long pitch = desc.lPitch / 2;
-		if (desc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
+		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
+		if (surfaceDesc.ddpfPixelFormat.dwGBitMask == SCRIPTED_SCREEN_SHOT_565_GREEN)
 		{
-			for (unsigned long y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
+			for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
 			{
-				long     row = (long)(y * scaleY) * pitch;
-				uint32_t pixel = ((uint16_t*)surface)[row];
-				uint32_t red = (pixel >> 12) & 0xf;
-				uint32_t green = (pixel >> 7) & 0xf;
-				uint32_t blue = (pixel >> 1) & 0xf;
-				for (unsigned long x = 0; x < CITADEL_TEXTURE_SIZE; x++)
+				long     rowOffset = (long)(y * scaleY) * pitchPixels;
+				uint32_t pixel = surfacePixels[rowOffset];
+				previousRed = (pixel >> 12) & 0xf;
+				previousGreen = (pixel >> 7) & 0xf;
+				previousBlue = (pixel >> 1) & 0xf;
+				for (x = 0; x < CITADEL_TEXTURE_SIZE; x++)
 				{
-					pixel = ((uint16_t*)surface)[row + (long)(x * scaleX)];
+					pixel = surfacePixels[rowOffset + (long)(x * scaleX)];
 					uint32_t nextRed = (pixel >> 12) & 0xf;
 					uint32_t nextGreen = (pixel >> 7) & 0xf;
 					uint32_t nextBlue = (pixel >> 1) & 0xf;
-					*out++ = (nextRed + red) << 3;
-					red = nextRed;
-					*out++ = (nextGreen + green) << 3;
-					green = nextGreen;
-					*out++ = (nextBlue + blue) << 3;
-					blue = nextBlue;
+					*outputPixels++ = (nextRed + previousRed) << 3;
+					previousRed = nextRed;
+					*outputPixels++ = (nextGreen + previousGreen) << 3;
+					previousGreen = nextGreen;
+					*outputPixels++ = (nextBlue + previousBlue) << 3;
+					previousBlue = nextBlue;
 				}
 			}
 		}
 		else
 		{
-			for (unsigned long y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
+			for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
 			{
-				long     row = (long)(y * scaleY) * pitch;
-				uint32_t pixel = ((uint16_t*)surface)[row];
-				uint32_t red = (pixel >> 11) & 0xf;
-				uint32_t green = (pixel >> 6) & 0xf;
-				uint32_t blue = (pixel >> 1) & 0xf;
-				for (unsigned long x = 0; x < CITADEL_TEXTURE_SIZE; x++)
+				long     rowOffset = (long)(y * scaleY) * pitchPixels;
+				uint32_t pixel = surfacePixels[rowOffset];
+				previousRed = (pixel >> 11) & 0xf;
+				previousGreen = (pixel >> 6) & 0xf;
+				previousBlue = (pixel >> 1) & 0xf;
+				for (x = 0; x < CITADEL_TEXTURE_SIZE; x++)
 				{
-					pixel = ((uint16_t*)surface)[row + (long)(x * scaleX)];
+					pixel = surfacePixels[rowOffset + (long)(x * scaleX)];
 					uint32_t nextRed = (pixel >> 11) & 0xf;
 					uint32_t nextGreen = (pixel >> 6) & 0xf;
 					uint32_t nextBlue = (pixel >> 1) & 0xf;
-					*out++ = (nextRed + red) << 3;
-					red = nextRed;
-					*out++ = (nextGreen + green) << 3;
-					green = nextGreen;
-					*out++ = (nextBlue + blue) << 3;
-					blue = nextBlue;
+					*outputPixels++ = (nextRed + previousRed) << 3;
+					previousRed = nextRed;
+					*outputPixels++ = (nextGreen + previousGreen) << 3;
+					previousGreen = nextGreen;
+					*outputPixels++ = (nextBlue + previousBlue) << 3;
+					previousBlue = nextBlue;
 				}
 			}
 		}
 	}
-	else if (desc.ddpfPixelFormat.dwRGBBitCount == 32)
+	else if (surfaceDesc.ddpfPixelFormat.dwRGBBitCount == 32)
 	{
-		uint8_t* surface = (uint8_t*)desc.lpSurface;
+		uint32_t* surfacePixels = (uint32_t*)surfaceDesc.lpSurface;
 		if (g_info.Half != 0)
 		{
-			out = picture + CITADEL_TEXTURE_BYTES / 2;
+			outputPixels = picture + CITADEL_TEXTURE_BYTES / 2;
 		}
-		long pitch = desc.lPitch / 4;
-		for (unsigned long y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
+		long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint32_t);
+		for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT; y++)
 		{
-			long      row = (long)(y * scaleY) * pitch;
-			LH3DColor pixel = ((LH3DColor*)surface)[row];
-			uint32_t  red = pixel.r;
-			uint32_t  green = pixel.g;
-			uint32_t  blue = pixel.b;
-			for (unsigned long x = 0; x < CITADEL_TEXTURE_SIZE; x++)
+			long     rowOffset = (long)(y * scaleY) * pitchPixels;
+			uint32_t pixel = surfacePixels[rowOffset];
+			previousRed = RGBA_GETRED(pixel);
+			previousGreen = RGBA_GETGREEN(pixel);
+			previousBlue = RGBA_GETBLUE(pixel);
+			for (x = 0; x < CITADEL_TEXTURE_SIZE; x++)
 			{
-				pixel = ((LH3DColor*)surface)[row + (long)(x * scaleX)];
-				uint32_t nextRed = pixel.r;
-				uint32_t nextGreen = pixel.g;
-				uint32_t nextBlue = pixel.b;
-				*out++ = (red + nextRed) >> 1;
-				*out++ = (green + nextGreen) >> 1;
-				*out++ = (blue + nextBlue) >> 1;
-				red = nextRed;
-				green = nextGreen;
-				blue = nextBlue;
+				pixel = surfacePixels[rowOffset + (long)(x * scaleX)];
+				uint32_t nextRed = RGBA_GETRED(pixel);
+				uint32_t nextGreen = RGBA_GETGREEN(pixel);
+				uint32_t nextBlue = RGBA_GETBLUE(pixel);
+				*outputPixels++ = (previousRed + nextRed) >> 1;
+				previousRed = nextRed;
+				*outputPixels++ = (previousGreen + nextGreen) >> 1;
+				previousGreen = nextGreen;
+				*outputPixels++ = (previousBlue + nextBlue) >> 1;
+				previousBlue = nextBlue;
 			}
 		}
 	}
@@ -1647,8 +1407,6 @@ void ScriptedScreenShot::Process()
 	{
 		pixel = picture + CITADEL_TEXTURE_BYTES / 2;
 	}
-	unsigned long x;
-	unsigned long y;
 	for (y = 0; y < SCRIPTED_SCREEN_SHOT_HALF_HEIGHT - 1; y++)
 	{
 		for (x = 0; x < CITADEL_TEXTURE_SIZE - 1; x++)
@@ -1684,11 +1442,14 @@ void ScriptedScreenShot::Process()
 	{
 		for (x = 0; x < SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH; x++)
 		{
-			thumbnail[0] = (source[0] + source[3]) >> 1;
-			thumbnail[1] = (source[1] + source[4]) >> 1;
-			thumbnail[2] = (source[2] + source[5]) >> 1;
-			thumbnail += 3;
+			int red = (source[0] + source[3]) >> 1;
+			int green = (source[1] + source[4]) >> 1;
+			int blue = (source[2] + source[5]) >> 1;
+			thumbnail[0] = red;
+			thumbnail[1] = green;
+			thumbnail[2] = blue;
 			source += 6;
+			thumbnail += 3;
 		}
 		thumbnail += SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH * 3;
 		source += CITADEL_TEXTURE_PITCH;
@@ -1754,17 +1515,19 @@ void LH3DTools::ExportTGA(int argc, char** argv)
 	*exe = '\0';
 	for (int i = 1; i < argc; i++)
 	{
+		char*    name = argv[i];
 		uint32_t size;
-		if (LHFileLength(argv[i], &size) != LH_FILE_RESULT_OK)
+		if (LHFileLength(name, &size) != LH_FILE_RESULT_OK)
 		{
 			sprintf(error, "Can't find %s", error);
 			return;
 		}
 		LH3DTexturePackFile* pack = (LH3DTexturePackFile*)malloc(size);
-		LHLoadData(argv[i], pack, size, NULL);
-		for (int j = 0; j < pack->Count; j++)
+		LHLoadData(name, pack, size, NULL);
+		long offset = 0;
+		for (int j = 0; j < pack->Count; j++, offset += sizeof(long))
 		{
-			long* texture = (long*)((uint8_t*)pack + ((long*)((uint8_t*)pack + pack->Offsets))[j]);
+			long* texture = (long*)((uint8_t*)pack + *(long*)((uint8_t*)pack + offset + pack->Offsets));
 			sprintf(file, LH3D_TOOLS_PACK_TEXTURE_PATH, path, texture[0]);
 			LHTGA* tga = LHTGA::GetTGA(texture + 1, LH3D_TEXTURE_PACK_SIZE, LH3D_TEXTURE_PACK_SIZE,
 			                           LHTGA_FORMAT_ARGB4444, false);
@@ -1859,26 +1622,28 @@ Bitmap16B* Bitmap16B::CreateFromRawOnHD(char* name, bool32_t check_size, long fo
 	{
 		return NULL;
 	}
-	uint8_t* data = (uint8_t*)malloc(size);
-	LHLoadData(name, data, size, NULL);
+	uint8_t* fileData = (uint8_t*)malloc(size);
+	LHLoadData(name, fileData, size, NULL);
 	Bitmap16B* bitmap = Create(BITMAP_16B_RAW_SIZE, BITMAP_16B_RAW_SIZE, 0);
 	if (format == BITMAP_16B_RAW_FORMAT_RGBA)
 	{
-		uint8_t* src = data;
-		for (int i = 0; i < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; i++, src += 4)
+		uint8_t* sourcePixel = fileData;
+		for (int pixelIndex = 0; pixelIndex < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; pixelIndex++, sourcePixel += 4)
 		{
-			bitmap->Data[i] = ((src[3] >> 4) << 12) | ((src[0] >> 4) << 8) | ((src[1] >> 4) << 4) | (src[2] >> 4);
+			bitmap->Data[pixelIndex] = ((sourcePixel[3] >> 4) << 12) | ((sourcePixel[0] >> 4) << 8) |
+			                           ((sourcePixel[1] >> 4) << 4) | (sourcePixel[2] >> 4);
 		}
 	}
 	else
 	{
-		uint8_t* src = data;
-		for (int i = 0; i < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; i++, src += 3)
+		uint8_t* sourcePixel = fileData;
+		for (int pixelIndex = 0; pixelIndex < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; pixelIndex++, sourcePixel += 3)
 		{
-			bitmap->Data[i] = ((src[0] >> 3) << 10) | ((src[1] >> 3) << 5) | (src[2] >> 3);
+			bitmap->Data[pixelIndex] =
+				((sourcePixel[0] >> 3) << 10) | ((sourcePixel[1] >> 3) << 5) | (sourcePixel[2] >> 3);
 		}
 	}
-	free(data);
+	free(fileData);
 	return bitmap;
 }
 
@@ -1886,10 +1651,11 @@ Bitmap16B* Bitmap16B::CreateFromTGAOnHD(char* name)
 {
 	LHTGA*     tga = LHTGA::CreateFromHD(name);
 	Bitmap16B* bitmap = Create(BITMAP_16B_RAW_SIZE, BITMAP_16B_RAW_SIZE, 0);
-	uint8_t*   src = (uint8_t*)(tga + 1);
-	for (int i = 0; i < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; i++, src += 4)
+	uint8_t*   sourcePixel = (uint8_t*)(tga + 1);
+	for (int pixelIndex = 0; pixelIndex < BITMAP_16B_RAW_SIZE * BITMAP_16B_RAW_SIZE; pixelIndex++, sourcePixel += 4)
 	{
-		bitmap->Data[i] = ((src[0] >> 4) << 12) | ((src[1] >> 4) << 8) | ((src[2] >> 4) << 4) | (src[3] >> 4);
+		bitmap->Data[pixelIndex] = ((sourcePixel[0] >> 4) << 12) | ((sourcePixel[1] >> 4) << 8) |
+		                           ((sourcePixel[2] >> 4) << 4) | (sourcePixel[3] >> 4);
 	}
 	free(tga);
 	return bitmap;
@@ -1992,89 +1758,89 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 	{
 		return;
 	}
-	long          sizeX = size;
-	long          sizeZ = size;
-	float         cellX = x * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
-	float         cellZ = z * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
-	long          px = (long)cellX;
-	long          pz = (long)cellZ;
-	unsigned long weightZ;
-	if (cellZ >= 0.0f)
+	long    clippedWidth = size;
+	long    clippedDepth = size;
+	float   gridX = x * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
+	float   gridZ = z * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
+	long    cellX = (long)gridX;
+	long    cellZ = (long)gridZ;
+	uint8_t weightZ;
+	if (gridZ >= 0.0f)
 	{
-		weightZ = (uint8_t)(255.0f - (cellZ - pz) * 255.0f);
+		weightZ = (long)(LH3D_COLOR_CHANNEL_MAX - (gridZ - cellZ) * LH3D_COLOR_CHANNEL_MAX);
 	}
 	else
 	{
-		weightZ = (uint8_t)((pz - cellZ) * 255.0f);
-		pz--;
+		weightZ = (long)((cellZ - gridZ) * LH3D_COLOR_CHANNEL_MAX);
+		cellZ--;
 	}
-	unsigned long weightX;
-	if (cellX >= 0.0f)
+	uint8_t weightX;
+	if (gridX >= 0.0f)
 	{
-		weightX = (uint8_t)(255.0f - (cellX - px) * 255.0f);
+		weightX = (long)(LH3D_COLOR_CHANNEL_MAX - (gridX - cellX) * LH3D_COLOR_CHANNEL_MAX);
 	}
 	else
 	{
-		weightX = (uint8_t)((px - cellX) * 255.0f);
-		px--;
+		weightX = (long)((cellX - gridX) * LH3D_COLOR_CHANNEL_MAX);
+		cellX--;
 	}
-	if (px > LAND_MAP_SIZE - size)
+	if (cellX > LAND_MAP_SIZE - size)
 	{
-		if (px >= LAND_MAP_SIZE)
+		if (cellX >= LAND_MAP_SIZE)
 		{
 			return;
 		}
-		sizeX = LAND_MAP_SIZE - px;
+		clippedWidth = LAND_MAP_SIZE - cellX;
 	}
-	else if (px < 0)
+	else if (cellX < 0)
 	{
-		sizeX = px + size;
-		light -= px * size;
-		px = 0;
+		clippedWidth = cellX + size;
+		light -= cellX * size;
+		cellX = 0;
 	}
-	if (pz > LAND_MAP_SIZE - size)
+	if (cellZ > LAND_MAP_SIZE - size)
 	{
-		if (pz >= LAND_MAP_SIZE)
+		if (cellZ >= LAND_MAP_SIZE)
 		{
 			return;
 		}
-		sizeZ = LAND_MAP_SIZE - pz;
+		clippedDepth = LAND_MAP_SIZE - cellZ;
 	}
-	else if (pz < 0)
+	else if (cellZ < 0)
 	{
-		sizeZ = pz + size;
-		light -= pz;
-		pz = 0;
+		clippedDepth = cellZ + size;
+		light -= cellZ;
+		cellZ = 0;
 	}
 	int maxDarkness =
 		((LH3DColor&)LandCell::g_darkness_to_color[LAND_CELL_MAX_DARKNESS]).GetG() * LAND_CELL_MIN_DARKNESS >> 8;
-	long alpha = (long)(intensity * 255.0f);
-	for (int i = 0; i < sizeX - 1; i++)
+	long alpha = (long)(intensity * LH3D_COLOR_CHANNEL_MAX);
+	for (int column = 0; column < clippedWidth - 1; column++)
 	{
-		for (int j = 0; j < sizeZ - 1; j++)
+		for (int row = 0; row < clippedDepth - 1; row++)
 		{
-			LandCell* cell = LH3DIsland::GetCell(px, pz);
+			LandCell* cell = LH3DIsland::GetCell(cellX, cellZ);
 			if (cell != NULL)
 			{
-				uint8_t*      next = light + size;
+				uint8_t*      nextColumn = light + size;
 				unsigned long top = LH3D_BLEND_COLOR(light[0], light[1], weightZ);
-				unsigned long bottom = LH3D_BLEND_COLOR(next[0], next[1], weightZ);
-				unsigned long darkness = LH3D_BLEND_COLOR(top, bottom, weightX) * alpha / 255;
+				unsigned long bottom = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weightZ);
+				unsigned long darkness = LH3D_BLEND_COLOR(top, bottom, weightX) * alpha / LH3D_COLOR_CHANNEL_MAX;
 				if (darkness <= (cell->darkness * maxDarkness >> 8))
 				{
 					darkness = cell->darkness;
 				}
 				LightCell(cell, darkness);
-				if ((pz & LAND_BLOCK_MASK) == 0)
+				if ((cellZ & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(px, pz - 1);
+					LandCell* edge = LH3DIsland::GetCell(cellX, cellZ - 1);
 					if (edge != NULL)
 					{
 						edge += 1;
 						LightCell(edge, darkness);
-						if ((px & LAND_BLOCK_MASK) == 0)
+						if ((cellX & LAND_BLOCK_MASK) == 0)
 						{
-							edge = LH3DIsland::GetCell(px - 1, pz - 1);
+							edge = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
 							if (edge != NULL)
 							{
 								edge += LAND_BLOCK_SIDE_POINTS + 1;
@@ -2083,9 +1849,9 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 						}
 					}
 				}
-				if ((px & LAND_BLOCK_MASK) == 0)
+				if ((cellX & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(px - 1, pz);
+					LandCell* edge = LH3DIsland::GetCell(cellX - 1, cellZ);
 					if (edge != NULL)
 					{
 						edge += LAND_BLOCK_SIDE_POINTS;
@@ -2094,11 +1860,11 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 				}
 			}
 			light++;
-			pz++;
+			cellZ++;
 		}
-		light += size - (sizeZ - 1);
-		pz -= sizeZ - 1;
-		px++;
+		light += size - (clippedDepth - 1);
+		cellZ -= clippedDepth - 1;
+		cellX++;
 	}
 }
 
@@ -2110,54 +1876,54 @@ static inline void ClearCell(LandCell* cell)
 
 void __fastcall ClearLightLikeHand(float x, float z, long size)
 {
-	long sizeX = size;
-	long sizeZ = size;
-	long px = (long)(x / MAP_COORDS_METRES_PER_CELL);
-	long pz = (long)(z / MAP_COORDS_METRES_PER_CELL);
-	if (px > LAND_MAP_SIZE - size)
+	long clippedWidth = size;
+	long clippedDepth = size;
+	long cellX = (long)(x / MAP_COORDS_METRES_PER_CELL);
+	long cellZ = (long)(z / MAP_COORDS_METRES_PER_CELL);
+	if (cellX > LAND_MAP_SIZE - size)
 	{
-		if (px >= LAND_MAP_SIZE)
+		if (cellX >= LAND_MAP_SIZE)
 		{
 			return;
 		}
-		sizeX = LAND_MAP_SIZE - px;
+		clippedWidth = LAND_MAP_SIZE - cellX;
 	}
-	else if (px < 0)
+	else if (cellX < 0)
 	{
-		sizeX = px + size;
-		px = 0;
+		clippedWidth = cellX + size;
+		cellX = 0;
 	}
-	if (pz > LAND_MAP_SIZE - size)
+	if (cellZ > LAND_MAP_SIZE - size)
 	{
-		if (pz >= LAND_MAP_SIZE)
+		if (cellZ >= LAND_MAP_SIZE)
 		{
 			return;
 		}
-		sizeZ = LAND_MAP_SIZE - pz;
+		clippedDepth = LAND_MAP_SIZE - cellZ;
 	}
-	else if (pz < 0)
+	else if (cellZ < 0)
 	{
-		sizeZ = pz + size;
-		pz = 0;
+		clippedDepth = cellZ + size;
+		cellZ = 0;
 	}
-	for (int i = 0; i < sizeX - 1; i++)
+	for (int column = 0; column < clippedWidth - 1; column++)
 	{
-		for (int j = 0; j < sizeZ - 1; j++)
+		for (int row = 0; row < clippedDepth - 1; row++)
 		{
-			LandCell* cell = LH3DIsland::GetCell(px, pz);
+			LandCell* cell = LH3DIsland::GetCell(cellX, cellZ);
 			if (cell != NULL)
 			{
 				ClearCell(cell);
-				if ((pz & LAND_BLOCK_MASK) == 0)
+				if ((cellZ & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(px, pz - 1);
+					LandCell* edge = LH3DIsland::GetCell(cellX, cellZ - 1);
 					if (edge != NULL)
 					{
 						edge += 1;
 						ClearCell(edge);
-						if ((px & LAND_BLOCK_MASK) == 0)
+						if ((cellX & LAND_BLOCK_MASK) == 0)
 						{
-							edge = LH3DIsland::GetCell(px - 1, pz - 1);
+							edge = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
 							if (edge != NULL)
 							{
 								edge += LAND_BLOCK_SIDE_POINTS + 1;
@@ -2166,9 +1932,9 @@ void __fastcall ClearLightLikeHand(float x, float z, long size)
 						}
 					}
 				}
-				if ((px & LAND_BLOCK_MASK) == 0)
+				if ((cellX & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(px - 1, pz);
+					LandCell* edge = LH3DIsland::GetCell(cellX - 1, cellZ);
 					if (edge != NULL)
 					{
 						edge += LAND_BLOCK_SIDE_POINTS;
@@ -2176,10 +1942,10 @@ void __fastcall ClearLightLikeHand(float x, float z, long size)
 					}
 				}
 			}
-			pz++;
+			cellZ++;
 		}
-		pz -= sizeZ - 1;
-		px++;
+		cellZ -= clippedDepth - 1;
+		cellX++;
 	}
 }
 
@@ -2386,7 +2152,7 @@ SmokyStuff* SmokyStuff::Create(const LHPoint* pos, long type, float size, LH3DCo
 		sprite->material = g_smoke_mat;
 		sprite->Frame = SMOKY_STUFF_FRAME;
 		sprite->pos.Set(Random(-size, size), Random(-size, size), Random(-size, size));
-		sprite->angle = Random(0.0f, TWO_PI);
+		sprite->SetRotation(Random(0.0f, TWO_PI));
 		smoke->Directions[i].Set(Random(-size, size), size, Random(-size, size));
 		if (smoke->Type != 0)
 		{
@@ -2473,7 +2239,7 @@ void SmokyStuff::Process()
 
 void SmokyStuff::ProcessAll()
 {
-	g_dt = LH3DTech::GetGameTimeInc() / 1000.0f;
+	g_dt = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	SmokyStuff* smoke;
 	for (smoke = g_first; smoke != NULL; smoke = smoke->Next)
 	{
@@ -2560,62 +2326,63 @@ void GlowVillager::SetNewFrame()
 
 void LH3DTools::BuildPaginationFromRawFile(int argc, char** argv)
 {
-	uint8_t* alpha = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE);
-	uint8_t* rgb = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE * 3);
-	uint8_t* tile = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4);
-	char*    name = argv[1];
+	uint8_t* alphaPage = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE);
+	uint8_t* rgbPage = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE * 3);
+	uint8_t* tilePixels = (uint8_t*)LH3DMem::AllocClear(LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4);
+	uint8_t* sourcePixel = tilePixels;
+	char*    inputName = argv[1];
 	uint32_t size;
-	char     base[LH3D_TOOLS_TEXT_SIZE];
-	char     file[LH3D_TOOLS_TEXT_SIZE];
-	LHFileLength(name, &size);
+	char     baseName[LH3D_TOOLS_TEXT_SIZE];
+	char     tilePath[LH3D_TOOLS_TEXT_SIZE];
+	LHFileLength(inputName, &size);
 	if (size != LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4)
 	{
 		return;
 	}
-	int length = strlen(name) - LH3D_TOOLS_RAW_EXTENSION_LENGTH;
-	int i = 0;
+	int baseNameLength = strlen(inputName) - LH3D_TOOLS_RAW_EXTENSION_LENGTH;
+	int tileIndex = 0;
 	while (true)
 	{
-		int      index = ((i / LH3D_TOOLS_PAGE_TILES) & (LH3D_TOOLS_PAGE_TILES - 1)) * LH3D_TOOLS_PAGE_SIZE +
-		                 (i & (LH3D_TOOLS_PAGE_TILES - 1));
-		uint8_t* pageAlpha = alpha + index * LH3D_TOOLS_TILE_SIZE;
-		uint8_t* pageRgb = rgb + index * LH3D_TOOLS_TILE_SIZE * 3;
-		strcpy(base, name);
-		base[length] = '\0';
-		sprintf(file, "%s%d.raw", base, i);
-		LHFileLength(file, &size);
+		int pageOffset = ((tileIndex / LH3D_TOOLS_PAGE_TILES) & (LH3D_TOOLS_PAGE_TILES - 1)) * LH3D_TOOLS_PAGE_SIZE +
+		                 (tileIndex & (LH3D_TOOLS_PAGE_TILES - 1));
+		uint8_t* pageAlpha = alphaPage + pageOffset * LH3D_TOOLS_TILE_SIZE;
+		uint8_t* pageRgb = rgbPage + pageOffset * LH3D_TOOLS_TILE_SIZE * 3;
+		strcpy(baseName, inputName);
+		baseName[baseNameLength] = '\0';
+		sprintf(tilePath, "%s%d.raw", baseName, tileIndex);
+		LHFileLength(tilePath, &size);
 		if (size == 0)
 		{
 			break;
 		}
-		LHLoadData(file, tile, LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4, NULL);
-		uint8_t* pixel = tile;
+		LHLoadData(tilePath, tilePixels, LH3D_TOOLS_TILE_SIZE * LH3D_TOOLS_TILE_SIZE * 4, NULL);
 		for (int y = 0; y < LH3D_TOOLS_TILE_SIZE; y++)
 		{
 			for (int x = 0; x < LH3D_TOOLS_TILE_SIZE; x++)
 			{
-				*pageAlpha++ = pixel[3];
-				pageRgb[0] = pixel[0];
-				pageRgb[1] = pixel[1];
-				pageRgb[2] = pixel[2];
+				*pageAlpha++ = sourcePixel[3];
+				pageRgb[0] = sourcePixel[0];
+				pageRgb[1] = sourcePixel[1];
+				pageRgb[2] = sourcePixel[2];
 				pageRgb += 3;
-				pixel += 4;
+				sourcePixel += 4;
 			}
 			pageAlpha += LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE;
 			pageRgb += (LH3D_TOOLS_PAGE_SIZE - LH3D_TOOLS_TILE_SIZE) * 3;
 		}
-		i++;
+		sourcePixel = tilePixels;
+		tileIndex++;
 	}
-	strcpy(base, name);
-	base[length] = '\0';
-	sprintf(file, "%sa.raw", base);
-	LHSaveData(file, alpha, LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE, NULL);
-	base[length] = '\0';
-	sprintf(file, "%s.raw", base);
-	LHSaveData(file, rgb, LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE * 3, NULL);
-	LH3DMem::Free(tile);
-	LH3DMem::Free(alpha);
-	LH3DMem::Free(rgb);
+	strcpy(baseName, inputName);
+	baseName[baseNameLength] = '\0';
+	sprintf(tilePath, "%sa.raw", baseName);
+	LHSaveData(tilePath, alphaPage, LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE, NULL);
+	baseName[baseNameLength] = '\0';
+	sprintf(tilePath, "%s.raw", baseName);
+	LHSaveData(tilePath, rgbPage, LH3D_TOOLS_PAGE_SIZE * LH3D_TOOLS_PAGE_SIZE * 3, NULL);
+	LH3DMem::Free(tilePixels);
+	LH3DMem::Free(alphaPage);
+	LH3DMem::Free(rgbPage);
 }
 
 LHPoint              FishRush::g_emergency(0.0f, 0.0f, 0.0f);
@@ -2662,7 +2429,7 @@ Fish::Fish(LHPoint* pos)
 bool32_t Fish::ComputePos(LHPoint* target)
 {
 	float scale = 1.0f;
-	float dt = LH3DTech::GetGameTimeInc() / 1000.0f;
+	float dt = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	if (Fear != 0.0f)
 	{
 		Fear -= dt;
@@ -2833,7 +2600,7 @@ long FishRush::Draw()
 		                                 (FISH_RUSH_FADE_RANGE * FISH_RUSH_FADE_RANGE)) *
 		                     255.0f);
 	}
-	TargetTime -= LH3DTech::GetGameTimeInc() / 1000.0f;
+	TargetTime -= LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	if (TargetTime < 0.0f)
 	{
 		LHPoint target(Random(-Radius, Radius), 0.0f, Random(-Radius, Radius));
@@ -3033,7 +2800,7 @@ bool32_t g_b_caca_intro = false;
 
 void SuperVillager::DrawAll()
 {
-	LHPoint        sun = LH3DTech::GetSun();
+	LHPoint        savedSun = LH3DTech::GetSun();
 	SuperVillager* villager = g_first;
 	LH3DTech::SetSun(DEFAULT_SUN);
 	while (villager != NULL)
@@ -3045,7 +2812,7 @@ void SuperVillager::DrawAll()
 		villager->AddDrawing();
 		villager = villager->Next;
 	}
-	LH3DTech::SetSun(sun);
+	LH3DTech::SetSun(savedSun);
 }
 
 void SuperVillager::Draw()
@@ -3056,33 +2823,34 @@ void SuperVillager::Draw()
 	}
 	LH3DMesh::g_current_lod = SUPER_VILLAGER_LOD;
 	LH3DIsland::GetColorAndSpecular(&Object->matrix.GetPos(), &Object->color, &Object->specular);
-	float angle = Object->y_angle;
-	float heading = angle_correct(angle);
+	float objectYaw = Object->y_angle;
+	float objectHeading = angle_correct(objectYaw);
 	Heading = angle_correct(Heading);
-	LHMatrix matrix = Object->matrix;
-	if (Heading == heading || NoSmoothing)
+	LHMatrix worldMatrix = Object->matrix;
+	if (Heading == objectHeading || NoSmoothing)
 	{
-		Heading = heading;
+		Heading = objectHeading;
 	}
 	else
 	{
-		float diff = angle_correct(heading - Heading);
-		float step = SUPER_VILLAGER_TURN_SPEED * (LH3DTech::GetGameTimeInc() / 1000.0f);
-		if (step >= fabs(diff))
+		float headingDelta = angle_correct(objectHeading - Heading);
+		float elapsedSeconds = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
+		float turnStep = SUPER_VILLAGER_TURN_SPEED * elapsedSeconds;
+		if (turnStep >= fabs(headingDelta))
 		{
-			Heading = heading;
+			Heading = objectHeading;
 		}
 		else
 		{
-			if (diff > 0.0f)
+			if (headingDelta > 0.0f)
 			{
-				Heading += step;
+				Heading += turnStep;
 			}
 			else
 			{
-				Heading -= step;
+				Heading -= turnStep;
 			}
-			matrix.RotateY(Heading - heading);
+			worldMatrix.RotateY(Heading - objectHeading);
 		}
 	}
 	static long blend_time = SUPER_VILLAGER_BLEND_TIME;
@@ -3111,15 +2879,15 @@ void SuperVillager::Draw()
 	LH3DPrimitive::g_current_index_primitive = 0;
 	LH3DTech::g_current_matrix = &LH3DTech::g_local_to_clipping;
 	bool32_t swimming = strcmp(Object->GetCurrentAnim()->name, SUPER_VILLAGER_SWIM_ANIM) == 0;
-	LHMatrix clipping;
+	LHMatrix localToClip;
 	if (Object->BlendTime != 0 && !NoSmoothing)
 	{
-		LHMATRIX_MULTIPLY(clipping, matrix, LH3DTech::g_world_to_clipping);
+		LHMATRIX_MULTIPLY(localToClip, worldMatrix, LH3DTech::g_world_to_clipping);
 		Object->CurrentAnim->CombineTransform(LH3DMesh::g_current_list_matrix, Object->CurrentCycleTime,
 		                                      1.0f - Object->BlendFactor, true);
 		Object->LastAnim->CombineTransform(LH3DMesh::g_current_list_matrix, Object->LastCycleTime, Object->BlendFactor,
 		                                   false);
-		LH3DAnim::FinishTransform(LH3DMesh::g_current_list_matrix, Object->mesh, clipping);
+		LH3DAnim::FinishTransform(LH3DMesh::g_current_list_matrix, Object->mesh, localToClip);
 	}
 	else if (swimming)
 	{
@@ -3128,21 +2896,21 @@ void SuperVillager::Draw()
 	}
 	else
 	{
-		LHMATRIX_MULTIPLY(clipping, matrix, LH3DTech::g_world_to_clipping);
+		LHMATRIX_MULTIPLY(localToClip, worldMatrix, LH3DTech::g_world_to_clipping);
 		if (Object->CurrentAnim != NULL)
 		{
 			Object->CurrentAnim->SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, Object->CurrentCycleTime,
-			                                  clipping);
+			                                  localToClip);
 		}
 		else
 		{
-			LH3DAnim::SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, clipping);
+			LH3DAnim::SetTransform(LH3DMesh::g_current_list_matrix, Object->mesh, localToClip);
 		}
 	}
 	unsigned long specular = Object->specular;
 	LH3DMesh::g_color = Object->color;
 	LH3DMesh::g_specular = specular;
-	LH3DTech::g_world_to_local.SetInverse(matrix);
+	LH3DTech::g_world_to_local.SetInverse(worldMatrix);
 	if (swimming)
 	{
 		LH3DMesh* mesh = Object->Meshes[0];
@@ -3311,7 +3079,7 @@ FallingRoot* FallingRoot::g_first = NULL;
 
 void FallingRoot::Update()
 {
-	Time += LH3DTech::GetGameTimeInc() / 1000.0f;
+	Time += LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	if (Object->matrix._42 > GroundHeight)
 	{
 		Object->matrix._42 = StartHeight - Time * Time * FALLING_ROOT_GRAVITY;
@@ -3584,7 +3352,7 @@ void InfluenceCircle::Draw(int mode)
 	time = (time + LH3DTech::GetGameTimeInc()) % INFLUENCE_CIRCLE_ANIM_PERIOD;
 	alpha = RGBA_MAKE(0, 0, 0, alpha);
 	LH3DRender::g_b_need_anim_uv = true;
-	LH3DTech::g_current_matrix = NULL;
+	LH3DTech::g_current_matrix = &LH3DTech::g_local_to_clipping;
 	LH3DRender::g_adu = time / INFLUENCE_CIRCLE_U_SPEED;
 	LH3DRender::g_adv = -time / INFLUENCE_CIRCLE_V_SPEED;
 	if (mode)
@@ -3723,7 +3491,7 @@ TouchMyEdge::TouchMyEdge(LHPoint* pos, LH3DColor colour, float angle)
 		FirstGrowth[i] = true;
 		Sprites[i].pos = position;
 		Sprites[i].material = g_smoke_mat;
-		Sprites[i].Frame = TOUCH_MY_EDGE_RING_FRAME;
+		Sprites[i].SetFrame(TOUCH_MY_EDGE_RING_FRAME);
 		Sprites[i].SetSize(i * TOUCH_MY_EDGE_RING_SPACING);
 		Sprites[i].angle = Random(0.0f, TWO_PI);
 	}
@@ -3788,7 +3556,7 @@ void TouchMyEdge::PostDraw()
 	{
 		fade = 1.0f;
 	}
-	float    growth = LH3DTech::GetGameTimeInc() / 1000.0f;
+	float    growth = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	LHMatrix matrix = Matrix;
 	matrix.PostMultiply(LH3DTech::g_world_to_clipping);
 	growth *= TOUCH_MY_EDGE_GROWTH;
@@ -4094,7 +3862,7 @@ void CheveauxDeFeu::AddDrawing()
 
 void CheveauxDeFeu::ComputePos(LHPoint* pos)
 {
-	float distance = CHEVEAUX_DE_FEU_SPEED * Time / CHEVEAUX_DE_FEU_MS_PER_SECOND;
+	float distance = CHEVEAUX_DE_FEU_SPEED * Time / LH3D_MILLISECONDS_PER_SECOND;
 	if (distance > CHEVEAUX_DE_FEU_RUN_UP - CHEVEAUX_DE_FEU_STOP_SHORT)
 	{
 		Arrived = true;
@@ -4477,13 +4245,13 @@ void NewCollide::Obj::CreateList()
 		LHPoint point;
 		if (alongX)
 		{
-			point = LHPoint((i + 0.5f) * step - length * 0.5f, 0.0f, 0.0f);
+			point.Set((i + 0.5f) * step - length * 0.5f, 0.0f, 0.0f);
 		}
 		else
 		{
-			point = LHPoint(0.0f, 0.0f, (i + 0.5f) * step - length * 0.5f);
+			point.Set(0.0f, 0.0f, (i + 0.5f) * step - length * 0.5f);
 		}
-		point = matrix * point;
+		matrix.TransformPoint(point);
 		IteratorList->Add(new Obj(width, &point));
 	}
 }
@@ -4496,15 +4264,17 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	{
 		return false;
 	}
-	if (IteratorList == NULL)
+	List* list = IteratorList;
+	if (list == NULL)
 	{
-		if (other->IteratorList == NULL)
+		list = other->IteratorList;
+		if (list == NULL)
 		{
 			return true;
 		}
-		for (int i = 0; i < other->IteratorList->count; i++)
+		for (int i = 0; i < list->count; i++)
 		{
-			if (other->IteratorList->objs[i]->Collide(this))
+			if (list->objs[i]->Collide(this))
 			{
 				return true;
 			}
@@ -4513,9 +4283,9 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	}
 	if (other->IteratorList == NULL)
 	{
-		for (int i = 0; i < IteratorList->count; i++)
+		for (int i = 0; i < list->count; i++)
 		{
-			if (IteratorList->objs[i]->Collide(other))
+			if (list->objs[i]->Collide(other))
 			{
 				return true;
 			}
@@ -4524,10 +4294,11 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	}
 	for (int i = 0; i < IteratorList->count; i++)
 	{
-		Obj* obj = IteratorList->objs[i];
-		for (int j = 0; j < other->IteratorList->count; j++)
+		Obj*  obj = IteratorList->objs[i];
+		List* otherList = other->IteratorList;
+		for (int j = 0; j < otherList->count; j++)
 		{
-			if (other->IteratorList->objs[j]->Collide(obj))
+			if (otherList->objs[j]->Collide(obj))
 			{
 				return true;
 			}
@@ -4560,17 +4331,18 @@ NewCollide::List::List(long initial_size)
 
 void NewCollide::List::IncreaseSize()
 {
-	Obj** list = (Obj**)LH3DMem::AllocClear(size * 2 * sizeof(Obj*));
-	memcpy(list, objs, size * sizeof(Obj*));
+	Obj** expandedObjects = (Obj**)LH3DMem::AllocClear(size * 2 * sizeof(Obj*));
+	memcpy(expandedObjects, objs, size * sizeof(Obj*));
 	size *= 2;
 	LH3DMem::Free(objs);
-	objs = list;
+	objs = expandedObjects;
 }
 
 NewCollide::NewCollide(LH3DObject* object) : obj(NULL)
 {
 	LH3DMesh* mesh = object->GetMesh();
-	LHPoint   centre = object->matrix * mesh->BoundingBox.centre;
+	LHPoint   centre = mesh->BoundingBox.centre;
+	object->matrix.TransformPoint(centre);
 	centre.y = 0.0f;
 	float x = mesh->BoundingBox.size.x * object->scale;
 	float z = mesh->BoundingBox.size.z * object->scale;
@@ -4761,7 +4533,7 @@ FishRush::PaulNet::PaulNet(LHPoint* pos, float radius)
 	Phase = 0.0f;
 	for (long i = 0; i < FISH_RUSH_NET_SEGMENTS; i++)
 	{
-		float angle = i * (TWO_PI / FISH_RUSH_NET_SEGMENTS);
+		float angle = i * TWO_PI / FISH_RUSH_NET_SEGMENTS;
 		Points[i].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
 		Points[i] += LHPoint(pos);
 		Bob[i] = 0.0f;
@@ -4791,7 +4563,7 @@ void FishRush::PaulNet::Draw()
 
 void FishRush::PaulNet::PreDraw()
 {
-	float dt = LH3DTech::GetGameTimeInc() / 1000.0f;
+	float dt = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	if (Caught && Size != 0.0f)
 	{
 		Size -= dt * FISH_RUSH_NET_SHRINK_SPEED;
@@ -4802,7 +4574,7 @@ void FishRush::PaulNet::PreDraw()
 		float radius = Size * FISH_RUSH_NET_RADIUS + 1.0f;
 		for (long i = 0; i < FISH_RUSH_NET_SEGMENTS; i++)
 		{
-			float angle = i * (TWO_PI / FISH_RUSH_NET_SEGMENTS);
+			float angle = i * TWO_PI / FISH_RUSH_NET_SEGMENTS;
 			Points[i].Set(radius * (float)cos(angle), 0.0f, radius * (float)sin(angle));
 			Points[i] += Pos;
 			Bob[i] = 0.0f;
@@ -4851,91 +4623,91 @@ void GWater::Process(LHPoint* pos)
 
 void GWater::AddPlouf(LHPoint* pos)
 {
-	for (unsigned long i = 0; i < GWATER_MAX_PLOUFS; i++)
+	for (unsigned long slotIndex = 0; slotIndex < GWATER_MAX_PLOUFS; slotIndex++)
 	{
-		if (Actives[i])
+		if (Actives[slotIndex])
 		{
 			continue;
 		}
-		Actives[i] = true;
+		Actives[slotIndex] = true;
 		switch (State)
 		{
 		case GWATER_STATE_NONE:
-			Types[i] = GWATER_PLOUF_TYPE_SPLASH;
+			Types[slotIndex] = GWATER_PLOUF_TYPE_SPLASH;
 			State = GWATER_STATE_SPLASH;
-			Sprites[i].pos.Set(pos->x, 0.0f, pos->z);
+			Sprites[slotIndex].pos.Set(pos->x, 0.0f, pos->z);
 			SetPlouf(pos);
 			break;
 		case GWATER_STATE_SPLASH:
 			Actives[Last] = false;
 			State = GWATER_STATE_TRAIL_STARTED;
-			Types[i] = GWATER_PLOUF_TYPE_TRAIL_ALONE;
-			Trails[i].Start.Set(LastPos);
-			Trails[i].End.Set(pos->x, 0.0f, pos->z);
+			Types[slotIndex] = GWATER_PLOUF_TYPE_TRAIL_ALONE;
+			Trails[slotIndex].Start.Set(LastPos);
+			Trails[slotIndex].End.Set(pos->x, 0.0f, pos->z);
 			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
+				LHPoint middle(Trails[slotIndex].Start);
+				middle.Add(Trails[slotIndex].End);
 				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
+				Sprites[slotIndex].pos.Set(middle);
+				float dz = Trails[slotIndex].Start.z - Trails[slotIndex].End.z;
+				float dx = Trails[slotIndex].Start.x - Trails[slotIndex].End.x;
 				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
 				if (length < GWATER_PLOUF_MIN_SIZE)
 				{
 					length = GWATER_PLOUF_MIN_SIZE;
 				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
+				Lengths[slotIndex] = length;
+				Sprites[slotIndex].SetRotation(LH3DMath::GetYAngle(&Trails[slotIndex].Start, &Trails[slotIndex].End));
+				Sprites[slotIndex].SetShapeOnly(1.0f, 1.0f / length);
 			}
 			break;
 		case GWATER_STATE_TRAIL_STARTED:
 			Types[Last] = GWATER_PLOUF_TYPE_TRAIL_START;
-			Types[i] = GWATER_PLOUF_TYPE_TRAIL_END;
+			Types[slotIndex] = GWATER_PLOUF_TYPE_TRAIL_END;
 			State = GWATER_STATE_TRAIL;
-			Trails[i].Start.Set(LastPos);
-			Trails[i].End.Set(pos->x, 0.0f, pos->z);
+			Trails[slotIndex].Start.Set(LastPos);
+			Trails[slotIndex].End.Set(pos->x, 0.0f, pos->z);
 			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
+				LHPoint middle(Trails[slotIndex].Start);
+				middle.Add(Trails[slotIndex].End);
 				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
+				Sprites[slotIndex].pos.Set(middle);
+				float dz = Trails[slotIndex].Start.z - Trails[slotIndex].End.z;
+				float dx = Trails[slotIndex].Start.x - Trails[slotIndex].End.x;
 				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
 				if (length < GWATER_PLOUF_MIN_SIZE)
 				{
 					length = GWATER_PLOUF_MIN_SIZE;
 				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
+				Lengths[slotIndex] = length;
+				Sprites[slotIndex].SetRotation(LH3DMath::GetYAngle(&Trails[slotIndex].Start, &Trails[slotIndex].End));
+				Sprites[slotIndex].SetShapeOnly(1.0f, 1.0f / length);
 			}
 			break;
 		case GWATER_STATE_TRAIL:
 			Types[Last] = GWATER_PLOUF_TYPE_TRAIL;
-			Types[i] = GWATER_PLOUF_TYPE_TRAIL_END;
-			Trails[i].Start.Set(LastPos);
-			Trails[i].End.Set(pos->x, 0.0f, pos->z);
+			Types[slotIndex] = GWATER_PLOUF_TYPE_TRAIL_END;
+			Trails[slotIndex].Start.Set(LastPos);
+			Trails[slotIndex].End.Set(pos->x, 0.0f, pos->z);
 			{
-				LHPoint middle(Trails[i].Start);
-				middle.Add(Trails[i].End);
+				LHPoint middle(Trails[slotIndex].Start);
+				middle.Add(Trails[slotIndex].End);
 				middle.Mul(0.5f);
-				Sprites[i].pos.Set(middle);
-				float dz = Trails[i].Start.z - Trails[i].End.z;
-				float dx = Trails[i].Start.x - Trails[i].End.x;
+				Sprites[slotIndex].pos.Set(middle);
+				float dz = Trails[slotIndex].Start.z - Trails[slotIndex].End.z;
+				float dx = Trails[slotIndex].Start.x - Trails[slotIndex].End.x;
 				float length = SquareRoot(dx * dx + dz * dz) * GWATER_PLOUF_TRAIL_WIDTH;
 				if (length < GWATER_PLOUF_MIN_SIZE)
 				{
 					length = GWATER_PLOUF_MIN_SIZE;
 				}
-				Lengths[i] = length;
-				Sprites[i].SetRotation(LH3DMath::GetYAngle(&Trails[i].Start, &Trails[i].End));
-				Sprites[i].SetShapeOnly(1.0f, 1.0f / length);
+				Lengths[slotIndex] = length;
+				Sprites[slotIndex].SetRotation(LH3DMath::GetYAngle(&Trails[slotIndex].Start, &Trails[slotIndex].End));
+				Sprites[slotIndex].SetShapeOnly(1.0f, 1.0f / length);
 			}
 			break;
 		}
-		Last = i;
+		Last = slotIndex;
 		LastPos.Set(pos->x, 0.0f, pos->z);
 		Touching = true;
 		return;
@@ -5056,67 +4828,68 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 	LH3DRender::D3DDevice->DrawIndexedPrimitive(primitive_type, fvf, vertices, vertex_count, indices, index_count, 0);
 }
 
-void SaveTextureCitadel(char* name, void* data)
+void SaveTextureCitadel(char* name, void* rgb_pixels)
 {
-	bool32_t lowRes = LH3DTexture::g_b_use_low_res;
+	bool32_t savedLowRes = LH3DTexture::g_b_use_low_res;
 	LH3DTexture::g_b_use_low_res = false;
 	IDirectDrawSurface7* surface = NULL;
-	LH3DCT*              ct = LH3DCT::Create(NULL, false);
-	if (ct != NULL)
+	LH3DCT*              textureContainer = LH3DCT::Create(NULL, false);
+	if (textureContainer != NULL)
 	{
-		DDSURFACEDESC2 desc;
-		memset(&desc, 0, sizeof(desc));
-		desc.dwSize = sizeof(desc);
-		desc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
-		desc.dwWidth = CITADEL_TEXTURE_SIZE;
-		desc.dwHeight = CITADEL_TEXTURE_SIZE;
-		desc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
-		desc.dwMipMapCount = 1;
-		desc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
-		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&desc, &surface, NULL);
+		DDSURFACEDESC2 surfaceDesc;
+		memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+		surfaceDesc.dwSize = sizeof(surfaceDesc);
+		surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
+		surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
+		surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
+		surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
+		surfaceDesc.dwMipMapCount = 1;
+		surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
+		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
 		if (surface != NULL)
 		{
-			memset(&desc, 0, sizeof(desc));
-			desc.dwSize = sizeof(desc);
-			surface->Lock(NULL, &desc, CITADEL_TEXTURE_LOCK, NULL);
-			uint16_t* bits = (uint16_t*)desc.lpSurface;
-			if (bits != NULL)
+			memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+			surfaceDesc.dwSize = sizeof(surfaceDesc);
+			surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
+			uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
+			if (surfacePixels != NULL)
 			{
-				long     pitch = desc.lPitch / 2;
-				uint8_t* pixel = (uint8_t*)data;
+				long     pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
+				uint8_t* sourceChannel = (uint8_t*)rgb_pixels;
 				long     x;
 				long     y;
 				if (!LH3DTexture::g_b_use_565)
 				{
-					for (y = 0; y < (long)desc.dwHeight; y++)
+					for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
 					{
-						for (x = 0; x < (long)desc.dwWidth; x++)
+						for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
 						{
-							long red = *pixel++ >> 3;
-							long green = *pixel++ >> 3;
-							long blue = *pixel++ >> 3;
-							bits[y * pitch + x] = CITADEL_TEXTURE_555_OPAQUE | red << 10 | green << 5 | blue;
+							long red = *sourceChannel++ >> 3;
+							long green = *sourceChannel++ >> 3;
+							long blue = *sourceChannel++ >> 3;
+							surfacePixels[y * pitchPixels + x] =
+								CITADEL_TEXTURE_555_OPAQUE | red << 10 | green << 5 | blue;
 						}
 					}
 				}
 				else
 				{
-					for (y = 0; y < (long)desc.dwHeight; y++)
+					for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
 					{
-						for (x = 0; x < (long)desc.dwWidth; x++)
+						for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
 						{
-							long red = *pixel++ >> 3;
-							long green = (*pixel++ >> 3) << 1;
-							long blue = *pixel++ >> 3;
-							bits[y * pitch + x] = red << 11 | green << 5 | blue;
+							long red = *sourceChannel++ >> 3;
+							long green = (*sourceChannel++ >> 3) << 1;
+							long blue = *sourceChannel++ >> 3;
+							surfacePixels[y * pitchPixels + x] = red << 11 | green << 5 | blue;
 						}
 					}
 				}
 			}
 			surface->Unlock(NULL);
-			if (ct->Surface->Blt(NULL, surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
+			if (textureContainer->Surface->Blt(NULL, surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
 			{
-				ct->SaveOnDisk(name);
+				textureContainer->SaveOnDisk(name);
 			}
 		}
 	}
@@ -5125,68 +4898,68 @@ void SaveTextureCitadel(char* name, void* data)
 		surface->Release();
 	}
 	surface = NULL;
-	if (ct != NULL)
+	if (textureContainer != NULL)
 	{
-		ct->Release();
+		textureContainer->Release();
 	}
-	LH3DTexture::g_b_use_low_res = lowRes;
+	LH3DTexture::g_b_use_low_res = savedLowRes;
 }
 
-void LoadTextureCitadel(char* name, uint8_t* data)
+void LoadTextureCitadel(char* name, uint8_t* rgb_pixels)
 {
 	uint32_t size = 0;
 	LHFileLength(name, &size);
 	if (size == 0 || IsRawFile(name))
 	{
 		Report3D__FPCce("LoadTextureCitadel %s not present\n", name);
-		memset(data, 0, CITADEL_TEXTURE_BYTES);
+		memset(rgb_pixels, 0, CITADEL_TEXTURE_BYTES);
 		return;
 	}
 	Report3D__FPCce("LoadTextureCitadel %s\n", name);
 	IDirectDrawSurface7* surface = NULL;
-	LH3DCT*              ct = LH3DCT::CreateFromDisk(name);
-	if (ct != NULL)
+	LH3DCT*              textureContainer = LH3DCT::CreateFromDisk(name);
+	if (textureContainer != NULL)
 	{
-		DDSURFACEDESC2 desc;
-		memset(&desc, 0, sizeof(desc));
-		desc.dwSize = sizeof(desc);
-		desc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
-		desc.dwWidth = CITADEL_TEXTURE_SIZE;
-		desc.dwHeight = CITADEL_TEXTURE_SIZE;
-		desc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
-		desc.dwMipMapCount = 1;
-		desc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
-		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&desc, &surface, NULL);
-		if (surface != NULL && surface->Blt(NULL, ct->Surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
+		DDSURFACEDESC2 surfaceDesc;
+		memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+		surfaceDesc.dwSize = sizeof(surfaceDesc);
+		surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
+		surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
+		surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
+		surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
+		surfaceDesc.dwMipMapCount = 1;
+		surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
+		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
+		if (surface != NULL && surface->Blt(NULL, textureContainer->Surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
 		{
-			surface->Lock(NULL, &desc, CITADEL_TEXTURE_LOCK, NULL);
-			uint16_t* bits = (uint16_t*)desc.lpSurface;
-			if (bits != NULL)
+			surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
+			uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
+			if (surfacePixels != NULL)
 			{
-				long pitch = desc.lPitch / 2;
+				long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
 				if (!LH3DTexture::g_b_use_565)
 				{
-					for (long y = 0; y < (long)desc.dwHeight; y++)
+					for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
 					{
-						for (long x = 0; x < (long)desc.dwWidth; x++)
+						for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
 						{
-							uint16_t pixel = bits[y * pitch + x];
-							*data++ = (pixel >> 10) << 3;
-							*data++ = (pixel >> 5) << 3;
-							*data++ = pixel << 3;
+							uint16_t pixel = surfacePixels[y * pitchPixels + x];
+							*rgb_pixels++ = (pixel >> 10) << 3;
+							*rgb_pixels++ = (pixel >> 5) << 3;
+							*rgb_pixels++ = pixel << 3;
 						}
 					}
 				}
 				else
 				{
-					for (long y = 0; y < (long)desc.dwHeight; y++)
+					for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
 					{
-						for (long x = 0; x < (long)desc.dwWidth; x++)
+						for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
 						{
-							uint16_t pixel = bits[y * pitch + x];
-							*data++ = (pixel >> 11) << 3;
-							*data++ = (pixel >> 6) << 3;
-							*data++ = pixel << 3;
+							uint16_t pixel = surfacePixels[y * pitchPixels + x];
+							*rgb_pixels++ = (pixel >> 11) << 3;
+							*rgb_pixels++ = (pixel >> 6) << 3;
+							*rgb_pixels++ = pixel << 3;
 						}
 					}
 				}
@@ -5199,19 +4972,19 @@ void LoadTextureCitadel(char* name, uint8_t* data)
 		surface->Release();
 	}
 	surface = NULL;
-	if (ct != NULL)
+	if (textureContainer != NULL)
 	{
-		ct->Release();
+		textureContainer->Release();
 	}
 }
 
-NewCollide::Obj::Obj(float radius, LHPoint* position)
-	: position(*position), radius(radius), r2(radius * radius), angle(0.0f), BoundingBox(radius, 0.0f, radius),
-	  IteratorList(NULL)
+NewCollide::Obj::Obj(float collision_radius, LHPoint* center)
+	: position(*center), radius(collision_radius), r2(collision_radius * collision_radius), angle(0.0f),
+	  BoundingBox(collision_radius, 0.0f, collision_radius), IteratorList(NULL)
 {
 }
 
-NewCollide::Obj::Obj(LHPoint* position, float bb_x, float bb_z, float angle)
+NewCollide::Obj::Obj(LHPoint* center, float bb_x, float bb_z, float heading)
 {
 	if (bb_x < NEW_COLLIDE_MIN_SIZE)
 	{
@@ -5221,11 +4994,11 @@ NewCollide::Obj::Obj(LHPoint* position, float bb_x, float bb_z, float angle)
 	{
 		bb_z = NEW_COLLIDE_MIN_SIZE;
 	}
-	this->position = *position;
+	position = *center;
 	r2 = bb_x * bb_x + bb_z * bb_z;
 	radius = sqrt(r2);
-	this->angle = angle;
-	BoundingBox = LHPoint(bb_x, 0.0f, bb_z);
+	angle = heading;
+	BoundingBox.Set(bb_x, 0.0f, bb_z);
 	IteratorList = NULL;
 	CreateList();
 }
@@ -5269,3 +5042,39 @@ void ClearAllStuff()
 		delete dead;
 	}
 }
+
+#if defined(VERSION_BW1W110) || defined(VERSION_BW1W120) || defined(VERSION_BW1W130)
+void UnidentifiedDiversRoutine() {}
+
+void ExportTexturePackTGA(int argc, char** argv)
+{
+	char file[LH3D_TOOLS_FILE_SIZE];
+	char path[LH3D_TOOLS_TEXT_SIZE];
+	for (int i = 1; i < argc; i++)
+	{
+		char*    name = argv[i];
+		uint32_t size;
+		if (LHFileLength(name, &size) != LH_FILE_RESULT_OK)
+		{
+			sprintf(path, "Can't find %s", path);
+			return;
+		}
+		LH3DTexturePackFile* pack = (LH3DTexturePackFile*)malloc(size);
+		LHLoadData(name, pack, size, NULL);
+		long offset = 0;
+		for (int j = 0; j < pack->Count; j++, offset += sizeof(long))
+		{
+			long* texture = (long*)((uint8_t*)pack + *(long*)((uint8_t*)pack + offset + pack->Offsets));
+			long  textureId = texture[0];
+			strcpy(path, name);
+			path[strlen(name) - LH3D_TOOLS_EXTENSION_LENGTH] = '\0';
+			sprintf(file, "%s%x.tga", path, textureId);
+			LHTGA* tga = LHTGA::GetTGA(texture + 1, LH3D_TEXTURE_PACK_SIZE, LH3D_TEXTURE_PACK_SIZE,
+			                           LHTGA_FORMAT_ARGB4444, false);
+			LHSaveData(file, tga, LHTGA::GetSize(tga->Width, tga->Height), NULL);
+			free(tga);
+		}
+		free(pack);
+	}
+}
+#endif
