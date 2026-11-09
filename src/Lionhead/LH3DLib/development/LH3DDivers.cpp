@@ -115,7 +115,7 @@ void BackgroundBox::DrawAll()
 	}
 	LH3DRender::SetMaterial(g_material, 0);
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
-	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, false);
 	for (int i = 0; i < g_count; i++)
 	{
 		BackgroundBox* box = &g_list_boxes[i];
@@ -132,7 +132,7 @@ void BackgroundBox::DrawAll()
 		DrawAndClip2D(D3DPT_TRIANGLELIST, BACKGROUND_BOX_FVF, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
 		              BACKGROUND_BOX_INDICES);
 	}
-	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, true);
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
 	g_count = 0;
 }
@@ -147,7 +147,7 @@ void BackgroundBox::Draw(LHRegion* region, LH3DColor* color, bool32_t keep_z)
 	}
 	else
 	{
-		LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+		LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, false);
 	}
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
 	g_list_vertex[0].x = (float)region->start.X();
@@ -165,7 +165,7 @@ void BackgroundBox::Draw(LHRegion* region, LH3DColor* color, bool32_t keep_z)
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
 	if (!keep_z)
 	{
-		LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
+		LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, true);
 	}
 }
 
@@ -461,7 +461,7 @@ void LH3DJustFootPrint::DrawDebugAll()
 	}
 }
 
-int IsObjectOnScreen(LH3DObject* object)
+bool32_t IsObjectOnScreen(LH3DObject* object)
 {
 	if (object->GetMesh() != NULL)
 	{
@@ -470,26 +470,28 @@ int IsObjectOnScreen(LH3DObject* object)
 	return false;
 }
 
-int IsPointOnScreen(LHPoint* point)
+bool32_t IsPointOnScreen(LHPoint* point)
 {
-	float w = LH3DTech::g_world_to_clipping.m[2] * point->x + LH3DTech::g_world_to_clipping.m[5] * point->y +
-	          LH3DTech::g_world_to_clipping.m[8] * point->z + LH3DTech::g_world_to_clipping.m[11];
-	if (w < LH3DTech::g_info_transform.NearClip)
+	float clipW = LH3DTech::g_world_to_clipping.m[2] * point->x + LH3DTech::g_world_to_clipping.m[5] * point->y +
+	              LH3DTech::g_world_to_clipping.m[8] * point->z + LH3DTech::g_world_to_clipping.m[11];
+	if (clipW < LH3DTech::g_info_transform.NearClip)
 	{
 		return false;
 	}
-	float rhw = 1.0f / w;
-	int   x = (int)(((LH3DTech::g_world_to_clipping.m[0] * point->x + LH3DTech::g_world_to_clipping.m[3] * point->y +
-	                  LH3DTech::g_world_to_clipping.m[6] * point->z + LH3DTech::g_world_to_clipping.m[9]) *
-	                     rhw +
-	                 1.0f) *
-	                LH3DTech::g_info_transform.HalfRes.x);
-	int   y =
+	float inverseClipW = 1.0f / clipW;
+	int   screenX =
+		(int)(((LH3DTech::g_world_to_clipping.m[0] * point->x + LH3DTech::g_world_to_clipping.m[3] * point->y +
+	            LH3DTech::g_world_to_clipping.m[6] * point->z + LH3DTech::g_world_to_clipping.m[9]) *
+	               inverseClipW +
+	           1.0f) *
+	          LH3DTech::g_info_transform.HalfRes.x);
+	int screenY =
 		(int)((1.0f - (LH3DTech::g_world_to_clipping.m[1] * point->x + LH3DTech::g_world_to_clipping.m[4] * point->y +
 	                   LH3DTech::g_world_to_clipping.m[7] * point->z + LH3DTech::g_world_to_clipping.m[10]) *
-	                      rhw) *
+	                      inverseClipW) *
 	          LH3DTech::g_info_transform.HalfRes.y);
-	if (x < 0 || y < 0 || x >= LH3DTech::g_info_transform.resolution.x || y >= LH3DTech::g_info_transform.resolution.y)
+	if (screenX < 0 || screenY < 0 || screenX >= LH3DTech::g_info_transform.resolution.x ||
+	    screenY >= LH3DTech::g_info_transform.resolution.y)
 	{
 		return false;
 	}
@@ -1806,51 +1808,51 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 	long intensityWeight = (long)(intensity * LH3D_COLOR_CHANNEL_MAX);
 	for (int column = 0; column < clippedWidth - 1; column++)
 	{
-		for (int row = 0; row < clippedDepth - 1; row++)
+		for (int row = 0; row < clippedDepth - 1; row++, light++, cellZ++)
 		{
 			LandCell* cell = LH3DIsland::GetCell(cellX, cellZ);
-			if (cell != NULL)
+			if (cell == NULL)
 			{
-				uint8_t*      nextColumn = light + size;
-				unsigned long columnDarkness = LH3D_BLEND_COLOR(light[0], light[1], weightZ);
-				unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weightZ);
-				unsigned long darkness = LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weightX) *
-				                         intensityWeight / LH3D_COLOR_CHANNEL_MAX;
-				if (darkness <= (cell->darkness * maxDarkness >> 8))
+				continue;
+			}
+
+			uint8_t*      nextColumn = light + size;
+			unsigned long columnDarkness = LH3D_BLEND_COLOR(light[0], light[1], weightZ);
+			unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weightZ);
+			unsigned long darkness = LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weightX) * intensityWeight /
+			                         LH3D_COLOR_CHANNEL_MAX;
+			if (darkness <= (cell->darkness * maxDarkness >> 8))
+			{
+				darkness = cell->darkness;
+			}
+			LightCell(cell, darkness);
+			if ((cellZ & LAND_BLOCK_MASK) == 0)
+			{
+				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX, cellZ - 1);
+				if (boundaryCopy != NULL)
 				{
-					darkness = cell->darkness;
-				}
-				LightCell(cell, darkness);
-				if ((cellZ & LAND_BLOCK_MASK) == 0)
-				{
-					LandCell* edge = LH3DIsland::GetCell(cellX, cellZ - 1);
-					if (edge != NULL)
+					boundaryCopy += 1;
+					LightCell(boundaryCopy, darkness);
+					if ((cellX & LAND_BLOCK_MASK) == 0)
 					{
-						edge += 1;
-						LightCell(edge, darkness);
-						if ((cellX & LAND_BLOCK_MASK) == 0)
+						boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
+						if (boundaryCopy != NULL)
 						{
-							edge = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
-							if (edge != NULL)
-							{
-								edge += LAND_BLOCK_SIDE_POINTS + 1;
-								LightCell(edge, darkness);
-							}
+							boundaryCopy += LAND_BLOCK_SIDE_POINTS + 1;
+							LightCell(boundaryCopy, darkness);
 						}
 					}
 				}
-				if ((cellX & LAND_BLOCK_MASK) == 0)
+			}
+			if ((cellX & LAND_BLOCK_MASK) == 0)
+			{
+				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ);
+				if (boundaryCopy != NULL)
 				{
-					LandCell* edge = LH3DIsland::GetCell(cellX - 1, cellZ);
-					if (edge != NULL)
-					{
-						edge += LAND_BLOCK_SIDE_POINTS;
-						LightCell(edge, darkness);
-					}
+					boundaryCopy += LAND_BLOCK_SIDE_POINTS;
+					LightCell(boundaryCopy, darkness);
 				}
 			}
-			light++;
-			cellZ++;
 		}
 		light += size - (clippedDepth - 1);
 		cellZ -= clippedDepth - 1;
@@ -1906,29 +1908,29 @@ void __fastcall ClearLightLikeHand(float x, float z, long size)
 				ClearCell(cell);
 				if ((cellZ & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(cellX, cellZ - 1);
-					if (edge != NULL)
+					LandCell* boundaryCopy = LH3DIsland::GetCell(cellX, cellZ - 1);
+					if (boundaryCopy != NULL)
 					{
-						edge += 1;
-						ClearCell(edge);
+						boundaryCopy += 1;
+						ClearCell(boundaryCopy);
 						if ((cellX & LAND_BLOCK_MASK) == 0)
 						{
-							edge = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
-							if (edge != NULL)
+							boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ - 1);
+							if (boundaryCopy != NULL)
 							{
-								edge += LAND_BLOCK_SIDE_POINTS + 1;
-								ClearCell(edge);
+								boundaryCopy += LAND_BLOCK_SIDE_POINTS + 1;
+								ClearCell(boundaryCopy);
 							}
 						}
 					}
 				}
 				if ((cellX & LAND_BLOCK_MASK) == 0)
 				{
-					LandCell* edge = LH3DIsland::GetCell(cellX - 1, cellZ);
-					if (edge != NULL)
+					LandCell* boundaryCopy = LH3DIsland::GetCell(cellX - 1, cellZ);
+					if (boundaryCopy != NULL)
 					{
-						edge += LAND_BLOCK_SIDE_POINTS;
-						ClearCell(edge);
+						boundaryCopy += LAND_BLOCK_SIDE_POINTS;
+						ClearCell(boundaryCopy);
 					}
 				}
 			}
@@ -3273,11 +3275,11 @@ void InfluenceCircle::Reset()
 	g_first = NULL;
 }
 
-void InfluenceCircle::Draw(int mode)
+void InfluenceCircle::Draw(bool32_t world_space)
 {
 	InfluenceCircle* circle = g_first;
 	unsigned long    alpha = INFLUENCE_CIRCLE_HIGH_ALPHA;
-	if (mode)
+	if (world_space)
 	{
 		float height = LH3DTech::g_camera.pos.y;
 		if (height <= INFLUENCE_CIRCLE_LOW_HEIGHT)
@@ -3308,7 +3310,7 @@ void InfluenceCircle::Draw(int mode)
 	LH3DTech::g_current_matrix = &LH3DTech::g_local_to_clipping;
 	LH3DRender::g_adu = time / INFLUENCE_CIRCLE_U_SPEED;
 	LH3DRender::g_adv = -time / INFLUENCE_CIRCLE_V_SPEED;
-	if (mode)
+	if (world_space)
 	{
 		LH3DTech::g_local_to_clipping.Set(LH3DTech::g_world_to_clipping);
 	}
