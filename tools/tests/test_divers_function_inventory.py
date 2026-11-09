@@ -37,11 +37,17 @@ class DiversInventoryTests(unittest.TestCase):
         fixture = Path(__file__).resolve().parents[1] / 'divers_readability_candidate.json'
         source = json.loads(fixture.read_text())['files']['src/Lionhead/LH3DLib/development/LH3DDivers.cpp']
         actual = function_inventory(source)
-        self.assertEqual(len(actual), 177)
+        helpers = ('SampleScreenshot16', 'SampleScreenshot32', 'BlendScreenshotPixels', 'BuildScreenshotThumbnail')
+        added = sum('static void ' + name + '(' in source for name in helpers)
+        expected_count = 177 + added
+        self.assertEqual(len(actual), expected_count)
+        for name in helpers:
+            if 'static void ' + name + '(' in source:
+                self.assertEqual(sum(x['signature'].startswith('static void ' + name + '(') for x in actual), 1)
         self.assertEqual(sum(x['signature'] == 'void UnidentifiedDiversRoutine()' for x in actual), 1)
         self.assertEqual(sum('operator==' in x['signature'] for x in actual), 1)
         self.assertEqual(len({x['line'] for x in actual}), len(actual))
-        self.assertEqual(actual[-1]['id'], 'F176')
+        self.assertEqual(actual[-1]['id'], 'F%03d' % (expected_count - 1))
 
 
 if __name__ == '__main__':
