@@ -39,6 +39,10 @@ class DiversInventoryTests(unittest.TestCase):
         actual = function_inventory(source)
         helpers = ('SampleScreenshot16', 'SampleScreenshot32', 'BlendScreenshotPixels', 'BuildScreenshotThumbnail')
         added = sum('static void ' + name + '(' in source for name in helpers)
+        shadow = 'static LHPoint GetShadowFootPosition('
+        added += shadow in source
+        if shadow in source:
+            self.assertEqual(sum(x['signature'].startswith(shadow) for x in actual), 1)
         expected_count = 177 + added
         self.assertEqual(len(actual), expected_count)
         for name in helpers:
