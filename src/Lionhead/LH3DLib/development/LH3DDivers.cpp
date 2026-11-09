@@ -1427,26 +1427,17 @@ Bitmap16B* Bitmap16B::CreateFromHD(char* name, bool32_t keep_format)
 	if (LH3DTexture::g_b_use_low_res)
 	{
 		Bitmap16B* lowRes = Create(BITMAP_16B_LOW_RES_SIZE, BITMAP_16B_LOW_RES_SIZE, 0);
-		if (LH3DTexture::g_b_use_565 && !keep_format)
+		bool32_t   convertTo565 = LH3DTexture::g_b_use_565 && !keep_format;
+		for (int y = 0; y < lowRes->Height; y++)
 		{
-			for (int y = 0; y < lowRes->Height; y++)
+			for (int x = 0; x < lowRes->Width; x++)
 			{
-				for (int x = 0; x < lowRes->Width; x++)
+				uint16_t pixel = bitmap->Data[(bitmap->Width * y + x) * 2];
+				if (convertTo565)
 				{
-					uint16_t pixel = bitmap->Data[(bitmap->Width * y + x) * 2];
-					lowRes->Data[lowRes->Width * y + x] =
-						((pixel & BITMAP_16B_555_HIGH) << 1) | (pixel & BITMAP_16B_555_BLUE);
+					pixel = ((pixel & BITMAP_16B_555_HIGH) << 1) | (pixel & BITMAP_16B_555_BLUE);
 				}
-			}
-		}
-		else
-		{
-			for (int y = 0; y < lowRes->Height; y++)
-			{
-				for (int x = 0; x < lowRes->Width; x++)
-				{
-					lowRes->Data[lowRes->Width * y + x] = bitmap->Data[(bitmap->Width * y + x) * 2];
-				}
+				lowRes->Data[lowRes->Width * y + x] = pixel;
 			}
 		}
 		bitmap->Release();
