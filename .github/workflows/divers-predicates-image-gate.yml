@@ -1,0 +1,134 @@
+name: LH3DDivers predicate and traversal full image gate
+
+on:
+  push:
+    branches:
+      - verify/lh3ddivers-predicates-20261109
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-image:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check fork package permission
+        if: github.repository == 'boltz/bw1-decomp'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api /users/boltz/packages/container/bw1-build --jq '{visibility, repository:.repository.full_name}'
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check build image access
+        env:
+          BUILD_IMAGE: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+        run: docker manifest inspect "$BUILD_IMAGE" > /dev/null
+
+  build:
+    if: github.repository == 'boltz/bw1-decomp'
+    needs: check-image
+    # This is a *private* build container.
+    # See docs/github_actions.md for more information.
+    container:
+      image: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [BW1W100, BW1W110, BW1W120, BW1W130, BW1WCI]
+        side: [control, candidate]
+
+    steps:
+    # Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.side == 'control' && '8214bb1e7cc106642bde7158f9a6c5c1b83b3876' || github.sha }}
+        fetch-depth: 0
+        submodules: recursive
+        persist-credentials: false
+
+    # Set Git config
+    - name: Git config
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+    # Normalize file mod times
+    - name: Restore timestamps
+      run: |
+        uv run https://raw.githubusercontent.com/MestreLion/git-tools/refs/tags/v2022.12/git-restore-mtime \
+            --merge --commit-time
+
+    # Copy the original files to the workspace
+    - name: Prepare
+      run: cp -a /orig .
+
+    # Caching doesn't same much time and breaks some changesets such as inline header definitions
+    # # Restore cached files
+    # - name: Cache build
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: |
+    #       build
+    #       .ninja_deps
+    #       .ninja_log
+    #     key: ${{ runner.os }}-${{ matrix.version }}-${{ github.sha }}
+    #     restore-keys: ${{ runner.os }}-${{ matrix.version }}-
+
+    # Build the project. Static libs ship in the build container under
+    # orig/libs (copied above via /orig), where configure.py reads them
+    # verbatim.
+    - name: Build
+      run: |
+        python configure.py --map --version ${{ matrix.version }}
+        ninja
+        sha1sum -c config/${{ matrix.version }}/build.sha1
+
+    - name: Collect binary review evidence
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: >-
+        python tools/pr_binary_evidence.py
+        --base "$BASE_SHA" --head "$HEAD_SHA"
+        --version ${{ matrix.version }}
+        --output binary-evidence/${{ matrix.version }}.json
+
+    - name: Upload binary review evidence
+      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary-evidence-${{ matrix.version }}
+        path: binary-evidence/*.json
+
+    # Upload map files
+    - name: Upload map
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.version }}_maps_${{ matrix.side }}
+        path: build/${{ matrix.version }}/**/*.map
+
+    # Upload progress report
+    - name: Upload report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.version }}_report_${{ matrix.side }}
+        path: build/${{ matrix.version }}/report.json
