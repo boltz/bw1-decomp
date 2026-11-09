@@ -17,6 +17,9 @@ on:
       - 'tools/check_addr_comments.py'
       - 'tools/review_quality.py'
       - 'tools/readability_review.py'
+      - 'tools/readability_scope.py'
+      - 'tools/matched*.py'
+      - '.github/workflows/matched-readability.yml'
       - 'tools/automatic_pr_review*'
       - 'tools/reposcout.py'
       - 'tools/tests/**'
@@ -89,3 +92,5 @@ jobs:
         python-version: '3.x'
     - run: python -m pip install PyYAML==6.0.3
     - run: python -m unittest tools.tests.test_automatic_pr_review tools.tests.test_review_quality tools.tests.test_reposcout tools.tests.test_build_evidence_report tools.tests.test_bw1_progress_tracker
+    - run: python -m unittest discover -s tools/tests -p test_readability_scope.py
+    - run: python -m unittest discover -s tools/tests -p 'test_matched*.py'

@@ -1,0 +1,95 @@
+name: Matched contribution readability
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Full PR base commit SHA
+        required: true
+      head:
+        description: Full PR head commit SHA
+        required: true
+      evidence_run:
+        description: Completed Build run containing matched-source-bundle (blank for no-model dry run)
+        required: false
+      trusted_bundle_sha256:
+        description: Independently approved receipt SHA-256 (never copy a pin supplied by PR code)
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review:
+    if: github.repository == 'boltz/bw1-decomp' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate revisions and completed build
+        env:
+          BASE: ${{ inputs.base }}
+          HEAD: ${{ inputs.head }}
+          RUN: ${{ inputs.evidence_run }}
+          PIN: ${{ inputs.trusted_bundle_sha256 }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import os, re, subprocess, sys
+          sys.path.insert(0, 'tools')
+          from automatic_pr_review import GitHub
+          for name in ('BASE', 'HEAD'):
+              value = os.environ[name]
+              if not re.fullmatch('[0-9a-f]{40}', value):
+                  raise SystemExit('Full lowercase commit SHAs required')
+              subprocess.run(['git', 'fetch', '--no-tags', 'origin', value], check=True)
+          run, pin = os.environ['RUN'], os.environ['PIN']
+          if bool(run) != bool(pin):
+              raise SystemExit('Evidence run and independent pin must be supplied together')
+          if run:
+              if not run.isdigit() or not re.fullmatch('[0-9a-f]{64}', pin):
+                  raise SystemExit('Invalid evidence run/pin')
+              repo = os.environ['GITHUB_REPOSITORY']
+              evidence = GitHub(repo, os.environ['GITHUB_TOKEN']).request('GET', f'/repos/{repo}/actions/runs/{run}')
+              if (evidence.get('status') != 'completed' or evidence.get('conclusion') != 'success'
+                      or evidence.get('head_sha') != os.environ['HEAD'] or evidence.get('event') != 'pull_request'
+                      or evidence.get('path') != '.github/workflows/build.yml'
+                      or evidence.get('head_repository', {}).get('full_name') != repo):
+                  raise SystemExit('Evidence must come from the successful same-repository PR Build for this head')
+          PY
+      - name: Download independently approved build bundle
+        if: inputs.evidence_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: matched-source-bundle
+          path: matched-source-bundle
+          run-id: ${{ inputs.evidence_run }}
+          github-token: ${{ github.token }}
+      - name: Review verified matched contributions
+        env:
+          BASE: ${{ inputs.base }}
+          HEAD: ${{ inputs.head }}
+          PIN: ${{ inputs.trusted_bundle_sha256 }}
+          PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
+          PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
+          PR_REVIEW_MODEL: ${{ vars.PR_REVIEW_MODEL || 'gpt-6-luna' }}
+        run: |
+          args=(--repo . --base "$BASE" --head "$HEAD" --output matched-readability.json)
+          if [ -n "$PIN" ]; then
+            args+=(--bundle matched-source-bundle/receipt.json --trusted-bundle-sha256 "$PIN" --artifact-root matched-source-bundle --run-model)
+          fi
+          python tools/matched_readability_review.py "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matched-readability
+          path: matched-readability.json
+          if-no-files-found: warn

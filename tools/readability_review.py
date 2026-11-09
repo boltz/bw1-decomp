@@ -250,6 +250,8 @@ def validate_quality(raw, inventory, changed_lines, precedents):
 
 
 def apply_quality_event(event, quality):
+    if quality.get("advisory"):
+        return "COMMENT"
     if quality["inventory"]["remove_comment_count"]:
         return "REQUEST_CHANGES"
     if quality["blocking"] and not quality["invalid"]:
@@ -298,6 +300,8 @@ def render_quality(result, escape, repository="", commit=""):
     incomplete = bool(
         result["invalid"] or inventory["limitations"] or not result["numbers_complete"] or result.get("scope_limited")
     )
+    if result.get("advisory"):
+        score += " (advisory changed-line diagnostic; not matched-contribution acceptance)"
     if incomplete and result["score"] is not None:
         score += " (partial review)"
     lines = [
@@ -322,7 +326,9 @@ def render_quality(result, escape, repository="", commit=""):
             "Partial. Counts may be too low" if incomplete else "Complete for the code checked"
         ),
         "",
-        "Counts cover the added code this check could read. Strings, vendor code, and docs are excluded.",
+        ("Advisory only. Matched-contribution acceptance is pending verified post-build scope evidence."
+         if result.get("advisory") else
+         "Counts cover the added code this check could read. Strings, vendor code, and docs are excluded."),
         "",
         "## Human readability",
         "",

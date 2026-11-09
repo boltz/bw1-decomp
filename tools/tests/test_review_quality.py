@@ -474,7 +474,7 @@ class BaseCommentTests(unittest.TestCase):
 
 
 class ReviewIntegrationTests(unittest.TestCase):
-    def test_posted_review_has_metrics_and_comment_request_despite_missing_binary_evidence(self):
+    def test_immediate_review_is_advisory_until_matched_scope_is_verified(self):
         import json
         import os
         from pathlib import Path
@@ -540,8 +540,9 @@ class ReviewIntegrationTests(unittest.TestCase):
             ):
                 reviewer.main()
             submitted = github.submit_review.call_args.args
-            self.assertEqual(submitted[2], "REQUEST_CHANGES")
-            self.assertIn("| Human readability | 80 / 100 |", submitted[3])
+            self.assertEqual(submitted[2], "COMMENT")
+            self.assertIn("advisory changed-line diagnostic", submitted[3])
+            self.assertIn("| Human readability | 80 / 100 (advisory", submitted[3])
             self.assertIn("1 found; 0 still unclear", submitted[3])
             self.assertIn("Remove 1 added or edited comment.", submitted[3])
             self.assertIn("Binary comparison evidence was unavailable", submitted[3])

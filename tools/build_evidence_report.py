@@ -57,6 +57,10 @@ def render_report(repository, head_sha, run, jobs, evidence, limited):
         "", "### What this proves", "",
         "Build success means the configured checks passed. Consult the build log for executable hash results. "
         "It does not prove that a NonMatching source was linked, that every object matches, or that runtime behavior is correct.",
+        "", "### Matched-contribution readability", "",
+        "Acceptance score: **N/A — pending complete trusted base/head match and source-ownership evidence**. "
+        "The bounded binary summaries above cannot establish function eligibility. Unmatched bodies do not lower "
+        "the readability score. The early changed-line score is advisory and is not this acceptance metric.",
         "", "The source readability review is separate. This report does not approve or merge the PR.",
     ]
     body = "\n".join(lines)
