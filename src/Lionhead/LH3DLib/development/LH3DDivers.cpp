@@ -295,68 +295,24 @@ LH3DJustFootPrint* LH3DJustFootPrint::Create(LH3DObject* object)
 		bool32_t                   needsBoundsInitialization = true;
 		for (int triangleIndex = 0; triangleIndex < footprint->NumTriangles; triangleIndex++)
 		{
-			LHPoint point(triangles[triangleIndex].Points[0].x, 0.0f, triangles[triangleIndex].Points[0].y);
-			object->matrix.TransformPoint(point);
-			if (needsBoundsInitialization)
+			for (int corner = 0; corner < ARRAY_SIZE(triangles[triangleIndex].Points); corner++)
 			{
-				needsBoundsInitialization = false;
-				footPrint->Min.Set(point.x, point.z);
-				footPrint->Max.Set(point.x, point.z);
-			}
-			else
-			{
-				if (footPrint->Min.x > point.x)
+				LHPoint worldPoint(triangles[triangleIndex].Points[corner].x, 0.0f,
+				                   triangles[triangleIndex].Points[corner].y);
+				object->matrix.TransformPoint(worldPoint);
+				if (needsBoundsInitialization)
 				{
-					footPrint->Min.x = point.x;
+					needsBoundsInitialization = false;
+					footPrint->Min.Set(worldPoint.x, worldPoint.z);
+					footPrint->Max.Set(worldPoint.x, worldPoint.z);
 				}
-				if (footPrint->Max.x < point.x)
+				else
 				{
-					footPrint->Max.x = point.x;
+					footPrint->Min.x = min(worldPoint.x, footPrint->Min.x);
+					footPrint->Max.x = max(worldPoint.x, footPrint->Max.x);
+					footPrint->Min.y = min(worldPoint.z, footPrint->Min.y);
+					footPrint->Max.y = max(worldPoint.z, footPrint->Max.y);
 				}
-				if (footPrint->Min.y > point.z)
-				{
-					footPrint->Min.y = point.z;
-				}
-				if (footPrint->Max.y < point.z)
-				{
-					footPrint->Max.y = point.z;
-				}
-			}
-			point.Set(triangles[triangleIndex].Points[1].x, 0.0f, triangles[triangleIndex].Points[1].y);
-			object->matrix.TransformPoint(point);
-			if (footPrint->Min.x > point.x)
-			{
-				footPrint->Min.x = point.x;
-			}
-			if (footPrint->Max.x < point.x)
-			{
-				footPrint->Max.x = point.x;
-			}
-			if (footPrint->Min.y > point.z)
-			{
-				footPrint->Min.y = point.z;
-			}
-			if (footPrint->Max.y < point.z)
-			{
-				footPrint->Max.y = point.z;
-			}
-			point.Set(triangles[triangleIndex].Points[2].x, 0.0f, triangles[triangleIndex].Points[2].y);
-			object->matrix.TransformPoint(point);
-			if (footPrint->Min.x > point.x)
-			{
-				footPrint->Min.x = point.x;
-			}
-			if (footPrint->Max.x < point.x)
-			{
-				footPrint->Max.x = point.x;
-			}
-			if (footPrint->Min.y > point.z)
-			{
-				footPrint->Min.y = point.z;
-			}
-			if (footPrint->Max.y < point.z)
-			{
-				footPrint->Max.y = point.z;
 			}
 		}
 	}
@@ -777,9 +733,8 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 		matrix.PreMultiply(bone->Matrix[1]);
 		LHPoint secondFoot = matrix.GetPos();
 		secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-		LHPoint offset = direction + (secondFoot - firstFoot) * 0.5f;
 		SetVertices(&g_vertex_list[0], &direction, &firstFoot);
-		offset = (firstFoot - secondFoot) * 0.5f + direction;
+		LHPoint offset = (firstFoot - secondFoot) * 0.5f + direction;
 		SetVertices(&g_vertex_list[LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
 		if (bone->BoneIndex[2] != -1)
 		{
@@ -794,7 +749,6 @@ void LH3DFeetShadow::Draw(LH3DObject* object, LHPoint* normal, ExtraBone* bone)
 			matrix.PreMultiply(bone->Matrix[3]);
 			secondFoot = matrix.GetPos();
 			secondFoot.y = LH3DIsland::GetAltitude(matrix.GetPos()) + TRANS_TO_ADD;
-			offset = direction + (secondFoot - firstFoot) * 0.5f;
 			SetVertices(&g_vertex_list[2 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &direction, &firstFoot);
 			offset = (firstFoot - secondFoot) * 0.5f + direction;
 			SetVertices(&g_vertex_list[3 * LH3D_FEET_SHADOW_VERTICES_PER_QUAD], &offset, &secondFoot);
@@ -4452,7 +4406,6 @@ void HowManyPeople::Draw(long max_people, long people, LHPoint* pos)
 		LH3DSprite* sprite = &g_sprites[i];
 		if (people == HOW_MANY_PEOPLE_ALL)
 		{
-			sprite->colour = HOW_MANY_PEOPLE_COLOUR_IN;
 			g_sprites[i].colour = HOW_MANY_PEOPLE_COLOUR_ALL;
 			g_sprites[i].SetSize(1.0f / spacing);
 		}
