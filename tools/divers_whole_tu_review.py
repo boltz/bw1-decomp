@@ -24,12 +24,11 @@ sha = os.environ["TARGET_SHA"]
 assert re.fullmatch(r"[0-9a-f]{40}", sha)
 github = api.GitHub(repository, os.environ["GITHUB_TOKEN"])
 paths = ['src/Lionhead/LH3DLib/development/LH3DDivers.cpp', 'src/Lionhead/LH3DLib/development/LH3DDivers.h', 'src/Lionhead/LH3DLib/development/Bitmap16B.h', 'src/Lionhead/LH3DLib/development/CheveauxDeFeu.h', 'src/Lionhead/LH3DLib/development/DansLesNuages.h', 'src/Lionhead/LH3DLib/development/EclairagePublic.h', 'src/Lionhead/LH3DLib/development/Eureka.h', 'src/Lionhead/LH3DLib/development/EvilOrAngel.h', 'src/Lionhead/LH3DLib/development/GlowVillager.h', 'src/Lionhead/LH3DLib/development/ExtraBone.h', 'src/Lionhead/LH3DLib/development/FallingRoot.h', 'src/Lionhead/LH3DLib/development/Fish.h', 'src/Lionhead/LH3DLib/development/Water.h', 'src/Lionhead/LH3DLib/development/LH3DAnim.h', 'src/Lionhead/LH3DLib/development/LH3DArena.h', 'src/Lionhead/LH3DLib/development/LH3DCT.h', 'src/Lionhead/LH3DLib/development/LH3DCameraChecker.h', 'src/Lionhead/LH3DLib/development/LH3DDynamicShadow.h', 'src/Lionhead/LH3DLib/development/LH3DEye.h', 'src/Lionhead/LH3DLib/development/HowManyPeople.h', 'src/Lionhead/LH3DLib/development/InfluenceCircle.h', 'src/Lionhead/LH3DLib/development/LH3DExtraDotLight.h', 'src/Lionhead/LH3DLib/development/LH3DFeetShadow.h', 'src/Lionhead/LH3DLib/development/LH3DInBuild.h', 'src/Lionhead/LH3DLib/development/LH3DIsland.h', 'src/Lionhead/LH3DLib/development/LH3DJustFootPrint.h', 'src/Lionhead/LH3DLib/development/LH3DLevelOfDetail.h', 'src/Lionhead/LH3DLib/development/LH3DLine.h', 'src/Lionhead/LH3DLib/development/LH3DMapCoords.h', 'src/Lionhead/LH3DLib/development/LH3DMaterial.h', 'src/Lionhead/LH3DLib/development/LH3DMath.h', 'src/Lionhead/LH3DLib/development/LH3DMem.h', 'src/Lionhead/LH3DLib/development/LH3DMesh.h', 'src/Lionhead/LH3DLib/development/LH3DMeshFootprint.h', 'src/Lionhead/LH3DLib/development/LH3DObject.h', 'src/Lionhead/LH3DLib/development/LH3DPrimitive.h', 'src/Lionhead/LH3DLib/development/LH3DRender.h', 'src/Lionhead/LH3DLib/development/LH3DSky.h', 'src/Lionhead/LH3DLib/development/LH3DSprite.h', 'src/Lionhead/LH3DLib/development/LH3DSubMesh.h', 'src/Lionhead/LH3DLib/development/LH3DTech.h', 'src/Lionhead/LH3DLib/development/LH3DText.h', 'src/Lionhead/LH3DLib/development/LH3DTexture.h', 'src/Lionhead/LH3DLib/development/LH3DTools.h', 'src/Lionhead/LH3DLib/development/LH3DVRAMTex.h', 'src/Lionhead/LH3DLib/development/LH3DZSorter.h', 'src/Lionhead/LH3DLib/development/LH3DWetFeet.h', 'src/Lionhead/LH3DLib/development/LHIlib.h', 'src/Lionhead/LH3DLib/development/Leash.h', 'src/Lionhead/LH3DLib/development/LHMatrix.h', 'src/Lionhead/LH3DLib/development/LHRandom.h', 'src/Lionhead/LH3DLib/development/LHTGA.h', 'src/Lionhead/LH3DLib/development/RootsPile.h', 'src/Lionhead/LH3DLib/development/ScriptedScreenShot.h', 'src/Lionhead/LH3DLib/development/SmokyStuff.h', 'src/Lionhead/LH3DLib/development/SuperVillager.h', 'src/Lionhead/LH3DLib/development/TouchMyEdge.h', 'src/Lionhead/LH3DLib/development/TemporaryShadow.h', 'src/Lionhead/LHLib/ver5.0/LHCollide.h', 'src/Lionhead/LH3DLib/development/LHPoint.h']
-source = {}
-for path in paths + ["AGENTS.md"]:
-    content = github.get_text_file(path, sha)
-    if content is None:
-        raise RuntimeError("Missing review input: " + path)
-    source[path] = content
+snapshot = json.loads(Path("tools/divers_readability_candidate.json").read_text())
+source = snapshot["files"]
+assert set(source) == set(paths + ["AGENTS.md"])
+assert {p: hashlib.sha256(t.encode()).hexdigest() for p, t in source.items()} == snapshot["source_hashes"]
+
 cpp = source[paths[0]]
 functions = []
 for match in re.finditer(r"^([^\n=;{}]+\([^;{}]*\))\s*\{", cpp, re.M):
@@ -51,7 +50,7 @@ facts.append('Original pagination control-flow evidence: the original BW1W120 ex
 
 
 
-payload = {"scope": "whole src/Black/LH3DDivers.cpp, all %d function definitions and file-scope data" % len(functions), "function_inventory": functions, "context_facts_and_limits": facts, "files": [{"path": path, "numbered_source": "\n".join("%d: %s" % (i, line) for i, line in enumerate(content.splitlines(), 1))} for path, content in source.items()]}
+payload = {"scope": "whole src/Lionhead/LH3DLib/development/LH3DDivers.cpp, all %d function definitions and file-scope data" % len(functions), "function_inventory": functions, "context_facts_and_limits": facts, "files": [{"path": path, "numbered_source": "\n".join("%d: %s" % (i, line) for i, line in enumerate(content.splitlines(), 1))} for path, content in source.items()]}
 Path("whole-tu-input.json").write_text(json.dumps({"target_sha": sha, "functions": functions, "source_hashes": {p: hashlib.sha256(s.encode()).hexdigest() for p, s in source.items()}, "rubric": system}, indent=2) + "\n")
 result = api.call_model(os.environ.get("PR_REVIEW_API_BASE", "https://api.openai.com/v1"), os.environ["PR_REVIEW_API_KEY"], os.environ["PR_REVIEW_MODEL"], system, json.dumps(payload))
 Path("whole-tu-response.json").write_text(json.dumps(result, indent=2) + "\n")
