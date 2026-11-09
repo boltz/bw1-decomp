@@ -2297,30 +2297,31 @@ Fish::Fish(LHPoint* pos)
 
 bool32_t Fish::ComputePos(LHPoint* target)
 {
-	float scale = 1.0f;
-	float dt = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
+	float movementScale = 1.0f;
+	float stepSeconds = LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
 	if (Fear != 0.0f)
 	{
-		Fear -= dt;
+		Fear -= stepSeconds;
 		if (Fear < 0.0f)
 		{
 			Fear = 0.0f;
 		}
-		scale = FISH_FEAR_SPEED;
+		movementScale = FISH_FEAR_SPEED;
 		if (Fear < 1.0f)
 		{
-			scale = LH3D_BLEND(1.0f, FISH_FEAR_SPEED, 1.0f - (1.0f - Fear));
+			movementScale = LH3D_BLEND(1.0f, FISH_FEAR_SPEED, 1.0f - (1.0f - Fear));
 		}
 	}
-	dt = min(dt, FISH_MAX_STEP);
-	Frame += dt * Speed * FISH_ANIMATION_SPEED;
+	stepSeconds = min(stepSeconds, FISH_MAX_STEP);
+	Frame += stepSeconds * Speed * FISH_ANIMATION_SPEED;
 	Sprite->Frame = ((long)Frame & FISH_FRAME_MASK) + FISH_FIRST_FRAME;
-	float value = Frame;
-	Frame = value - (long)(value * (1.0f / FISH_FRAMES)) * FISH_FRAMES;
-	Pos += LHPoint((float)cos(Angle) * Speed * dt * scale, 0.0f, (float)sin(Angle) * Speed * dt * scale);
+	float unwrappedFrame = Frame;
+	Frame = unwrappedFrame - (long)(unwrappedFrame * (1.0f / FISH_FRAMES)) * FISH_FRAMES;
+	Pos += LHPoint((float)cos(Angle) * Speed * stepSeconds * movementScale, 0.0f,
+	               (float)sin(Angle) * Speed * stepSeconds * movementScale);
 	LHPoint direction(cos(Angle), 0.0f, sin(Angle));
 	LHPoint cross = direction ^ (LHPoint(target) - Pos);
-	Angle += (cross.y < 0.0f ? 1.0f : -1.0f) * TurnSpeed * dt;
+	Angle += (cross.y < 0.0f ? 1.0f : -1.0f) * TurnSpeed * stepSeconds;
 	WrapRef(Angle, 0.0f, TWO_PI);
 	if (Angle > PI_F)
 	{
@@ -4121,17 +4122,17 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	{
 		return false;
 	}
-	List* list = IteratorList;
-	if (list == NULL)
+	List* ownChildren = IteratorList;
+	if (ownChildren == NULL)
 	{
-		list = other->IteratorList;
-		if (list == NULL)
+		List* otherChildren = other->IteratorList;
+		if (otherChildren == NULL)
 		{
 			return true;
 		}
-		for (int objectIndex = 0; objectIndex < list->count; objectIndex++)
+		for (int objectIndex = 0; objectIndex < otherChildren->count; objectIndex++)
 		{
-			if (list->objs[objectIndex]->Collide(this))
+			if (otherChildren->objs[objectIndex]->Collide(this))
 			{
 				return true;
 			}
@@ -4140,9 +4141,9 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	}
 	if (other->IteratorList == NULL)
 	{
-		for (int objectIndex = 0; objectIndex < list->count; objectIndex++)
+		for (int objectIndex = 0; objectIndex < ownChildren->count; objectIndex++)
 		{
-			if (list->objs[objectIndex]->Collide(other))
+			if (ownChildren->objs[objectIndex]->Collide(other))
 			{
 				return true;
 			}
@@ -4151,11 +4152,11 @@ bool32_t NewCollide::Obj::Collide(Obj* other)
 	}
 	for (int objectIndex = 0; objectIndex < IteratorList->count; objectIndex++)
 	{
-		Obj*  obj = IteratorList->objs[objectIndex];
-		List* otherList = other->IteratorList;
-		for (int otherIndex = 0; otherIndex < otherList->count; otherIndex++)
+		Obj*  ownChild = IteratorList->objs[objectIndex];
+		List* otherChildren = other->IteratorList;
+		for (int otherIndex = 0; otherIndex < otherChildren->count; otherIndex++)
 		{
-			if (otherList->objs[otherIndex]->Collide(obj))
+			if (otherChildren->objs[otherIndex]->Collide(ownChild))
 			{
 				return true;
 			}
