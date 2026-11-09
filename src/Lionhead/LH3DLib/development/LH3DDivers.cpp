@@ -983,23 +983,9 @@ void LH3DInBuild::Draw()
 		{
 			screenVertex->rhw = 1.0f / clipVertex->rhw;
 			screenVertex->x = (screenVertex->rhw * clipVertex->x + 1.0f) * LH3DTech::g_info_transform.HalfRes.x;
-			if (screenVertex->x < 0.0f)
-			{
-				screenVertex->x = 0.0f;
-			}
-			else if (screenVertex->x > LH3DTech::g_max_screen[0])
-			{
-				screenVertex->x = LH3DTech::g_max_screen[0];
-			}
+			CLAMP(screenVertex->x, 0.0f, LH3DTech::g_max_screen[0]);
 			screenVertex->y = (1.0f - screenVertex->rhw * clipVertex->y) * LH3DTech::g_info_transform.HalfRes.y;
-			if (screenVertex->y < 0.0f)
-			{
-				screenVertex->y = 0.0f;
-			}
-			else if (screenVertex->y > LH3DTech::g_max_screen[1])
-			{
-				screenVertex->y = LH3DTech::g_max_screen[1];
-			}
+			CLAMP(screenVertex->y, 0.0f, LH3DTech::g_max_screen[1]);
 			screenVertex->rhw = LH3DTech::g_info_transform.NearClip * screenVertex->rhw;
 			screenVertex->z = 1.0f - screenVertex->rhw;
 		}
@@ -2913,55 +2899,20 @@ void SuperVillager::Draw()
 	if (swimming)
 	{
 		LH3DMesh* mesh = Object->Meshes[0];
-		LH3DMesh::g_current_matrix = LH3DMesh::g_current_list_matrix;
+		LH3DMesh::InitMatrixDrawing();
 		for (int submeshIndex = 0; submeshIndex < mesh->SubmeshCount; submeshIndex++)
 		{
 			LH3DSubMesh* submesh = mesh->submeshes[submeshIndex];
 			if (submesh->GetLod() & LH3DMesh::g_current_lod)
 			{
-				LH3DSubMesh::g_current_sub_mesh = submesh;
-				for (int primitiveIndex = 0; primitiveIndex < submesh->NumPrimitives; primitiveIndex++)
-				{
-					submesh->primitives_[primitiveIndex]->DrawCutByPlane();
-				}
-				LH3DMesh::g_current_matrix += submesh->NumBones;
+				submesh->DrawCutByPlane();
+				LH3DMesh::UpdateMatrixDrawing(submesh->NumBones);
 			}
 		}
 	}
 	else
 	{
-		LH3DMesh* mesh = Object->Meshes[0];
-		LH3DMesh::g_current_matrix = LH3DMesh::g_current_list_matrix;
-		for (int submeshIndex = 0; submeshIndex < mesh->SubmeshCount; submeshIndex++)
-		{
-			LH3DSubMesh* submesh = mesh->submeshes[submeshIndex];
-			if (LH3DMesh::g_window_state && submesh->IsWindow())
-			{
-				unsigned long savedColor = LH3DMesh::g_color;
-				LH3DMesh::g_color = LH3DMesh::g_window_col;
-				if (submesh->GetStatus() <= LH3DSubMesh::g_current_status)
-				{
-					LH3DSubMesh::g_current_sub_mesh = submesh;
-					for (int primitiveIndex = 0; primitiveIndex < submesh->NumPrimitives; primitiveIndex++)
-					{
-						submesh->primitives_[primitiveIndex]->Draw();
-					}
-				}
-				LH3DMesh::g_color = savedColor;
-			}
-			else if (submesh->GetLod() & LH3DMesh::g_current_lod)
-			{
-				if (submesh->GetStatus() <= LH3DSubMesh::g_current_status)
-				{
-					LH3DSubMesh::g_current_sub_mesh = submesh;
-					for (int primitiveIndex = 0; primitiveIndex < submesh->NumPrimitives; primitiveIndex++)
-					{
-						submesh->primitives_[primitiveIndex]->DrawLit();
-					}
-				}
-				LH3DMesh::g_current_matrix += submesh->NumBones;
-			}
-		}
+		Object->Meshes[0]->Draw(true);
 	}
 	LH3DRender::g_b_need_tilling = false;
 	LH3DRender::g_b_need_anim_uv = false;
