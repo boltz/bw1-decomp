@@ -202,11 +202,11 @@ bool32_t BackgroundBox::Close()
 bool32_t LH3DDivers::Open()
 {
 	BackgroundBox::Open();
-	g_weather_texture =
-		LH3DTexture::Create(LH3D_DIVERS_WEATHER_TEXTURE_PATH, LH3D_DIVERS_WEATHER_TEXTURE_FLAGS, 0, NULL);
+	g_weather_texture = LH3DTexture::Create(LH3D_DIVERS_WEATHER_TEXTURE_PATH,
+	                                        LH3D_TEXTURE_TYPE_FILE | LH3D_TEXTURE_FLAGS_ALPHA, 0, NULL);
 	TextureFormat format;
-	format.Type = LH3D_DIVERS_SUN_TEXTURE_FORMAT;
-	g_sun_texture = LH3DTexture::Create(LH3D_DIVERS_SUN_TEXTURE_PATH, 1, 0, &format);
+	format.Type = LH3D_TEXTURE_FORMAT_555;
+	g_sun_texture = LH3DTexture::Create(LH3D_DIVERS_SUN_TEXTURE_PATH, LH3D_TEXTURE_TYPE_FILE, 0, &format);
 	return true;
 }
 
@@ -4737,7 +4737,7 @@ void SaveTextureCitadel(char* name, void* rgb_pixels)
 						long red = *sourceChannel++ >> 3;
 						long green = *sourceChannel++ >> 3;
 						long blue = *sourceChannel++ >> 3;
-						surfacePixels[y * pitchPixels + x] = CITADEL_TEXTURE_555_OPAQUE | red << 10 | green << 5 | blue;
+						surfacePixels[y * pitchPixels + x] = 0x8000 | red << 10 | green << 5 | blue;
 					}
 				}
 			}
