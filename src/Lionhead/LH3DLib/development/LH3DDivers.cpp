@@ -4784,65 +4784,71 @@ void SaveTextureCitadel(char* name, void* rgb_pixels)
 	LH3DTexture::g_b_use_low_res = false;
 	IDirectDrawSurface7* surface = NULL;
 	LH3DCT*              textureContainer = LH3DCT::Create(NULL, false);
-	if (textureContainer != NULL)
+	if (textureContainer == NULL)
 	{
-		DDSURFACEDESC2 surfaceDesc;
+		goto cleanup;
+	}
+
+	DDSURFACEDESC2 surfaceDesc;
+	memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+	surfaceDesc.dwSize = sizeof(surfaceDesc);
+	surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
+	surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
+	surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
+	surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
+	surfaceDesc.dwMipMapCount = 1;
+	surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
+	LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
+	if (surface == NULL)
+	{
+		goto cleanup;
+	}
+	{
 		memset(&surfaceDesc, 0, sizeof(surfaceDesc));
 		surfaceDesc.dwSize = sizeof(surfaceDesc);
-		surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
-		surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
-		surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
-		surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
-		surfaceDesc.dwMipMapCount = 1;
-		surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
-		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
-		if (surface != NULL)
+		surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
+		uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
+		if (surfacePixels != NULL)
 		{
-			memset(&surfaceDesc, 0, sizeof(surfaceDesc));
-			surfaceDesc.dwSize = sizeof(surfaceDesc);
-			surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
-			uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
-			if (surfacePixels != NULL)
+			long     pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
+			uint8_t* sourceChannel = (uint8_t*)rgb_pixels;
+			long     x;
+			long     y;
+			if (!LH3DTexture::g_b_use_565)
 			{
-				long     pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
-				uint8_t* sourceChannel = (uint8_t*)rgb_pixels;
-				long     x;
-				long     y;
-				if (!LH3DTexture::g_b_use_565)
+				for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
 				{
-					for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
+					for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
 					{
-						for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
-						{
-							long red = *sourceChannel++ >> 3;
-							long green = *sourceChannel++ >> 3;
-							long blue = *sourceChannel++ >> 3;
-							surfacePixels[y * pitchPixels + x] =
-								CITADEL_TEXTURE_555_OPAQUE | red << 10 | green << 5 | blue;
-						}
-					}
-				}
-				else
-				{
-					for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
-					{
-						for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
-						{
-							long red = *sourceChannel++ >> 3;
-							long green = (*sourceChannel++ >> 3) << 1;
-							long blue = *sourceChannel++ >> 3;
-							surfacePixels[y * pitchPixels + x] = red << 11 | green << 5 | blue;
-						}
+						long red = *sourceChannel++ >> 3;
+						long green = *sourceChannel++ >> 3;
+						long blue = *sourceChannel++ >> 3;
+						surfacePixels[y * pitchPixels + x] = CITADEL_TEXTURE_555_OPAQUE | red << 10 | green << 5 | blue;
 					}
 				}
 			}
-			surface->Unlock(NULL);
-			if (textureContainer->Surface->Blt(NULL, surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
+			else
 			{
-				textureContainer->SaveOnDisk(name);
+				for (y = 0; y < (long)surfaceDesc.dwHeight; y++)
+				{
+					for (x = 0; x < (long)surfaceDesc.dwWidth; x++)
+					{
+						long red = *sourceChannel++ >> 3;
+						long green = (*sourceChannel++ >> 3) << 1;
+						long blue = *sourceChannel++ >> 3;
+						surfacePixels[y * pitchPixels + x] = red << 11 | green << 5 | blue;
+					}
+				}
 			}
 		}
+		surface->Unlock(NULL);
+		if (textureContainer->Surface->Blt(NULL, surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
+		{
+			textureContainer->SaveOnDisk(name);
+		}
 	}
+
+cleanup:
 	if (surface != NULL)
 	{
 		surface->Release();
@@ -4868,55 +4874,62 @@ void LoadTextureCitadel(char* name, uint8_t* rgb_pixels)
 	Report3D__FPCce("LoadTextureCitadel %s\n", name);
 	IDirectDrawSurface7* surface = NULL;
 	LH3DCT*              textureContainer = LH3DCT::CreateFromDisk(name);
-	if (textureContainer != NULL)
+	if (textureContainer == NULL)
 	{
-		DDSURFACEDESC2 surfaceDesc;
-		memset(&surfaceDesc, 0, sizeof(surfaceDesc));
-		surfaceDesc.dwSize = sizeof(surfaceDesc);
-		surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
-		surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
-		surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
-		surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
-		surfaceDesc.dwMipMapCount = 1;
-		surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
-		LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
-		if (surface != NULL && surface->Blt(NULL, textureContainer->Surface, NULL, DDBLT_WAIT, NULL) == DD_OK)
+		goto cleanup;
+	}
+
+	DDSURFACEDESC2 surfaceDesc;
+	memset(&surfaceDesc, 0, sizeof(surfaceDesc));
+	surfaceDesc.dwSize = sizeof(surfaceDesc);
+	surfaceDesc.dwFlags = CITADEL_TEXTURE_DESC_FLAGS;
+	surfaceDesc.dwWidth = CITADEL_TEXTURE_SIZE;
+	surfaceDesc.dwHeight = CITADEL_TEXTURE_SIZE;
+	surfaceDesc.ddsCaps.dwCaps = CITADEL_TEXTURE_CAPS;
+	surfaceDesc.dwMipMapCount = 1;
+	surfaceDesc.ddpfPixelFormat = LH3DVRAMTex::g_pixel_format[CITADEL_TEXTURE_PIXEL_FORMAT].Format;
+	LHSys::TheSystem.screen.PDirectDraw->CreateSurface(&surfaceDesc, &surface, NULL);
+	if (surface == NULL || surface->Blt(NULL, textureContainer->Surface, NULL, DDBLT_WAIT, NULL) != DD_OK)
+	{
+		goto cleanup;
+	}
+	{
+		surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
+		uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
+		if (surfacePixels != NULL)
 		{
-			surface->Lock(NULL, &surfaceDesc, CITADEL_TEXTURE_LOCK, NULL);
-			uint16_t* surfacePixels = (uint16_t*)surfaceDesc.lpSurface;
-			if (surfacePixels != NULL)
+			long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
+			if (!LH3DTexture::g_b_use_565)
 			{
-				long pitchPixels = surfaceDesc.lPitch / (long)sizeof(uint16_t);
-				if (!LH3DTexture::g_b_use_565)
+				for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
 				{
-					for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
+					for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
 					{
-						for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
-						{
-							uint16_t pixel = surfacePixels[y * pitchPixels + x];
-							*rgb_pixels++ = (pixel >> 10) << 3;
-							*rgb_pixels++ = (pixel >> 5) << 3;
-							*rgb_pixels++ = pixel << 3;
-						}
-					}
-				}
-				else
-				{
-					for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
-					{
-						for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
-						{
-							uint16_t pixel = surfacePixels[y * pitchPixels + x];
-							*rgb_pixels++ = (pixel >> 11) << 3;
-							*rgb_pixels++ = (pixel >> 6) << 3;
-							*rgb_pixels++ = pixel << 3;
-						}
+						uint16_t pixel = surfacePixels[y * pitchPixels + x];
+						*rgb_pixels++ = (pixel >> 10) << 3;
+						*rgb_pixels++ = (pixel >> 5) << 3;
+						*rgb_pixels++ = pixel << 3;
 					}
 				}
 			}
-			surface->Unlock(NULL);
+			else
+			{
+				for (long y = 0; y < (long)surfaceDesc.dwHeight; y++)
+				{
+					for (long x = 0; x < (long)surfaceDesc.dwWidth; x++)
+					{
+						uint16_t pixel = surfacePixels[y * pitchPixels + x];
+						*rgb_pixels++ = (pixel >> 11) << 3;
+						*rgb_pixels++ = (pixel >> 6) << 3;
+						*rgb_pixels++ = pixel << 3;
+					}
+				}
+			}
 		}
+		surface->Unlock(NULL);
 	}
+
+cleanup:
 	if (surface != NULL)
 	{
 		surface->Release();
