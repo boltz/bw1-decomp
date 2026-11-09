@@ -1625,117 +1625,137 @@ static inline void LightCell(LandCell* cell, uint8_t darkness)
 	}
 }
 
+static uint8_t GetLightGridWeight(float grid_coordinate, long& cell_coordinate)
+{
+	if (grid_coordinate >= 0.0f)
+	{
+		return (long)(LH3D_COLOR_CHANNEL_MAX - (grid_coordinate - cell_coordinate) * LH3D_COLOR_CHANNEL_MAX);
+	}
+	uint8_t weight = (long)((cell_coordinate - grid_coordinate) * LH3D_COLOR_CHANNEL_MAX);
+	cell_coordinate--;
+	return weight;
+}
+
+static unsigned long SampleLightBrush(uint8_t* sample, long size, uint8_t weight_x, uint8_t weight_z,
+                                      long intensity_weight)
+{
+	uint8_t*      nextColumn = sample + size;
+	unsigned long columnDarkness = LH3D_BLEND_COLOR(sample[0], sample[1], weight_z);
+	unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weight_z);
+	return LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weight_x) * intensity_weight / LH3D_COLOR_CHANNEL_MAX;
+}
+
+static void LightCellAndCopies(LandCell* cell, long cell_x, long cell_z, unsigned long darkness)
+{
+	LightCell(cell, darkness);
+	if (((cell_z)&LAND_BLOCK_MASK) == 0)
+	{
+		LandCell* boundaryCopy = LH3DIsland::GetCell(cell_x, cell_z - 1);
+		if (boundaryCopy != NULL)
+		{
+			boundaryCopy += 1;
+			LightCell(boundaryCopy, darkness);
+			if (((cell_x)&LAND_BLOCK_MASK) == 0)
+			{
+				boundaryCopy = LH3DIsland::GetCell(cell_x - 1, cell_z - 1);
+				if (boundaryCopy != NULL)
+				{
+					boundaryCopy += LAND_BLOCK_SIDE_POINTS + 1;
+					LightCell(boundaryCopy, darkness);
+				}
+			}
+		}
+	}
+	if (((cell_x)&LAND_BLOCK_MASK) == 0)
+	{
+		LandCell* boundaryCopy = LH3DIsland::GetCell(cell_x - 1, cell_z);
+		if (boundaryCopy != NULL)
+		{
+			boundaryCopy += LAND_BLOCK_SIDE_POINTS;
+			LightCell(boundaryCopy, darkness);
+		}
+	}
+}
+
+struct LightBrushRegion
+{
+	long     CellX;
+	long     CellZ;
+	long     Width;
+	long     Depth;
+	uint8_t* Samples;
+};
+
+static bool32_t ClipLightBrush(LightBrushRegion& region, long size)
+{
+	if (region.CellX > LAND_MAP_SIZE - size)
+	{
+		if (region.CellX >= LAND_MAP_SIZE)
+		{
+			return false;
+		}
+		region.Width = LAND_MAP_SIZE - region.CellX;
+	}
+	else if (region.CellX < 0)
+	{
+		region.Width = region.CellX + size;
+		region.Samples -= region.CellX * size;
+		region.CellX = 0;
+	}
+	if (region.CellZ > LAND_MAP_SIZE - size)
+	{
+		if (region.CellZ >= LAND_MAP_SIZE)
+		{
+			return false;
+		}
+		region.Depth = LAND_MAP_SIZE - region.CellZ;
+	}
+	else if (region.CellZ < 0)
+	{
+		region.Depth = region.CellZ + size;
+		region.Samples -= region.CellZ;
+		region.CellZ = 0;
+	}
+	return true;
+}
+
 void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, float intensity)
 {
 	if (intensity <= 0.0f)
 	{
 		return;
 	}
-	long    clippedWidth = size;
-	long    clippedDepth = size;
-	float   gridX = x * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
-	float   gridZ = z * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
-	long    cellX = (long)gridX;
-	long    cellZ = (long)gridZ;
-	uint8_t weightZ;
-	if (gridZ >= 0.0f)
+	float            gridX = x * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
+	float            gridZ = z * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
+	long             cellX = (long)gridX;
+	long             cellZ = (long)gridZ;
+	uint8_t          weightZ = GetLightGridWeight(gridZ, cellZ);
+	uint8_t          weightX = GetLightGridWeight(gridX, cellX);
+	LightBrushRegion region = {cellX, cellZ, size, size, light};
+	if (!ClipLightBrush(region, size))
 	{
-		weightZ = (long)(LH3D_COLOR_CHANNEL_MAX - (gridZ - cellZ) * LH3D_COLOR_CHANNEL_MAX);
-	}
-	else
-	{
-		weightZ = (long)((cellZ - gridZ) * LH3D_COLOR_CHANNEL_MAX);
-		cellZ--;
-	}
-	uint8_t weightX;
-	if (gridX >= 0.0f)
-	{
-		weightX = (long)(LH3D_COLOR_CHANNEL_MAX - (gridX - cellX) * LH3D_COLOR_CHANNEL_MAX);
-	}
-	else
-	{
-		weightX = (long)((cellX - gridX) * LH3D_COLOR_CHANNEL_MAX);
-		cellX--;
-	}
-	if (cellX > LAND_MAP_SIZE - size)
-	{
-		if (cellX >= LAND_MAP_SIZE)
-		{
-			return;
-		}
-		clippedWidth = LAND_MAP_SIZE - cellX;
-	}
-	else if (cellX < 0)
-	{
-		clippedWidth = cellX + size;
-		light -= cellX * size;
-		cellX = 0;
-	}
-	if (cellZ > LAND_MAP_SIZE - size)
-	{
-		if (cellZ >= LAND_MAP_SIZE)
-		{
-			return;
-		}
-		clippedDepth = LAND_MAP_SIZE - cellZ;
-	}
-	else if (cellZ < 0)
-	{
-		clippedDepth = cellZ + size;
-		light -= cellZ;
-		cellZ = 0;
+		return;
 	}
 	int maxDarkness =
 		((LH3DColor&)LandCell::g_darkness_to_color[LAND_CELL_MAX_DARKNESS]).GetG() * LAND_CELL_MIN_DARKNESS >> 8;
 	long intensityWeight = (long)(intensity * LH3D_COLOR_CHANNEL_MAX);
-	for (int column = 0; column < clippedWidth - 1; column++)
+	for (int column = 0; column < region.Width - 1; column++)
 	{
-		for (int row = 0; row < clippedDepth - 1; row++)
+		for (int row = 0; row < region.Depth - 1; row++)
 		{
-			LandCell* cell = LH3DIsland::GetCell(cellX + column, cellZ + row);
+			LandCell* cell = LH3DIsland::GetCell(region.CellX + column, region.CellZ + row);
 			if (cell == NULL)
 			{
 				continue;
 			}
 
-			uint8_t*      sample = light + column * size + row;
-			uint8_t*      nextColumn = sample + size;
-			unsigned long columnDarkness = LH3D_BLEND_COLOR(sample[0], sample[1], weightZ);
-			unsigned long nextColumnDarkness = LH3D_BLEND_COLOR(nextColumn[0], nextColumn[1], weightZ);
-			unsigned long darkness = LH3D_BLEND_COLOR(columnDarkness, nextColumnDarkness, weightX) * intensityWeight /
-			                         LH3D_COLOR_CHANNEL_MAX;
+			unsigned long darkness =
+				SampleLightBrush(region.Samples + column * size + row, size, weightX, weightZ, intensityWeight);
 			if (darkness <= (cell->darkness * maxDarkness >> 8))
 			{
 				darkness = cell->darkness;
 			}
-			LightCell(cell, darkness);
-			if (((cellZ + row) & LAND_BLOCK_MASK) == 0)
-			{
-				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX + column, cellZ + row - 1);
-				if (boundaryCopy != NULL)
-				{
-					boundaryCopy += 1;
-					LightCell(boundaryCopy, darkness);
-					if (((cellX + column) & LAND_BLOCK_MASK) == 0)
-					{
-						boundaryCopy = LH3DIsland::GetCell(cellX + column - 1, cellZ + row - 1);
-						if (boundaryCopy != NULL)
-						{
-							boundaryCopy += LAND_BLOCK_SIDE_POINTS + 1;
-							LightCell(boundaryCopy, darkness);
-						}
-					}
-				}
-			}
-			if (((cellX + column) & LAND_BLOCK_MASK) == 0)
-			{
-				LandCell* boundaryCopy = LH3DIsland::GetCell(cellX + column - 1, cellZ + row);
-				if (boundaryCopy != NULL)
-				{
-					boundaryCopy += LAND_BLOCK_SIDE_POINTS;
-					LightCell(boundaryCopy, darkness);
-				}
-			}
+			LightCellAndCopies(cell, region.CellX + column, region.CellZ + row, darkness);
 		}
 	}
 }
@@ -4618,6 +4638,15 @@ void __cdecl DrawAndClip(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Ver
 	LH3DRender::D3DDevice->DrawIndexedPrimitive(primitive_type, fvf, vertices, vertex_count, indices, index_count, 0);
 }
 
+static void CalculateClipTexturePlane(Vertex3D* corners, float first_uv, float second_uv, float third_uv,
+                                      LHPoint& normal, float& distance)
+{
+	LHPoint side(corners[0].x - corners[1].x, corners[0].y - corners[1].y, first_uv - second_uv);
+	LHPoint other(corners[2].x - corners[1].x, corners[2].y - corners[1].y, third_uv - second_uv);
+	normal.CrossProduct(side, other);
+	distance = normal.x * corners[0].x + normal.y * corners[0].y + normal.z * first_uv;
+}
+
 void __cdecl DrawAndClip2D(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, Vertex3D* vertices,
                            unsigned long vertex_count, uint16_t* indices, unsigned long index_count)
 {
@@ -4638,16 +4667,10 @@ void __cdecl DrawAndClip2D(D3DPRIMITIVETYPE primitive_type, unsigned long fvf, V
 			{
 				lastClippedQuad = quadStart;
 				Vertex3D* corner = &vertices[quadStart];
-				LHPoint   uSide(corner[0].x - corner[1].x, corner[0].y - corner[1].y, corner[0].uv.x - corner[1].uv.x);
-				LHPoint   uOther(corner[2].x - corner[1].x, corner[2].y - corner[1].y, corner[2].uv.x - corner[1].uv.x);
-				uPlaneNormal.CrossProduct(uSide, uOther);
-				uPlaneDistance =
-					uPlaneNormal.x * corner[0].x + uPlaneNormal.y * corner[0].y + uPlaneNormal.z * corner[0].uv.x;
-				LHPoint vSide(corner[0].x - corner[1].x, corner[0].y - corner[1].y, corner[0].uv.y - corner[1].uv.y);
-				LHPoint vOther(corner[2].x - corner[1].x, corner[2].y - corner[1].y, corner[2].uv.y - corner[1].uv.y);
-				vPlaneNormal.CrossProduct(vSide, vOther);
-				vPlaneDistance =
-					vPlaneNormal.x * corner[0].x + vPlaneNormal.y * corner[0].y + vPlaneNormal.z * corner[0].uv.y;
+				CalculateClipTexturePlane(corner, corner[0].uv.x, corner[1].uv.x, corner[2].uv.x, uPlaneNormal,
+				                          uPlaneDistance);
+				CalculateClipTexturePlane(corner, corner[0].uv.y, corner[1].uv.y, corner[2].uv.y, vPlaneNormal,
+				                          vPlaneDistance);
 			}
 			CLAMP(vertex->x, 0.0f, maxX);
 			CLAMP(vertex->y, 0.0f, maxY);
