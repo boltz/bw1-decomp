@@ -525,10 +525,15 @@ inline int CalcWorldRoomWaterAlpha(float animation_time)
 
 inline uint32_t CalcWorldRoomWaterColour()
 {
-	uint32_t packedCitadelColour = Temple::CitadelColour.GetColor();
-	uint32_t packedRed = (((packedCitadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE) & 0xff0000;
-	uint32_t packedGreen = ((((packedCitadelColour >> 8) & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8) << 8;
-	uint32_t packedBlue = ((packedCitadelColour & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
+	const uint32_t packedCitadelColour = Temple::CitadelColour.GetColor();
+	const uint32_t redScaleInput = (packedCitadelColour & 0xff0000) >> 8;
+	const uint32_t scaledRed = redScaleInput * WORLD_ROOM_WATER_COLOUR_SCALE;
+	const uint32_t packedRed = scaledRed & 0xff0000;
+	const uint32_t greenChannel = (packedCitadelColour >> 8) & 0xff;
+	const uint32_t scaledGreen = (greenChannel * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
+	const uint32_t packedGreen = scaledGreen << 8;
+	const uint32_t blueChannel = packedCitadelColour & 0xff;
+	const uint32_t packedBlue = (blueChannel * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
 	return (packedRed | packedGreen | packedBlue) & LH3D_COLOR_RGB_MASK;
 }
 
@@ -595,8 +600,8 @@ void WorldRoom::Draw()
 
 	static float waterAnimationTime = 0.0f;
 	waterAnimationTime += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
-	uint32_t waterAlpha = static_cast<uint32_t>(CalcWorldRoomWaterAlpha(waterAnimationTime));
-	uint32_t waterColour = CalcWorldRoomWaterColour();
+	const uint32_t waterAlpha = static_cast<uint32_t>(CalcWorldRoomWaterAlpha(waterAnimationTime));
+	const uint32_t waterColour = CalcWorldRoomWaterColour();
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
 	WaterObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
@@ -632,7 +637,7 @@ void WorldRoom::Draw()
 	// Walking out of the citadel: the exit door fills with light.
 	if (camera->State == INNER_CAMERA_STATE_THROUGH_DOOR && camera->TargetRoom == TEMPLE_ROOM_COUNT)
 	{
-		float exitGlowProgress = CalcWorldRoomExitGlowProgress(camera->StateTime);
+		const float exitGlowProgress = CalcWorldRoomExitGlowProgress(camera->StateTime);
 		if (exitGlowProgress > 0.0f)
 		{
 			uint32_t exitGlowBrightness =
@@ -652,7 +657,7 @@ void WorldRoom::Draw()
 			rotation.SetRotationY(static_cast<WorldRoomCamera*>(camera)->SelectedDoor * QUARTER_PI_F);
 			rotation.TransformPoint(start);
 			rotation.TransformPoint(end);
-			uint32_t glowColour =
+			const uint32_t glowColour =
 				(glowAlpha << 24) + (exitGlowBrightness << 16) + (exitGlowBrightness << 8) + exitGlowBrightness;
 			inner_room->Glow->DrawWhiteGlow(
 				start, end, WORLD_ROOM_EXIT_GLOW_START_HEIGHT,
