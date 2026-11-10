@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from divers_function_inventory import definitions, function_inventory
+from divers_translation_unit_inventory import translation_unit_inventory
 
 
 class DiversInventoryTests(unittest.TestCase):
@@ -47,8 +48,9 @@ class DiversInventoryTests(unittest.TestCase):
     def test_full_divers_fixture_has_one_entry_for_every_definition(self):
         import json
         fixture = Path(__file__).resolve().parents[1] / 'divers_readability_candidate.json'
-        source = json.loads(fixture.read_text())['files']['src/Lionhead/LH3DLib/development/LH3DDivers.cpp']
-        actual = function_inventory(source)
+        snapshot = json.loads(fixture.read_text())
+        source, actual = translation_unit_inventory(snapshot['files'],
+            'src/Lionhead/LH3DLib/development/LH3DDivers.cpp', snapshot.get('implementation_files', []))
         helper_signatures = ('static void SampleScreenshot16(', 'static void SampleScreenshot32(', 'static void BlendScreenshotPixels(', 'static void BuildScreenshotThumbnail(', 'static void UpdateVillagerAnimationBlend(', 'static void TransformVillagerAnimation(', 'static void ProjectInBuildVertices(', 'static void DrawVillagerMesh(', 'static void LightCellAndCopies(', 'static void CalculateClipTexturePlane(', 'static LHPoint GetShadowFootPosition(', 'static uint8_t GetLightGridWeight(', 'static unsigned long SampleLightBrush(', 'static bool32_t ClipLightBrush(', 'static long* WriteInfluenceCircleStrip(', 'static void SampleScreenshotSurface(', 'static void CopyPaginationTile(', 'static void BuildInfluenceCircleMesh(', 'static bool32_t UpdateSmokeAppearance(', 'static void UpdateFishRushTarget(', 'static long DrawFishRushFishes(', 'static void SaveScreenshotPictureAndThumbnail(', 'static inline void DescribeCitadelTextureSurface(', 'static void AllocatePeopleSprites(')
         added = 0
         for signature in helper_signatures:
@@ -59,8 +61,41 @@ class DiversInventoryTests(unittest.TestCase):
         self.assertEqual(len(actual), expected_count)
         self.assertEqual(sum(x['signature'] == 'void UnidentifiedDiversRoutine()' for x in actual), 1)
         self.assertEqual(sum('operator==' in x['signature'] for x in actual), 1)
-        self.assertEqual(len({x['line'] for x in actual}), len(actual))
+        self.assertEqual(len({(x['path'], x['line']) for x in actual}), len(actual))
         self.assertEqual(actual[-1]['id'], 'F%03d' % (expected_count - 1))
+
+    def test_implementation_includes_preserve_complete_order_and_physical_locations(self):
+        files = {'src/root.cpp': '#include "context.h"\nvoid First() {}\n#include "group.inc"\nvoid Last() {}\n',
+                 'src/group.inc': 'int data[] = {1, 2};\nvoid Middle() {}\n',
+                 'src/context.h': 'inline void ContextOnly() {}\n'}
+        expanded, actual = translation_unit_inventory(files, 'src/root.cpp', ['src/group.inc'])
+        self.assertIn('int data[] = {1, 2};', expanded)
+        self.assertEqual([(x['path'], x['line'], x['signature']) for x in actual],
+                         [('src/root.cpp', 2, 'void First()'), ('src/group.inc', 2, 'void Middle()'),
+                          ('src/root.cpp', 4, 'void Last()')])
+
+    def test_missing_unlisted_unused_duplicate_and_cyclic_includes_fail(self):
+        cases = [({'root.cpp': '#include "a.inc"\n'}, []),
+                 ({'root.cpp': '#include "a.inc"\n'}, ['a.inc']),
+                 ({'root.cpp': 'void F() {}\n', 'a.inc': 'void A() {}\n'}, ['a.inc']),
+                 ({'root.cpp': '#include "a.inc"\n', 'a.inc': 'void A() {}\n'}, ['a.inc', 'a.inc']),
+                 ({'root.cpp': '#include "a.inc"\n#include "a.inc"\n', 'a.inc': 'void A() {}\n'}, ['a.inc']),
+                 ({'root.cpp': '#include "a.inc"\n', 'a.inc': '#include "b.inc"\n', 'b.inc': '#include "a.inc"\n'}, ['a.inc', 'b.inc'])]
+        for files, manifest in cases:
+            with self.subTest(files=files, manifest=manifest), self.assertRaises(ValueError):
+                translation_unit_inventory(files, 'root.cpp', manifest)
+
+    def test_comment_includes_are_not_followed(self):
+        source = '/*\n#include "hidden.inc"\n*/\n// #include "also-hidden.inc"\nvoid F() {}\n'
+        expanded, actual = translation_unit_inventory({'root.cpp': source}, 'root.cpp')
+        self.assertEqual(expanded, source)
+        self.assertEqual(actual[0]['line'], 5)
+
+    def test_macro_traversal_angle_and_cross_file_function_includes_fail(self):
+        for source in ['#include MACRO\n', '#include "../a.inc"\n', '#include <a.inc>\n',
+                       'void F() {\n#include "a.inc"\n}\n']:
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                translation_unit_inventory({'root.cpp': source, 'a.inc': 'int value;\n'}, 'root.cpp', ['a.inc'])
 
 
 if __name__ == '__main__':
