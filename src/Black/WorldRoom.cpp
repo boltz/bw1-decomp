@@ -111,31 +111,15 @@ WorldRoom::WorldRoom() : TempleRoom("World Room")
 
 WorldRoom::~WorldRoom() {}
 
-inline void CreateWorldRoomCitadelIcon(WorldRoom* room, char* path)
+inline void CreateWorldRoomIcon(char* path, LH3DMesh*& icon_mesh, LH3DObject*& icon_object)
 {
-	room->CitadelIconMesh = LH3DMesh::CreateFromHD(path, false);
-	room->CitadelIconObject = LH3DObject::Create(LH3DObject::STATIC);
-	room->CitadelIconObject->SetMesh(room->CitadelIconMesh, NULL, NULL);
-	room->CitadelIconObject->SetDynamicLighting(true);
-	room->CitadelIconObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
-}
-
-inline void CreateWorldRoomCreatureIcon(WorldRoom* room, char* path)
-{
-	room->CreatureIconMesh = LH3DMesh::CreateFromHD(path, false);
-	room->CreatureIconObject = LH3DObject::Create(LH3DObject::STATIC);
-	room->CreatureIconObject->SetMesh(room->CreatureIconMesh, NULL, NULL);
-	room->CreatureIconObject->SetDynamicLighting(true);
-	room->CreatureIconObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
-}
-
-inline void CreateWorldRoomChallengeIcon(WorldRoom* room, char* path)
-{
-	room->ChallengeIconMesh = LH3DMesh::CreateFromHD(path, false);
-	room->ChallengeIconObject = LH3DObject::Create(LH3DObject::STATIC);
-	room->ChallengeIconObject->SetMesh(room->ChallengeIconMesh, NULL, NULL);
-	room->ChallengeIconObject->SetDynamicLighting(true);
-	room->ChallengeIconObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
+	icon_mesh = LH3DMesh::CreateFromHD(path, false);
+	LH3DObject* createdIcon = LH3DObject::Create(LH3DObject::STATIC);
+	LH3DMesh*   meshForIcon = icon_mesh;
+	icon_object = createdIcon;
+	icon_object->SetMesh(meshForIcon, NULL, NULL);
+	icon_object->SetDynamicLighting(true);
+	icon_object->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
 }
 
 inline void InvalidateWorldRoomTextures()
@@ -186,9 +170,9 @@ void WorldRoom::InitEngine()
 		}
 		CreateWorldMapSpells();
 	}
-	CreateWorldRoomCitadelIcon(this, WORLD_ROOM_ICON_PATH "I_citadel_on_map.l3d");
-	CreateWorldRoomCreatureIcon(this, WORLD_ROOM_ICON_PATH "I_creature_on_map.l3d");
-	CreateWorldRoomChallengeIcon(this, WORLD_ROOM_ICON_PATH "I_challenge_on_map.l3d");
+	CreateWorldRoomIcon(WORLD_ROOM_ICON_PATH "I_citadel_on_map.l3d", CitadelIconMesh, CitadelIconObject);
+	CreateWorldRoomIcon(WORLD_ROOM_ICON_PATH "I_creature_on_map.l3d", CreatureIconMesh, CreatureIconObject);
+	CreateWorldRoomIcon(WORLD_ROOM_ICON_PATH "I_challenge_on_map.l3d", ChallengeIconMesh, ChallengeIconObject);
 	camera->Close();
 	delete camera;
 	camera = NEW(150) WorldRoomCamera;
@@ -525,15 +509,10 @@ inline int CalcWorldRoomWaterAlpha(float animation_time)
 
 inline uint32_t CalcWorldRoomWaterColour()
 {
-	const uint32_t packedCitadelColour = Temple::CitadelColour.GetColor();
-	const uint32_t redScaleInput = (packedCitadelColour & 0xff0000) >> 8;
-	const uint32_t scaledRed = redScaleInput * WORLD_ROOM_WATER_COLOUR_SCALE;
-	const uint32_t packedRed = scaledRed & 0xff0000;
-	const uint32_t greenChannel = (packedCitadelColour >> 8) & 0xff;
-	const uint32_t scaledGreen = (greenChannel * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
-	const uint32_t packedGreen = scaledGreen << 8;
-	const uint32_t blueChannel = packedCitadelColour & 0xff;
-	const uint32_t packedBlue = (blueChannel * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
+	uint32_t packedCitadelColour = Temple::CitadelColour.GetColor();
+	uint32_t packedRed = (((packedCitadelColour & 0xff0000) >> 8) * WORLD_ROOM_WATER_COLOUR_SCALE) & 0xff0000;
+	uint32_t packedGreen = ((((packedCitadelColour >> 8) & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8) << 8;
+	uint32_t packedBlue = ((packedCitadelColour & 0xff) * WORLD_ROOM_WATER_COLOUR_SCALE) >> 8;
 	return (packedRed | packedGreen | packedBlue) & LH3D_COLOR_RGB_MASK;
 }
 
@@ -600,8 +579,8 @@ void WorldRoom::Draw()
 
 	static float waterAnimationTime = 0.0f;
 	waterAnimationTime += LH3DTech::g_delta_time * WORLD_ROOM_ANIMATION_TIME_SCALE;
-	const uint32_t waterAlpha = static_cast<uint32_t>(CalcWorldRoomWaterAlpha(waterAnimationTime));
-	const uint32_t waterColour = CalcWorldRoomWaterColour();
+	uint32_t waterAlpha = static_cast<uint32_t>(CalcWorldRoomWaterAlpha(waterAnimationTime));
+	uint32_t waterColour = CalcWorldRoomWaterColour();
 
 	WaterObject->SetDrawWithGlobalAlpha(true);
 	WaterObject->SetPosition(LHPoint(0.0f, 0.0f, 0.0f), 0.0f, 1.0f);
@@ -637,7 +616,7 @@ void WorldRoom::Draw()
 	// Walking out of the citadel: the exit door fills with light.
 	if (camera->State == INNER_CAMERA_STATE_THROUGH_DOOR && camera->TargetRoom == TEMPLE_ROOM_COUNT)
 	{
-		const float exitGlowProgress = CalcWorldRoomExitGlowProgress(camera->StateTime);
+		float exitGlowProgress = CalcWorldRoomExitGlowProgress(camera->StateTime);
 		if (exitGlowProgress > 0.0f)
 		{
 			uint32_t exitGlowBrightness =
@@ -657,7 +636,7 @@ void WorldRoom::Draw()
 			rotation.SetRotationY(static_cast<WorldRoomCamera*>(camera)->SelectedDoor * QUARTER_PI_F);
 			rotation.TransformPoint(start);
 			rotation.TransformPoint(end);
-			const uint32_t glowColour =
+			uint32_t glowColour =
 				(glowAlpha << 24) + (exitGlowBrightness << 16) + (exitGlowBrightness << 8) + exitGlowBrightness;
 			inner_room->Glow->DrawWhiteGlow(
 				start, end, WORLD_ROOM_EXIT_GLOW_START_HEIGHT,
