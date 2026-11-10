@@ -971,7 +971,7 @@ void LH3DInBuild::Draw()
 
 void LH3DInBuild::AddEdge(Vertex3D* a, Vertex3D* b)
 {
-	if (g_edge_count > LH3D_IN_BUILD_MAX_EDGES)
+	if (g_edge_count > LH3D_IN_BUILD_LAST_EDGE_INDEX)
 	{
 		g_b_fuck = true;
 		return;
