@@ -129,7 +129,7 @@ void BackgroundBox::DrawAll()
 		g_list_vertex[3].y = (float)box->Region.end.Y();
 		g_list_vertex[0].color = g_list_vertex[1].color = g_list_vertex[2].color = g_list_vertex[3].color =
 			box->Color.GetColor();
-		DrawAndClip2D(D3DPT_TRIANGLELIST, BACKGROUND_BOX_FVF, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
+		DrawAndClip2D(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
 		              BACKGROUND_BOX_INDICES);
 	}
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, true);
@@ -160,7 +160,7 @@ void BackgroundBox::Draw(LHRegion* region, LH3DColor* color, bool32_t keep_z)
 	g_list_vertex[3].y = (float)region->end.Y();
 	g_list_vertex[0].color = g_list_vertex[1].color = g_list_vertex[2].color = g_list_vertex[3].color =
 		drawColor.GetColor();
-	DrawAndClip2D(D3DPT_TRIANGLELIST, BACKGROUND_BOX_FVF, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
+	DrawAndClip2D(D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, g_list_vertex, BACKGROUND_BOX_VERTICES, g_index,
 	              BACKGROUND_BOX_INDICES);
 	LH3DRender::SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_LESSEQUAL);
 	if (!keep_z)
@@ -1696,8 +1696,8 @@ void __fastcall DrawLightLikeHand(float x, float z, uint8_t* light, long size, f
 	{
 		return;
 	}
-	float            gridX = x * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
-	float            gridZ = z * LIGHT_LIKE_HAND_CELLS_PER_UNIT;
+	float            gridX = x * (1.0f / MAP_COORDS_METRES_PER_CELL);
+	float            gridZ = z * (1.0f / MAP_COORDS_METRES_PER_CELL);
 	long             cellX = (long)gridX;
 	long             cellZ = (long)gridZ;
 	uint8_t          weightZ = GetLightGridWeight(gridZ, cellZ);
@@ -3053,6 +3053,9 @@ static long* WriteInfluenceCircleStrip(long* indices, long bottom_vertex)
 	return indices;
 }
 
+static void BuildInfluenceCircleMesh(InfluenceCircle* circle, const LHPoint& pos, long player, float circumference,
+                                     float radius);
+
 InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 {
 	player &= INFLUENCE_CIRCLE_PLAYER_COUNT - 1;
@@ -3074,47 +3077,57 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 	Colours = (unsigned long*)LH3DMem::AllocClear(vertices * sizeof(unsigned long));
 	Indices = (long*)LH3DMem::AllocClear(Segments * INFLUENCE_CIRCLE_SEGMENT_INDICES * sizeof(long));
 	Hidden = (bool32_t*)LH3DMem::AllocClear(vertices * sizeof(bool32_t));
-	LHPoint*       point = Points;
-	unsigned long* colour = Colours;
-	long*          index = Indices;
-	float*         uv = UVs;
+	BuildInfluenceCircleMesh(this, pos, player, circumference, radius);
+	for (InfluenceCircle* other = Next; other != NULL; other = other->Next)
+	{
+		DeleteContact(this, other);
+	}
+}
+
+static void BuildInfluenceCircleMesh(InfluenceCircle* circle, const LHPoint& pos, long player, float circumference,
+                                     float radius)
+{
+	LHPoint*       point = circle->Points;
+	unsigned long* colour = circle->Colours;
+	long*          index = circle->Indices;
+	float*         uv = circle->UVs;
 	float          u = 0.0f;
-	float          uStep = (float)(1 - (long)(circumference / INFLUENCE_CIRCLE_U_LENGTH)) / Segments;
+	float          uStep = (float)(1 - (long)(circumference / INFLUENCE_CIRCLE_U_LENGTH)) / circle->Segments;
 	float          v = 0.0f;
-	float          altitude = LH3DIsland::GetAltitude(LH3DMapCoords(Pos.x, Pos.z));
+	float          altitude = LH3DIsland::GetAltitude(LH3DMapCoords(circle->Pos.x, circle->Pos.z));
 	float          middle = altitude + INFLUENCE_CIRCLE_MIDDLE_HEIGHT;
 	float          top = altitude + INFLUENCE_CIRCLE_TOP_HEIGHT;
-	float          vStep = (float)min(INFLUENCE_CIRCLE_MAX_V, (long)(radius / INFLUENCE_CIRCLE_V_RADIUS)) / Segments;
-	long           rowStartVertex = 0;
-	for (long rowIndex = 0; rowIndex <= Segments; rowIndex++)
+	float vStep = (float)min(INFLUENCE_CIRCLE_MAX_V, (long)(radius / INFLUENCE_CIRCLE_V_RADIUS)) / circle->Segments;
+	long  rowStartVertex = 0;
+	for (long rowIndex = 0; rowIndex <= circle->Segments; rowIndex++)
 	{
 		float x;
 		float z;
-		if (rowIndex == Segments)
+		if (rowIndex == circle->Segments)
 		{
-			x = Radius + pos.x;
+			x = circle->Radius + pos.x;
 			z = pos.z;
 		}
 		else
 		{
-			float angle = rowIndex * TWO_PI / Segments;
-			x = (float)cos(angle) * Radius + pos.x;
-			z = (float)sin(angle) * Radius + pos.z;
+			float angle = rowIndex * TWO_PI / circle->Segments;
+			x = (float)cos(angle) * circle->Radius + pos.x;
+			z = (float)sin(angle) * circle->Radius + pos.z;
 		}
 		float height = LH3DIsland::GetAltitude(LH3DMapCoords(x, z)) - altitude;
 		*point++ = LHPoint(x, height + altitude, z);
 		*point++ = LHPoint(x, height + middle, z);
 		*point++ = LHPoint(x, height + top, z);
-		*colour++ = g_players_color[player].GetColor();
-		*colour++ = g_players_color[player].GetColor();
-		*colour++ = g_players_color[player].GetColor();
+		*colour++ = InfluenceCircle::g_players_color[player].GetColor();
+		*colour++ = InfluenceCircle::g_players_color[player].GetColor();
+		*colour++ = InfluenceCircle::g_players_color[player].GetColor();
 		*uv++ = u;
 		*uv++ = v;
 		*uv++ = u;
 		*uv++ = v + INFLUENCE_CIRCLE_MIDDLE_V;
 		*uv++ = u;
 		*uv++ = v + INFLUENCE_CIRCLE_TOP_V;
-		if (rowIndex == Segments)
+		if (rowIndex == circle->Segments)
 		{
 			break;
 		}
@@ -3122,10 +3135,6 @@ InfluenceCircle::InfluenceCircle(long player, const LHPoint& pos, float radius)
 		v += vStep;
 		index = WriteInfluenceCircleStrip(index, rowStartVertex);
 		rowStartVertex += INFLUENCE_CIRCLE_ROW_VERTICES;
-	}
-	for (InfluenceCircle* other = Next; other != NULL; other = other->Next)
-	{
-		DeleteContact(this, other);
 	}
 }
 
