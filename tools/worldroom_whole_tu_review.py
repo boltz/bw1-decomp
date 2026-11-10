@@ -23,14 +23,14 @@ assert repository == "boltz/bw1-decomp"
 sha = os.environ["TARGET_SHA"]
 assert re.fullmatch(r"[0-9a-f]{40}", sha)
 github = api.GitHub(repository, os.environ["GITHUB_TOKEN"])
-paths = ["src/Black/WorldRoom.cpp", "src/Black/WorldRoom.h", "src/Black/TempleRoom.h", "src/Black/MiniMap.h", "src/Black/SpellSeedGraphic.h", "src/Black/Audio.h", "src/Black/CameraHelpTypes.h", "src/Lionhead/LH3DLib/development/LH3DColor.h", "src/Lionhead/LH3DLib/development/LH3DStaticObject.h", "src/Lionhead/LH3DLib/development/LH3DTexture.h", "src/Lionhead/LHAudio/ver7.0/LH_SamplePlayOptions.h"]
+paths = ["include/chlasm/HelpTextEnums.h", "src/Black/WorldRoom.cpp", "src/Black/WorldRoom.h", "src/Black/TempleRoom.h", "src/Black/MiniMap.h", "src/Black/SpellSeedGraphic.h", "src/Black/Audio.h", "src/Black/CameraHelpTypes.h", "src/Lionhead/LH3DLib/development/LH3DColor.h", "src/Lionhead/LH3DLib/development/LH3DStaticObject.h", "src/Lionhead/LH3DLib/development/LH3DTexture.h", "src/Lionhead/LHAudio/ver7.0/LH_SamplePlayOptions.h"]
 source = {}
 for path in paths + ["AGENTS.md"]:
     content = github.get_text_file(path, sha)
     if content is None:
         raise RuntimeError("Missing review input: " + path)
     source[path] = content
-cpp = source[paths[0]]
+cpp = source["src/Black/WorldRoom.cpp"]
 functions = []
 for match in re.finditer(r"^([^\n=;{}]+\([^;{}]*\))\s*\{", cpp, re.M):
     if match[1].startswith(("\t", " ", "#")):

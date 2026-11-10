@@ -1,7 +1,7 @@
 name: WorldRoom whole TU readability
 on:
   push:
-    branches: [review/worldroom-whole-tu-review-20261106]
+    branches: [review/worldroom-pr739-review-20261110]
 permissions:
   contents: read
 jobs:
@@ -19,7 +19,7 @@ jobs:
       - run: python -m pip install PyYAML==6.0.3
       - name: Review pinned whole TU
         env:
-          TARGET_SHA: 99515105eaed00f2982df1aa128f3acc13c30547
+          TARGET_SHA: a2ef4424cebf9f9e4773df18a60bf1def2d2aef1
           GITHUB_TOKEN: ${{ github.token }}
           PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
           PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
