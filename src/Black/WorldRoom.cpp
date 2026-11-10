@@ -6,7 +6,6 @@
 
 #include <chlasm/AudioSFX.h>      /* For enum AUDIO_SFX_BANK_TYPE */
 #include <chlasm/HelpTextEnums.h> /* For HELP_TEXT */
-#include <chlasm/HelpTextTooltipEnums.h>
 #include <chlasm/LHSample.h>
 
 #include <Lionhead/LH3DLib/development/Glow.h>              /* For class GlowManager */
@@ -202,7 +201,7 @@ void WorldRoom::InitEngine()
 	delete camera;
 	camera = NEW(150) WorldRoomCamera;
 	camera->Init(WORLD_ROOM_ENGINE_PATH "main.cam");
-	ScrollTexture = LH3DTexture::Create("Data\\Citadel\\Controls\\ChallengeScroll.raw",
+	ScrollTexture = LH3DTexture::Create(WORLD_ROOM_SCROLL_TEXTURE_PATH,
 	                                    LH3D_TEXTURE_TYPE_SYSTEM_MEMORY | LH3D_TEXTURE_FLAGS_ALPHA, 0, NULL);
 	ScrollMaterial =
 		LH3DRender::CreateMaterial(LH3DMaterial::LH3D_MATERIAL_RENDER_MODE_ALPHA_TEXTURED_ALPHA, ScrollTexture);
