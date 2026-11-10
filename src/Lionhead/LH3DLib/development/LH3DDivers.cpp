@@ -2456,6 +2456,8 @@ void FishRush::Challenge::Draw()
 
 static void UpdateFishRushTarget(FishRush* rush);
 
+static long DrawFishRushFishes(FishRush* rush, uint32_t colour);
+
 long FishRush::Draw()
 {
 	g_challenge = Goal;
@@ -2480,20 +2482,24 @@ long FishRush::Draw()
 		                     255.0f);
 	}
 	UpdateFishRushTarget(this);
+	return DrawFishRushFishes(this, colour.GetColor());
+}
+static long DrawFishRushFishes(FishRush* rush, uint32_t colour)
+{
 	long fishInChallenge = 0;
-	long activeFishCount = (long)(Density * FISH_RUSH_MAX_FISH);
+	long activeFishCount = (long)(rush->Density * FISH_RUSH_MAX_FISH);
 	for (long fishIndex = 0; fishIndex < activeFishCount; fishIndex++)
 	{
-		if (g_b_er_valid &&
-		    g_emergency.GetDistanceSq(Fishes[fishIndex]->Pos) < FISH_RUSH_FEAR_RADIUS * FISH_RUSH_FEAR_RADIUS)
+		if (FishRush::g_b_er_valid && FishRush::g_emergency.GetDistanceSq(rush->Fishes[fishIndex]->Pos) <
+		                                  FISH_RUSH_FEAR_RADIUS * FISH_RUSH_FEAR_RADIUS)
 		{
-			Fishes[fishIndex]->Fear = FISH_RUSH_FEAR_TIME;
-			TargetTime = FISH_RUSH_FEAR_TIME;
-			Fishes[fishIndex]->Angle =
-				atan2(Fishes[fishIndex]->Pos.z - g_emergency.z, Fishes[fishIndex]->Pos.x - g_emergency.x);
+			rush->Fishes[fishIndex]->Fear = FISH_RUSH_FEAR_TIME;
+			rush->TargetTime = FISH_RUSH_FEAR_TIME;
+			rush->Fishes[fishIndex]->Angle = atan2(rush->Fishes[fishIndex]->Pos.z - FishRush::g_emergency.z,
+			                                       rush->Fishes[fishIndex]->Pos.x - FishRush::g_emergency.x);
 		}
-		Fishes[fishIndex]->Sprite->colour = colour.GetColor();
-		fishInChallenge += Fishes[fishIndex]->Draw(&Target);
+		rush->Fishes[fishIndex]->Sprite->colour = colour;
+		fishInChallenge += rush->Fishes[fishIndex]->Draw(&rush->Target);
 	}
 	return fishInChallenge;
 }
