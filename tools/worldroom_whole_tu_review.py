@@ -31,7 +31,10 @@ for path in paths + ["AGENTS.md"]:
     if content is None:
         raise RuntimeError("Missing review input: " + path)
     source[path] = content
+available_paths = {entry["path"] for entry in github.request("GET", "/repos/%s/git/trees/%s?recursive=1" % (repository, sha))["tree"]}
 for path in ["include/chlasm/HelpTextEnums.h", "include/chlasm/HelpTextTooltipEnums.h"]:
+    if path not in available_paths:
+        continue
     content = github.get_text_file(path, sha)
     if content is not None:
         source[path] = content

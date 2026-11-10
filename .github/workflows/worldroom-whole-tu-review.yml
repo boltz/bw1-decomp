@@ -19,7 +19,7 @@ jobs:
       - run: python -m pip install PyYAML==6.0.3
       - name: Review pinned whole TU
         env:
-          TARGET_SHA: a2ef4424cebf9f9e4773df18a60bf1def2d2aef1
+          TARGET_SHA: 368e0ba59630553cf811328c4df44e716d12d4ca
           GITHUB_TOKEN: ${{ github.token }}
           PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
           PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
