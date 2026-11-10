@@ -2053,41 +2053,14 @@ void SmokyStuff::Release()
 	LH3DMem::Free(this);
 }
 
+static bool32_t UpdateSmokeAppearance(SmokyStuff* smoke, uint32_t& colour);
+
 void SmokyStuff::Process()
 {
-	if (Type != 0)
-	{
-		Life -= g_dt / SMOKY_STUFF_BURST_LIFE;
-	}
-	else
-	{
-		Life -= g_dt * (1.0f / SMOKY_STUFF_LIFE);
-	}
-	if (Life <= 0.0f)
+	uint32_t colour;
+	if (!UpdateSmokeAppearance(this, colour))
 	{
 		return;
-	}
-	float alpha;
-	if (Life < SMOKY_STUFF_FADE_LIFE)
-	{
-		alpha = (Life / SMOKY_STUFF_FADE_LIFE) * 255.0f;
-	}
-	else
-	{
-		alpha = 255.0f;
-	}
-	uint32_t colour;
-	if (Type != 0)
-	{
-		colour = RGBA_SETALPHA(SMOKY_STUFF_BURST_COLOUR, (long)alpha);
-	}
-	else
-	{
-		colour = RGBA_SETALPHA(SMOKY_STUFF_COLOUR, (long)(Life * SMOKY_STUFF_ALPHA));
-	}
-	if (Color.GetColor() != SMOKY_STUFF_DEFAULT_COLOUR)
-	{
-		colour = RGBA_SETALPHA(Color.GetColor(), RGBA_GETALPHA(colour));
 	}
 	for (int puffIndex = 0; puffIndex < SMOKY_STUFF_PUFFS; puffIndex++)
 	{
@@ -2100,6 +2073,44 @@ void SmokyStuff::Process()
 		sprite->Frame = (long)(Life * SMOKY_STUFF_FRAMES);
 		sprite->AddDrawing();
 	}
+}
+
+static bool32_t UpdateSmokeAppearance(SmokyStuff* smoke, uint32_t& colour)
+{
+	if (smoke->Type != 0)
+	{
+		smoke->Life -= SmokyStuff::g_dt / SMOKY_STUFF_BURST_LIFE;
+	}
+	else
+	{
+		smoke->Life -= SmokyStuff::g_dt * (1.0f / SMOKY_STUFF_LIFE);
+	}
+	if (smoke->Life <= 0.0f)
+	{
+		return false;
+	}
+	float alpha;
+	if (smoke->Life < SMOKY_STUFF_FADE_LIFE)
+	{
+		alpha = (smoke->Life / SMOKY_STUFF_FADE_LIFE) * 255.0f;
+	}
+	else
+	{
+		alpha = 255.0f;
+	}
+	if (smoke->Type != 0)
+	{
+		colour = RGBA_SETALPHA(SMOKY_STUFF_BURST_COLOUR, (long)alpha);
+	}
+	else
+	{
+		colour = RGBA_SETALPHA(SMOKY_STUFF_COLOUR, (long)(smoke->Life * SMOKY_STUFF_ALPHA));
+	}
+	if (smoke->Color.GetColor() != SMOKY_STUFF_DEFAULT_COLOUR)
+	{
+		colour = RGBA_SETALPHA(smoke->Color.GetColor(), RGBA_GETALPHA(colour));
+	}
+	return true;
 }
 
 void SmokyStuff::ProcessAll()
