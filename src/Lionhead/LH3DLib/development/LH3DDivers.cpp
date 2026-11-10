@@ -1249,6 +1249,8 @@ void ScriptedScreenShot::TakeFullScreen()
 	g_b_fullscreen = false;
 }
 
+static void SaveScreenshotPictureAndThumbnail(uint8_t* picturePixels);
+
 void ScriptedScreenShot::Process()
 {
 	if (!g_b_do_it)
@@ -1283,25 +1285,30 @@ void ScriptedScreenShot::Process()
 	SampleScreenshotSurface(capturePixel, surfaceDesc, CITADEL_TEXTURE_SIZE, SCRIPTED_SCREEN_SHOT_HALF_HEIGHT, scaleX,
 	                        scaleY);
 	LHSys::TheSystem.screen.PPrimarySurface->Unlock(NULL);
+	SaveScreenshotPictureAndThumbnail(picturePixels);
+}
+static void SaveScreenshotPictureAndThumbnail(uint8_t* picturePixels)
+{
 	uint8_t* blendPixel = picturePixels;
-	if (g_info.Half != 0)
+	if (ScriptedScreenShot::g_info.Half != 0)
 	{
 		blendPixel = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 	}
 	BlendScreenshotPixels(blendPixel);
-	SaveTextureCitadel(g_info.PictureTexture, picturePixels);
+	SaveTextureCitadel(ScriptedScreenShot::g_info.PictureTexture, picturePixels);
 	uint8_t* thumbnails = (uint8_t*)malloc(CITADEL_TEXTURE_BYTES);
-	LoadTextureCitadel(g_info.ThumbnailTexture, thumbnails);
-	uint8_t* thumbnailPixel = thumbnails +
-	                          g_info.Thumbnail / 2 * SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT * CITADEL_TEXTURE_PITCH +
-	                          (g_info.Thumbnail & 1) * SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH * 3;
+	LoadTextureCitadel(ScriptedScreenShot::g_info.ThumbnailTexture, thumbnails);
+	uint8_t* thumbnailPixel =
+		thumbnails +
+		ScriptedScreenShot::g_info.Thumbnail / 2 * SCRIPTED_SCREEN_SHOT_THUMBNAIL_HEIGHT * CITADEL_TEXTURE_PITCH +
+		(ScriptedScreenShot::g_info.Thumbnail & 1) * SCRIPTED_SCREEN_SHOT_THUMBNAIL_WIDTH * 3;
 	uint8_t* thumbnailSource = picturePixels;
-	if (g_info.Half != 0)
+	if (ScriptedScreenShot::g_info.Half != 0)
 	{
 		thumbnailSource = picturePixels + CITADEL_TEXTURE_BYTES / 2;
 	}
 	BuildScreenshotThumbnail(thumbnailPixel, thumbnailSource);
-	SaveTextureCitadel(g_info.ThumbnailTexture, thumbnails);
+	SaveTextureCitadel(ScriptedScreenShot::g_info.ThumbnailTexture, thumbnails);
 	free(picturePixels);
 	free(thumbnails);
 }
