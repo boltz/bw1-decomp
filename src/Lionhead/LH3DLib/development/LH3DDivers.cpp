@@ -800,14 +800,10 @@ void LHTGA::GetARGB(unsigned long* alpha_out, unsigned long* red_out, unsigned l
 	if (format == LHTGA_FORMAT_ARGB4444)
 	{
 		uint16_t pixel = ((uint16_t*)source_pixels)[pixel_index];
-		uint32_t alpha = (pixel >> 8) & 0xf0;
-		uint32_t green = pixel & 0xf0;
-		uint32_t red = (pixel >> 4) & 0xf0;
-		uint32_t blue = (pixel & 0xf) << 4;
-		*alpha_out = (uint8_t)alpha;
-		*red_out = (uint8_t)red;
-		*green_out = (uint8_t)green;
-		*blue_out = (uint8_t)blue;
+		*alpha_out = (pixel >> 8) & 0xf0;
+		*red_out = (pixel >> 4) & 0xf0;
+		*green_out = pixel & 0xf0;
+		*blue_out = (pixel & 0xf) << 4;
 	}
 }
 
