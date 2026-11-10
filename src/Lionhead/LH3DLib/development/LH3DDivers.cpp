@@ -2454,6 +2454,8 @@ void FishRush::Challenge::Draw()
 	}
 }
 
+static void UpdateFishRushTarget(FishRush* rush);
+
 long FishRush::Draw()
 {
 	g_challenge = Goal;
@@ -2477,22 +2479,7 @@ long FishRush::Draw()
 		                                 (FISH_RUSH_FADE_RANGE * FISH_RUSH_FADE_RANGE)) *
 		                     255.0f);
 	}
-	TargetTime -= LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
-	if (TargetTime < 0.0f)
-	{
-		LHPoint target(Random(-Radius, Radius), 0.0f, Random(-Radius, Radius));
-		target += Center;
-		TargetTime = LH3DMath::GetDistance(&Target, &target) * FISH_RUSH_TARGET_TIME;
-		Target = target;
-	}
-	if (g_b_er_valid)
-	{
-		LHMatrix rotation;
-		rotation.SetRotationY(Random(0.0f, TWO_PI));
-		Target.Set(FISH_RUSH_ESCAPE_DIST, 0.0f, 0.0f);
-		rotation.TransformPoint(Target);
-		Target += Center;
-	}
+	UpdateFishRushTarget(this);
 	long fishInChallenge = 0;
 	long activeFishCount = (long)(Density * FISH_RUSH_MAX_FISH);
 	for (long fishIndex = 0; fishIndex < activeFishCount; fishIndex++)
@@ -2509,6 +2496,26 @@ long FishRush::Draw()
 		fishInChallenge += Fishes[fishIndex]->Draw(&Target);
 	}
 	return fishInChallenge;
+}
+
+static void UpdateFishRushTarget(FishRush* rush)
+{
+	rush->TargetTime -= LH3DTech::GetGameTimeInc() / LH3D_MILLISECONDS_PER_SECOND;
+	if (rush->TargetTime < 0.0f)
+	{
+		LHPoint target(Random(-rush->Radius, rush->Radius), 0.0f, Random(-rush->Radius, rush->Radius));
+		target += rush->Center;
+		rush->TargetTime = LH3DMath::GetDistance(&rush->Target, &target) * FISH_RUSH_TARGET_TIME;
+		rush->Target = target;
+	}
+	if (FishRush::g_b_er_valid)
+	{
+		LHMatrix rotation;
+		rotation.SetRotationY(Random(0.0f, TWO_PI));
+		rush->Target.Set(FISH_RUSH_ESCAPE_DIST, 0.0f, 0.0f);
+		rotation.TransformPoint(rush->Target);
+		rush->Target += rush->Center;
+	}
 }
 
 TemporaryShadow* TemporaryShadow::g_first = NULL;
