@@ -1,0 +1,37 @@
+name: Private WorldRoom fixed-rubric readability
+on:
+  push:
+    branches: [review/worldroom-private-readability80-20261111]
+permissions:
+  contents: read
+jobs:
+  review:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python -m pip install PyYAML==6.0.3
+      - name: Assess private exact-input packet with original grader
+        env:
+          PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
+          PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
+          PR_REVIEW_MODEL: gpt-6-luna
+          WORLDROOM_PACKET_A: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_A }}
+          WORLDROOM_PACKET_B: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_B }}
+          WORLDROOM_PACKET_C: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_C }}
+          WORLDROOM_ENVELOPE_SHA256: 98fe910efafeebbcd7eb3e2687cd2ab4b94a60372a0dcd72131ba3b3de481215
+        run: python -B tools/worldroom_private_whole_tu_review.py
+      - name: Upload encrypted result only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-worldroom-review-encrypted
+          path: private-review-result.p7m
+          if-no-files-found: error
+          retention-days: 1
