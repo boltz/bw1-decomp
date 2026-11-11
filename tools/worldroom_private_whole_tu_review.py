@@ -39,7 +39,7 @@ def assess(envelope):
     payload = packet["user_payload"]
     inventory = payload["function_inventory"]
     expected = [f["id"] for f in inventory]
-    assert len(expected) == len(set(expected)) == 69
+    assert len(expected) == len(set(expected)) == envelope["inputs"]["definitions"] >= 50
     assert os.environ["PR_REVIEW_API_KEY"]
     result = api.call_model(
         os.environ.get("PR_REVIEW_API_BASE", "https://api.openai.com/v1"),
