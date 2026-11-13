@@ -673,7 +673,7 @@ def repair_numeric_decisions(api_base, api_key, model, prompt, result, inventory
     }
 
 
-def call_model(api_base, api_key, model, system, user):
+def call_model(api_base, api_key, model, system, user, *, audit=None):
     parsed = urllib.parse.urlparse(api_base)
     if parsed.scheme != "https" or not parsed.netloc:
         raise ReviewError("PR_REVIEW_API_BASE must be an HTTPS URL")
@@ -693,9 +693,12 @@ def call_model(api_base, api_key, model, system, user):
             }
         },
     }
+    request_body = json.dumps(payload).encode("utf-8")
+    if audit is not None:
+        audit.record_request(request_body)
     request = urllib.request.Request(
         api_base.rstrip("/") + "/responses",
-        data=json.dumps(payload).encode("utf-8"),
+        data=request_body,
         method="POST",
         headers={
             "Authorization": "Bearer " + api_key,
@@ -705,12 +708,19 @@ def call_model(api_base, api_key, model, system, user):
     )
     opener = urllib.request.build_opener(NoRedirect)
     for attempt in range(MAX_RETRIES):
+        if audit is not None:
+            audit.start_attempt(attempt + 1)
         try:
             with opener.open(request, timeout=MODEL_REQUEST_TIMEOUT_SECONDS) as response:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
+                if audit is not None:
+                    audit.record_response(raw, response.status, response.headers,
+                                          body_complete=len(raw) <= MAX_RESPONSE_BYTES)
             if len(raw) > MAX_RESPONSE_BYTES:
                 raise ReviewError("Model response exceeded the size limit")
             envelope = json.loads(raw.decode("utf-8"))
+            if audit is not None:
+                require_completed_response(envelope)
             content = response_output_text(envelope)
             result = json.loads(content)
             if (
@@ -719,25 +729,66 @@ def call_model(api_base, api_key, model, system, user):
                 or not isinstance(result.get("quality"), dict)
             ):
                 raise RetryableModelResponse("Model returned an invalid review object")
+            if audit is not None:
+                audit.record_result()
             return result
         except urllib.error.HTTPError as error:
+            if audit is not None:
+                raw = error.read(MAX_RESPONSE_BYTES + 1)
+                audit.record_response(raw, error.code, error.headers,
+                                      body_complete=len(raw) <= MAX_RESPONSE_BYTES)
+                audit.record_failure("http_error")
             if error.code not in (429, 500, 502, 503, 504) or attempt + 1 == MAX_RETRIES:
+                if audit is not None:
+                    raise ReviewError("Model API returned HTTP {}".format(error.code)) from None
                 detail = error.read(2_000).decode("utf-8", "replace")
                 raise ReviewError("Model API returned HTTP {}: {}".format(error.code, detail)) from error
             time.sleep(2**attempt)
         except (urllib.error.URLError, TimeoutError) as error:
+            if audit is not None:
+                audit.record_failure("transport_error")
             if attempt + 1 == MAX_RETRIES:
+                if audit is not None:
+                    raise ReviewError("Model API request failed after retries") from None
                 raise ReviewError("Model API request failed: {}".format(error)) from error
             time.sleep(2**attempt)
         except RetryableModelResponse as error:
+            if audit is not None:
+                audit.record_failure("unusable_review_json")
             if attempt + 1 == MAX_RETRIES:
                 raise ReviewError("Model API repeatedly returned unusable output: {}".format(error)) from error
             time.sleep(2**attempt)
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as error:
+            if audit is not None:
+                audit.record_failure("invalid_json")
             if attempt + 1 == MAX_RETRIES:
                 raise ReviewError("Model repeatedly returned an invalid JSON response") from error
             time.sleep(2**attempt)
+        except UnicodeDecodeError as error:
+            if audit is not None:
+                audit.record_failure("invalid_utf8")
+                raise ReviewError("Model returned an invalid UTF-8 response") from None
+            raise
+        except ReviewError:
+            if audit is not None:
+                audit.record_failure("rejected_response")
+            raise
     raise ReviewError("Model API request failed after retries")
+
+
+def require_completed_response(envelope):
+    if not isinstance(envelope, dict) or envelope.get("status") != "completed":
+        raise ReviewError("Whole-TU model response did not complete")
+    if envelope.get("error") is not None or envelope.get("incomplete_details") is not None:
+        raise ReviewError("Whole-TU model response reported an error or incomplete output")
+    for item in envelope.get("output", []):
+        if not isinstance(item, dict) or item.get("type") != "message":
+            continue
+        if item.get("status") not in (None, "completed"):
+            raise ReviewError("Whole-TU model message did not complete")
+        for content in item.get("content", []):
+            if isinstance(content, dict) and content.get("type") == "refusal":
+                raise ReviewError("Whole-TU model response refused the review")
 
 
 def response_output_text(envelope):

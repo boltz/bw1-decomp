@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 
 import automatic_pr_review as api
+from review_transport_audit import ModelResponseAudit
 
 
 def obj(properties):
@@ -30,7 +31,8 @@ paths.append("include/d3dtypes.h")
 snapshot = json.loads(Path("tools/divers_readability_candidate.json").read_text())
 source = snapshot["files"]
 implementation_files = snapshot.get("implementation_files", [])
-assert set(source) == set(paths + implementation_files + ["AGENTS.md"])
+additional_context_files = [path for path in ("include/re_common.h",) if path in source]
+assert set(source) == set(paths + implementation_files + additional_context_files + ["AGENTS.md"])
 assert {p: hashlib.sha256(t.encode()).hexdigest() for p, t in source.items()} == snapshot["source_hashes"]
 
 from divers_translation_unit_inventory import translation_unit_inventory
@@ -53,7 +55,7 @@ facts.append('Original pagination control-flow evidence: the original BW1W120 ex
 
 payload = {"scope": "whole src/Lionhead/LH3DLib/development/LH3DDivers.cpp, all %d function definitions and file-scope data" % len(functions), "function_inventory": functions, "context_facts_and_limits": facts, "files": [{"path": path, "numbered_source": "\n".join("%d: %s" % (i, line) for i, line in enumerate(content.splitlines(), 1))} for path, content in source.items()]}
 Path("whole-tu-input.json").write_text(json.dumps({"target_sha": sha, "functions": functions, "source_hashes": {p: hashlib.sha256(s.encode()).hexdigest() for p, s in source.items()}, "rubric": system}, indent=2) + "\n")
-result = api.call_model(os.environ.get("PR_REVIEW_API_BASE", "https://api.openai.com/v1"), os.environ["PR_REVIEW_API_KEY"], os.environ["PR_REVIEW_MODEL"], system, json.dumps(payload))
+result = api.call_model(os.environ.get("PR_REVIEW_API_BASE", "https://api.openai.com/v1"), os.environ["PR_REVIEW_API_KEY"], os.environ["PR_REVIEW_MODEL"], system, json.dumps(payload), audit=ModelResponseAudit("whole-tu-request.json", "whole-tu-transport.json"))
 Path("whole-tu-response.json").write_text(json.dumps(result, indent=2) + "\n")
 q = result["quality"]
 expected = [f["id"] for f in functions]
