@@ -7,11 +7,19 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
     # This is a *private* build container.
     # See docs/github_actions.md for more information.
-    container: ghcr.io/openblack/bw1-build:main
+    container:
+      image: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     runs-on: ubuntu-latest
     strategy:
