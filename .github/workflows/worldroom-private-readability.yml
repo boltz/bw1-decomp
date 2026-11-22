@@ -25,7 +25,7 @@ jobs:
           WORLDROOM_PACKET_A: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_A }}
           WORLDROOM_PACKET_B: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_B }}
           WORLDROOM_PACKET_C: ${{ secrets.WORLDROOM_PRIVATE_20261111_PACKET_C }}
-          WORLDROOM_ENVELOPE_SHA256: 49d14dfc230069c1eddd1f11b6c7b51698bbf861eae18cd8a649297042e6e9f6
+          WORLDROOM_ENVELOPE_SHA256: a783bfa690e01f28cb7b3355bb2e6ff2bb1e3e11523c21d49e048869fe40e2e6
         run: python -B tools/worldroom_private_whole_tu_review.py
       - name: Upload encrypted result only
         if: always()
