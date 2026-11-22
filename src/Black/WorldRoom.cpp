@@ -694,53 +694,49 @@ inline void PlayCitadelButtonSound(LH_SamplePlayOptions& options, Base* attached
 	GGlobal::Global.audio->PlaySoundEffect(&options);
 }
 
-bool32_t WorldRoom::WorldButtonDisplayCitadelCheckedSet(CallbackData& data)
+inline bool32_t SetWorldRoomDisplay(bool32_t& display, bool32_t enabled, LH_SAMPLE sample, uint32_t sound_pitch_percent,
+                                    Base* attached_object = NULL)
 {
 	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT);
-	DisplayCitadel = false;
+	PlayCitadelButtonSound(options, attached_object, sample, sound_pitch_percent);
+	display = enabled;
 	return true;
+}
+
+bool32_t WorldRoom::WorldButtonDisplayCitadelCheckedSet(CallbackData& data)
+{
+	return SetWorldRoomDisplay(DisplayCitadel, false, LH_SAMPLE_G_CITADELBUTTONDOWN_01,
+	                           WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayCitadelUncheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT);
-	DisplayCitadel = true;
-	return true;
+	return SetWorldRoomDisplay(DisplayCitadel, true, LH_SAMPLE_G_CITADELBUTTONUP_01,
+	                           WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayCreatureCheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_SOUND_PITCH_CREATURE_PERCENT);
-	DisplayCreature = false;
-	return true;
+	return SetWorldRoomDisplay(DisplayCreature, false, LH_SAMPLE_G_CITADELBUTTONDOWN_01,
+	                           WORLD_ROOM_SOUND_PITCH_CREATURE_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayCreatureUncheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, reinterpret_cast<Base*>(110), LH_SAMPLE_G_CITADELBUTTONUP_01,
-	                       WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT);
-	DisplayCreature = true;
-	return true;
+	return SetWorldRoomDisplay(DisplayCreature, true, LH_SAMPLE_G_CITADELBUTTONUP_01,
+	                           WORLD_ROOM_SOUND_PITCH_NORMAL_PERCENT, reinterpret_cast<Base*>(110));
 }
 
 bool32_t WorldRoom::WorldButtonDisplayMagicActivityCheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_SOUND_PITCH_MAGIC_PERCENT);
-	DisplayMagicActivity = false;
-	return true;
+	return SetWorldRoomDisplay(DisplayMagicActivity, false, LH_SAMPLE_G_CITADELBUTTONDOWN_01,
+	                           WORLD_ROOM_SOUND_PITCH_MAGIC_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayMagicActivityUncheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_SOUND_PITCH_MAGIC_PERCENT);
-	DisplayMagicActivity = true;
-	return true;
+	return SetWorldRoomDisplay(DisplayMagicActivity, true, LH_SAMPLE_G_CITADELBUTTONUP_01,
+	                           WORLD_ROOM_SOUND_PITCH_MAGIC_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayInfluenceCheckedSet(CallbackData& data)
@@ -764,18 +760,14 @@ bool32_t WorldRoom::WorldButtonDisplayInfluenceUncheckedSet(CallbackData& data)
 
 bool32_t WorldRoom::WorldButtonDisplayChallengesCheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONDOWN_01, WORLD_ROOM_SOUND_PITCH_CHALLENGES_PERCENT);
-	DisplayChallenges = false;
-	return true;
+	return SetWorldRoomDisplay(DisplayChallenges, false, LH_SAMPLE_G_CITADELBUTTONDOWN_01,
+	                           WORLD_ROOM_SOUND_PITCH_CHALLENGES_PERCENT);
 }
 
 bool32_t WorldRoom::WorldButtonDisplayChallengesUncheckedSet(CallbackData& data)
 {
-	LH_SamplePlayOptions options;
-	PlayCitadelButtonSound(options, NULL, LH_SAMPLE_G_CITADELBUTTONUP_01, WORLD_ROOM_SOUND_PITCH_CHALLENGES_PERCENT);
-	DisplayChallenges = true;
-	return true;
+	return SetWorldRoomDisplay(DisplayChallenges, true, LH_SAMPLE_G_CITADELBUTTONUP_01,
+	                           WORLD_ROOM_SOUND_PITCH_CHALLENGES_PERCENT);
 }
 
 inline void SetWorldRoomToolTip(unsigned long text_id, KEYALIGN align)
