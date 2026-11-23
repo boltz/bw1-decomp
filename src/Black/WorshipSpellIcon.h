@@ -23,7 +23,6 @@ class Base;
 class Citadel;
 class EffectValues;
 class GPlayer;
-class GPrayerIconInfo;
 class GSpellIconInfo;
 class GSpellSeedInfo;
 class GameOSFile;
@@ -187,13 +186,7 @@ public:
 
 class PrayerIcon : public SingleMapFixed
 {
-	uint32_t field_0x5c;
-	uint8_t  field_0x60[4];
-
 public:
-	PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo* unused, float y_angle,
-	           float scale);
-
 	// Override methods
 	// BW1W120 00670980 BW1M119 inlined
 	virtual void ToBeDeleted(bool32_t delete_now) {}
@@ -212,7 +205,5 @@ public:
 	// BW1W120 006709f0 BW1M119 inlined
 	virtual void Draw() {}
 };
-
-static_assert(sizeof(PrayerIcon) == 0x64, "PrayerIcon size is incorrect");
 
 #endif /* BW1_DECOMP_WORSHIP_SPELL_ICON_INCLUDED_H */
