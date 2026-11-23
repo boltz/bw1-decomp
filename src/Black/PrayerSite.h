@@ -6,11 +6,15 @@
 
 #include "MultiMapFixed.h" /* For struct MultiMapFixed */
 
+#define PRAYER_SITE_DEFAULT_SCALE         0.2f
+#define PRAYER_SITE_INITIAL_PERCENT_BUILT 1.0f
+
 // Forward Declares
 
 class Base;
 class Creature;
 class GPlayer;
+class GPrayerSiteInfo;
 class GameThing;
 class Object;
 class Town;
@@ -18,12 +22,31 @@ class Town;
 class PrayerSite : public MultiMapFixed
 {
 public:
-	// Override methods
+	struct IndexedValueTable
+	{
+		uint32_t Entries[4];
 
-	// BW1W120 00670800 BW1M119 inlined
-	virtual ~PrayerSite();
+		IndexedValueTable()
+		{
+			Entries[0] = 0;
+			Entries[1] = 0;
+			Entries[2] = 0;
+			Entries[3] = 0;
+		}
+	};
+
+	IndexedValueTable IndexedValues;
+	uint8_t           field_0x8c[4];
+
+	PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float, float);
+
+	using MultiMapFixed::GetPos;
+	uint32_t  GetIndexedValue(uint32_t index) const;
+	MapCoords GetPos(uint32_t) const;
+
+	// Override methods
 	// BW1W120 00670830 BW1M119 inlined
-	virtual void ToBeDeleted(int param_1);
+	virtual void ToBeDeleted(bool32_t delete_now);
 	// BW1W120 006708c0 BW1M119 inlined
 	virtual GPlayer* GetPlayer();
 	// BW1W120 006708e0 BW1M119 inlined
@@ -33,7 +56,9 @@ public:
 	// BW1W120 006707f0 BW1M119 inlined
 	virtual MESH_LIST GetMesh() const;
 	// BW1W120 00670a10 BW1M119 inlined
-	virtual bool32_t CreatureMustAvoid(Creature* param_1);
+	virtual bool32_t CreatureMustAvoid(Creature* creature);
 };
+
+static_assert(sizeof(PrayerSite) == 0x90, "PrayerSite size is incorrect");
 
 #endif /* BW1_DECOMP_PRAYER_SITE_INCLUDED_H */
