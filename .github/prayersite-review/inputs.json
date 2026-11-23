@@ -1,13 +1,13 @@
 {
   "unit": "src/Black/PrayerSite.cpp",
-  "target_sha": "8fa29e5e9e417327b803cda02dfc894c7b16db6b",
+  "target_sha": "6348212e33113c5c1a53ed7eba6f285017bb1ed4",
   "rubric_sha256": "eb460d391eda86f149361451977793d0b5fab7b201a2f9adae717885f2298ce3",
   "source_hashes": {
-    "src/Black/PrayerSite.cpp": "4527dd71e6c85b24b980d40f9ff09eea63653829652f3a170db7bfee8ec87582",
-    "src/Black/PrayerSite.h": "1cc26cbfd5e43c240254ddc2ccbace6b606fb685596171102e29153ed99eecf3",
+    "src/Black/PrayerSite.cpp": "adb4eee4d87e43db5777b9f15d829bfd44b524e6e32702ba4b14f67d1e604cbe",
+    "src/Black/PrayerSite.h": "68be1b94f3a81781cdae5c303236ac2d0d1d8bd0a9c5d593a4b9cd650deba1a1",
     "src/Black/PrayerSiteInfo.h": "03678e3688bc0427509e6cff6fa486b1da95c4ee2500b239c11a26e7c6f0800f",
     "src/Black/PrayerIconInfo.h": "a649f5de3dfb32ac240193b060b614adbf3d119df80632115933eefd74cea863",
-    "src/Black/WorshipSpellIcon.h": "039b0289b01226197d20a501f2fcf11badab3bcc0c0fc1136fca154e631766a3",
+    "src/Black/WorshipSpellIcon.h": "d19c4f601546b1cc99f9e02ae6f1da5e12eac90d881c660b5607d287f22027b5",
     "src/Black/MultiMapFixed.h": "e8015baee0c62e65136be7e9586b5952d0a6083646bcd3d50fbdd15369cb23d3",
     "src/Black/Fixed.h": "4addd06901fabf5fa608cba4bd118ded04751e8e961333ec29ca948fb91cbea9",
     "src/Black/GameThing.h": "2648151f663d32387d75dc5693c59a1bcef079eefbb78e5f95f46236507937c0",
@@ -41,73 +41,73 @@
     {
       "id": "F004",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 34,
-      "signature": "PrayerSite::PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float, float) : MultiMapFixed(coords, info, 0.0f, PRAYER_SITE_DEFAULT_SCALE, PRAYER_SITE_INITIAL_PERCENT_BUILT, false)"
+      "line": 37,
+      "signature": "PrayerSite::PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float unused_1, float unused_2) : MultiMapFixed(coords, info, 0.0f, PRAYER_SITE_DEFAULT_SCALE, PRAYER_SITE_INITIAL_PERCENT_BUILT, false)"
     },
     {
       "id": "F005",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 40,
+      "line": 43,
       "signature": "void PrayerSite::ToBeDeleted(bool32_t delete_now)"
     },
     {
       "id": "F006",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 42,
+      "line": 45,
       "signature": "uint32_t PrayerSite::GetIndexedValue(uint32_t entry_index) const"
     },
     {
       "id": "F007",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 47,
-      "signature": "MapCoords PrayerSite::GetPos(uint32_t) const"
+      "line": 50,
+      "signature": "MapCoords PrayerSite::GetPos(uint32_t unused) const"
     },
     {
       "id": "F008",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 53,
+      "line": 56,
       "signature": "uint32_t PrayerSite::Process()"
     },
     {
       "id": "F009",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 58,
+      "line": 61,
       "signature": "GPlayer* PrayerSite::GetPlayer()"
     },
     {
       "id": "F010",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 63,
+      "line": 66,
       "signature": "Town* PrayerSite::GetTown()"
     },
     {
       "id": "F011",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 68,
+      "line": 71,
       "signature": "bool32_t PrayerSite::CreatureMustAvoid(Creature* creature)"
     },
     {
       "id": "F012",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 74,
-      "signature": "PrayerIcon::PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo*, float y_angle, float scale) : SingleMapFixed(coords, info, y_angle, scale), field_0x5c(0)"
+      "line": 77,
+      "signature": "PrayerIcon::PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo* unused, float y_angle, float scale) : SingleMapFixed(coords, info, y_angle, scale), field_0x5c(0)"
     },
     {
       "id": "F013",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 81,
+      "line": 84,
       "signature": "uint32_t PrayerIcon::GetCreatureBeliefType()"
     },
     {
       "id": "F014",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 87,
+      "line": 90,
       "signature": "MESH_LIST PrayerIcon::GetMesh() const"
     },
     {
       "id": "F015",
       "path": "src/Black/PrayerSite.cpp",
-      "line": 93,
+      "line": 96,
       "signature": "uint32_t PrayerIcon::Process()"
     }
   ]
