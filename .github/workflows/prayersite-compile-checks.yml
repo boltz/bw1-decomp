@@ -25,13 +25,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 2
+        fetch-depth: 1
         submodules: recursive
         persist-credentials: false
     - name: Configure Git for the build container
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
     - name: Confirm exact source revision
-      run: git diff --exit-code 03f4ff9db4f38d59a96ad9d8963a3c6355e4e584 HEAD -- src include config configure.py tools
+      run: |
+        fingerprint=$(git rev-parse HEAD:src HEAD:include HEAD:config HEAD:configure.py HEAD:tools | sha256sum | cut -d' ' -f1)
+        test "$fingerprint" = "f19283475c486302cffa785e1d94abbf6db97e2b13fcfd746f75781ca8665cc4"
     - name: Prepare the existing compiler inputs
       run: cp -a /orig .
     - name: Compile PrayerSite only
