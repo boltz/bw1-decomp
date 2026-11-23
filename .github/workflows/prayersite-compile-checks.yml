@@ -1,0 +1,48 @@
+name: PrayerSite five-version object check
+
+on:
+  push:
+    branches: [fork-check/prayersite-compile-20261123]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  compile:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [BW1W100, BW1W110, BW1W120, BW1W130, BW1WCI]
+    container:
+      image: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        persist-credentials: false
+    - name: Confirm exact source revision
+      run: git diff --exit-code 03f4ff9db4f38d59a96ad9d8963a3c6355e4e584 HEAD -- src include config configure.py tools
+    - name: Prepare the existing compiler inputs
+      run: cp -a /orig .
+    - name: Compile PrayerSite only
+      env:
+        PRAYERSITE_PROFILE: ${{ matrix.version }}
+      run: |
+        python configure.py --version "$PRAYERSITE_PROFILE"
+        ninja "build/$PRAYERSITE_PROFILE/src/Black/PrayerSite.o"
+        python tools/decomp-diff.py --unit PrayerSite --strict --sections > "PrayerSite-$PRAYERSITE_PROFILE.txt"
+        cat "PrayerSite-$PRAYERSITE_PROFILE.txt"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: PrayerSite-${{ matrix.version }}
+        path: PrayerSite-${{ matrix.version }}.txt
+        if-no-files-found: error
+        retention-days: 7
