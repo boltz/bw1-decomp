@@ -1,10 +1,10 @@
 {
   "unit": "src/Black/PrayerSite.cpp",
-  "target_sha": "03f4ff9db4f38d59a96ad9d8963a3c6355e4e584",
+  "target_sha": "13bdb3711e90b83e97317a5063386d21a1f7618c",
   "rubric_sha256": "eb460d391eda86f149361451977793d0b5fab7b201a2f9adae717885f2298ce3",
   "source_hashes": {
-    "src/Black/PrayerSite.cpp": "96d374af9ff9ee9560675e87efae2032f087d69ca663067690965fac3e8294dc",
-    "src/Black/PrayerSite.h": "7259c09fa23ff13af1951b7194eaa54a26b9563b011efe8777c302a5f94dc583",
+    "src/Black/PrayerSite.cpp": "6a838bdfda98adc8cbe2419ed1efce4c0b245dbf0f23f3d8ca9e7fb93cdab734",
+    "src/Black/PrayerSite.h": "1cc26cbfd5e43c240254ddc2ccbace6b606fb685596171102e29153ed99eecf3",
     "src/Black/PrayerSiteInfo.h": "03678e3688bc0427509e6cff6fa486b1da95c4ee2500b239c11a26e7c6f0800f",
     "src/Black/PrayerIconInfo.h": "a649f5de3dfb32ac240193b060b614adbf3d119df80632115933eefd74cea863",
     "src/Black/WorshipSpellIcon.h": "d59d828cb4b9d86d23aea7617f7d7d7746dc4be15d2cde188414699b4d400bd4",
@@ -54,7 +54,7 @@
       "id": "F006",
       "path": "src/Black/PrayerSite.cpp",
       "line": 42,
-      "signature": "uint32_t PrayerSite::GetIndexedValue(uint32_t index) const"
+      "signature": "uint32_t PrayerSite::GetIndexedValue(uint32_t entry_index) const"
     },
     {
       "id": "F007",
