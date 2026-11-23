@@ -25,9 +25,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 2
         submodules: recursive
         persist-credentials: false
+    - name: Configure Git for the build container
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
     - name: Confirm exact source revision
       run: git diff --exit-code 03f4ff9db4f38d59a96ad9d8963a3c6355e4e584 HEAD -- src include config configure.py tools
     - name: Prepare the existing compiler inputs
