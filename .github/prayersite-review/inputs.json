@@ -1,13 +1,13 @@
 {
   "unit": "src/Black/PrayerSite.cpp",
-  "target_sha": "13bdb3711e90b83e97317a5063386d21a1f7618c",
+  "target_sha": "8fa29e5e9e417327b803cda02dfc894c7b16db6b",
   "rubric_sha256": "eb460d391eda86f149361451977793d0b5fab7b201a2f9adae717885f2298ce3",
   "source_hashes": {
-    "src/Black/PrayerSite.cpp": "6a838bdfda98adc8cbe2419ed1efce4c0b245dbf0f23f3d8ca9e7fb93cdab734",
+    "src/Black/PrayerSite.cpp": "4527dd71e6c85b24b980d40f9ff09eea63653829652f3a170db7bfee8ec87582",
     "src/Black/PrayerSite.h": "1cc26cbfd5e43c240254ddc2ccbace6b606fb685596171102e29153ed99eecf3",
     "src/Black/PrayerSiteInfo.h": "03678e3688bc0427509e6cff6fa486b1da95c4ee2500b239c11a26e7c6f0800f",
     "src/Black/PrayerIconInfo.h": "a649f5de3dfb32ac240193b060b614adbf3d119df80632115933eefd74cea863",
-    "src/Black/WorshipSpellIcon.h": "d59d828cb4b9d86d23aea7617f7d7d7746dc4be15d2cde188414699b4d400bd4",
+    "src/Black/WorshipSpellIcon.h": "039b0289b01226197d20a501f2fcf11badab3bcc0c0fc1136fca154e631766a3",
     "src/Black/MultiMapFixed.h": "e8015baee0c62e65136be7e9586b5952d0a6083646bcd3d50fbdd15369cb23d3",
     "src/Black/Fixed.h": "4addd06901fabf5fa608cba4bd118ded04751e8e961333ec29ca948fb91cbea9",
     "src/Black/GameThing.h": "2648151f663d32387d75dc5693c59a1bcef079eefbb78e5f95f46236507937c0",
