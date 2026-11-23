@@ -41,7 +41,7 @@ jobs:
         PRAYERSITE_PROFILE: ${{ matrix.version }}
       run: |
         python configure.py --version "$PRAYERSITE_PROFILE"
-        ninja "build/$PRAYERSITE_PROFILE/src/Black/PrayerSite.o"
+        ninja "build/$PRAYERSITE_PROFILE/src/Black/PrayerSite.o" build/tools/objdiff-cli
         python tools/decomp-diff.py --unit PrayerSite --strict --sections > "PrayerSite-$PRAYERSITE_PROFILE.txt"
         cat "PrayerSite-$PRAYERSITE_PROFILE.txt"
     - uses: actions/upload-artifact@v4
