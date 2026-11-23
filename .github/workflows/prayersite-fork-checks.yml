@@ -1,0 +1,153 @@
+name: PrayerSite fork checks
+
+on:
+  push:
+    branches: [fork-check/prayersite-20261123]
+
+permissions:
+  contents: read
+
+jobs:
+  check-format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: jidicula/clang-format-action@v4.18.0
+      with:
+        clang-format-version: '22'
+        fallback-style: 'none'
+        # Only lint our own source tree; include/ holds vendor SDK headers
+        # (ddraw.h, d3dtypes.h) and unformatted shared headers.
+        # Vendored GameSpy sources are excluded; zlib, mpg123 and jpeg are skipped via .clang-format-ignore.
+        check-path: 'src'
+        exclude-regex: '^src/GameSpy/src/GameSpy/'
+
+  check-address-comments:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # Every `// BW1W120 ...` comment must be `// BW1W120 <w> [BW1M119 <m> [(<module>)]]`
+    # on its own line, with a Mac address that exists in config/BW1M119.
+    - run: python tools/check_addr_comments.py
+
+  check-split-gaps:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # Every address of these ranges belongs to a unit in splits.txt. The ranges stop
+    # where the linker's import thunks start.
+    - name: BW1W100 .text
+      run: python tools/split-gaps.py --check -v BW1W100 -s .text --range 0x401000-0x729090
+
+    - name: BW1W110 .text
+      run: python tools/split-gaps.py --check -v BW1W110 -s .text --range 0x401000-0x79E2E0
+
+    - name: BW1W120 .text
+      run: python tools/split-gaps.py --check -v BW1W120 -s .text --range 0x401000-0x7AEBB0
+
+    - name: BW1W130 .text
+      run: python tools/split-gaps.py --check -v BW1W130 -s .text --range 0x401000-0x7B3BB0
+
+    - name: BW1WCI .text
+      run: python tools/split-gaps.py --check -v BW1WCI -s .text --range 0x401000-0x7C6CC0
+
+    - name: BW1W100 .data
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W100 -s .data
+
+    - name: BW1W110 .data
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W110 -s .data
+
+    - name: BW1W120 .data
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W120 -s .data
+
+    - name: BW1W130 .data
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W130 -s .data
+
+    # Creature Isle's libcmt and libjpeg data past the range still has unclaimed objects.
+    - name: BW1WCI .data
+      run: python tools/split-gaps.py --check --allow-padding -v BW1WCI -s .data --range 0xA36000-0xCA09DC
+
+    # The ranges stop where the static library data begins, after LHDLL (Immersion, DirectX
+    # and DirectInput objects the project does not have).
+    - name: BW1W100 .rdata
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W100 -s .rdata --range 0x7EB000-0x8D52C4
+
+    - name: BW1W110 .rdata
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W110 -s .rdata --range 0x899000-0x98EF24
+
+    - name: BW1W120 .rdata
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W120 -s .rdata --range 0x8A9000-0x99F01C
+
+    # 0x9582A8 holds a 1000.0f that no 1.30 code reads and that no linked unit's object emits.
+    - name: BW1W130 .rdata
+      run: python tools/split-gaps.py --check --allow-padding -v BW1W130 -s .rdata --range 0x8AE000-0x9582A8 --range 0x9582AC-0xA1EA0C
+
+    - name: BW1WCI .rdata
+      run: python tools/split-gaps.py --check --allow-padding -v BW1WCI -s .rdata --range 0x8D4000-0xA0EB5C
+
+    # Every configure.py unit has splits in some version.
+    - name: configure.py units
+      run: python tools/split-gaps.py --check --units
+
+  check-table-order:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    # dtk rewrites a symbols.txt it finds out of its order on the next split; the rewrite then
+    # lands in an unrelated PR and conflicts with every PR touching the lines it moves.
+    - run: python tools/check-symbols-order.py
+
+    # Tables PRs append to (post_link_patch.py's padding rows, config.yml relocation lists) stay
+    # in address order, so concurrent additions do not collide at the end.
+    - run: python tools/check-tables.py
+
+    # The symbols.txt merge driver shares the ordering code.
+    - run: python -m unittest discover -s tools/tests -p 'test_merge_symbols.py'
+    - run: python -m unittest discover -s tools/tests -p 'test_check_tables.py'
+
+  readability:
+    if: github.repository == 'boltz/bw1-decomp'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Checkout the fork’s trusted reviewer
+      uses: actions/checkout@v4
+      with:
+        ref: 77986f020ac201395e7a4ac4fc35ee9879d7d8a2
+        path: fork-reviewer
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - run: python -m pip install PyYAML==6.0.3
+    - name: Grade the exact PrayerSite source
+      env:
+        PR_REVIEW_API_KEY: ${{ secrets.PR_REVIEW_API_KEY }}
+        PR_REVIEW_API_BASE: ${{ vars.PR_REVIEW_API_BASE || 'https://api.openai.com/v1' }}
+      run: python -B .github/prayersite-review/grade.py
+    - uses: actions/upload-artifact@v4
+      with:
+        name: prayersite-readability
+        path: prayersite-readability.json
+        if-no-files-found: error
+        retention-days: 7

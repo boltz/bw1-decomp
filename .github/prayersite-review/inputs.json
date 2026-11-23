@@ -1,0 +1,114 @@
+{
+  "unit": "src/Black/PrayerSite.cpp",
+  "target_sha": "03f4ff9db4f38d59a96ad9d8963a3c6355e4e584",
+  "rubric_sha256": "eb460d391eda86f149361451977793d0b5fab7b201a2f9adae717885f2298ce3",
+  "source_hashes": {
+    "src/Black/PrayerSite.cpp": "96d374af9ff9ee9560675e87efae2032f087d69ca663067690965fac3e8294dc",
+    "src/Black/PrayerSite.h": "7259c09fa23ff13af1951b7194eaa54a26b9563b011efe8777c302a5f94dc583",
+    "src/Black/PrayerSiteInfo.h": "03678e3688bc0427509e6cff6fa486b1da95c4ee2500b239c11a26e7c6f0800f",
+    "src/Black/PrayerIconInfo.h": "a649f5de3dfb32ac240193b060b614adbf3d119df80632115933eefd74cea863",
+    "src/Black/WorshipSpellIcon.h": "d59d828cb4b9d86d23aea7617f7d7d7746dc4be15d2cde188414699b4d400bd4",
+    "src/Black/MultiMapFixed.h": "e8015baee0c62e65136be7e9586b5952d0a6083646bcd3d50fbdd15369cb23d3",
+    "src/Black/Fixed.h": "4addd06901fabf5fa608cba4bd118ded04751e8e961333ec29ca948fb91cbea9",
+    "src/Black/GameThing.h": "2648151f663d32387d75dc5693c59a1bcef079eefbb78e5f95f46236507937c0",
+    "src/Black/Object.h": "bfc8bc015fbfd9b6fa3583c93d2e8c4bb2283c028c1b00e2e6ff9fad56ba3d13"
+  },
+  "function_inventory": [
+    {
+      "id": "F000",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 7,
+      "signature": "inline MESH_LIST GPrayerSiteInfo::GetMesh() const"
+    },
+    {
+      "id": "F001",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 12,
+      "signature": "inline GBaseInfo* GPrayerSiteInfo::GetBaseInfo(uint32_t& info_count)"
+    },
+    {
+      "id": "F002",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 20,
+      "signature": "inline GBaseInfo* GPrayerIconInfo::GetBaseInfo(uint32_t& info_count)"
+    },
+    {
+      "id": "F003",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 28,
+      "signature": "inline MESH_LIST PrayerSite::GetMesh() const"
+    },
+    {
+      "id": "F004",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 34,
+      "signature": "PrayerSite::PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float, float) : MultiMapFixed(coords, info, 0.0f, PRAYER_SITE_DEFAULT_SCALE, PRAYER_SITE_INITIAL_PERCENT_BUILT, false)"
+    },
+    {
+      "id": "F005",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 40,
+      "signature": "void PrayerSite::ToBeDeleted(bool32_t delete_now)"
+    },
+    {
+      "id": "F006",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 42,
+      "signature": "uint32_t PrayerSite::GetIndexedValue(uint32_t index) const"
+    },
+    {
+      "id": "F007",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 47,
+      "signature": "MapCoords PrayerSite::GetPos(uint32_t) const"
+    },
+    {
+      "id": "F008",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 53,
+      "signature": "uint32_t PrayerSite::Process()"
+    },
+    {
+      "id": "F009",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 58,
+      "signature": "GPlayer* PrayerSite::GetPlayer()"
+    },
+    {
+      "id": "F010",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 63,
+      "signature": "Town* PrayerSite::GetTown()"
+    },
+    {
+      "id": "F011",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 68,
+      "signature": "bool32_t PrayerSite::CreatureMustAvoid(Creature* creature)"
+    },
+    {
+      "id": "F012",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 74,
+      "signature": "PrayerIcon::PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo*, float y_angle, float scale) : SingleMapFixed(coords, info, y_angle, scale), field_0x5c(0)"
+    },
+    {
+      "id": "F013",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 81,
+      "signature": "uint32_t PrayerIcon::GetCreatureBeliefType()"
+    },
+    {
+      "id": "F014",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 87,
+      "signature": "MESH_LIST PrayerIcon::GetMesh() const"
+    },
+    {
+      "id": "F015",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 93,
+      "signature": "uint32_t PrayerIcon::Process()"
+    }
+  ]
+}
