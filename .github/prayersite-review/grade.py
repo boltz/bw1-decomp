@@ -48,7 +48,7 @@ def prepare_packet():
     inventory = manifest["function_inventory"]
     ids = {function["id"] for function in inventory}
     unit = manifest["unit"]
-    assert len(ids) == len(inventory) == 16
+    assert len(ids) == len(inventory) == 12
     for function in inventory:
         assert function["path"] == unit
         assert 1 <= function["line"] <= len(sources[unit])
