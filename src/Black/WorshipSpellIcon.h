@@ -187,10 +187,10 @@ public:
 
 class PrayerIcon : public SingleMapFixed
 {
-public:
 	uint32_t field_0x5c;
 	uint8_t  field_0x60[4];
 
+public:
 	PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo*, float y_angle, float scale);
 
 	// Override methods

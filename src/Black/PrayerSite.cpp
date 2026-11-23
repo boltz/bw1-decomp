@@ -46,8 +46,8 @@ uint32_t PrayerSite::GetIndexedValue(uint32_t entry_index) const
 
 MapCoords PrayerSite::GetPos(uint32_t) const
 {
-	MapCoords pos = Pos;
-	return pos;
+	const MapCoords position = Pos;
+	return position;
 }
 
 uint32_t PrayerSite::Process()
