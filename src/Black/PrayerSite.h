@@ -6,9 +6,6 @@
 
 #include "MultiMapFixed.h" /* For struct MultiMapFixed */
 
-#define PRAYER_SITE_DEFAULT_SCALE         0.2f
-#define PRAYER_SITE_INITIAL_PERCENT_BUILT 1.0f
-
 // Forward Declares
 
 class Base;
@@ -38,11 +35,11 @@ class PrayerSite : public MultiMapFixed
 	uint8_t           field_0x8c[4];
 
 public:
-	PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float, float);
+	PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float unused_1, float unused_2);
 
 	using MultiMapFixed::GetPos;
 	uint32_t  GetIndexedValue(uint32_t entry_index) const;
-	MapCoords GetPos(uint32_t) const;
+	MapCoords GetPos(uint32_t unused) const;
 
 	// Override methods
 	// BW1W120 00670830 BW1M119 inlined

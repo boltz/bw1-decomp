@@ -191,7 +191,8 @@ class PrayerIcon : public SingleMapFixed
 	uint8_t  field_0x60[4];
 
 public:
-	PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo*, float y_angle, float scale);
+	PrayerIcon(const MapCoords& coords, const GPrayerIconInfo* info, const GSpellSeedInfo* unused, float y_angle,
+	           float scale);
 
 	// Override methods
 	// BW1W120 00670980 BW1M119 inlined
