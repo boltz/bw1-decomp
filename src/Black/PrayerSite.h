@@ -21,7 +21,6 @@ class Town;
 
 class PrayerSite : public MultiMapFixed
 {
-public:
 	struct IndexedValueTable
 	{
 		uint32_t Entries[4];
@@ -38,10 +37,11 @@ public:
 	IndexedValueTable IndexedValues;
 	uint8_t           field_0x8c[4];
 
+public:
 	PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, float, float);
 
 	using MultiMapFixed::GetPos;
-	uint32_t  GetIndexedValue(uint32_t index) const;
+	uint32_t  GetIndexedValue(uint32_t entry_index) const;
 	MapCoords GetPos(uint32_t) const;
 
 	// Override methods

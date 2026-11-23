@@ -39,9 +39,9 @@ PrayerSite::PrayerSite(const MapCoords& coords, const GPrayerSiteInfo* info, flo
 
 void PrayerSite::ToBeDeleted(bool32_t delete_now) {}
 
-uint32_t PrayerSite::GetIndexedValue(uint32_t index) const
+uint32_t PrayerSite::GetIndexedValue(uint32_t entry_index) const
 {
-	return IndexedValues.Entries[index];
+	return IndexedValues.Entries[entry_index];
 }
 
 MapCoords PrayerSite::GetPos(uint32_t) const
@@ -62,7 +62,7 @@ GPlayer* PrayerSite::GetPlayer()
 
 Town* PrayerSite::GetTown()
 {
-	return NULL;
+	return MultiMapFixed::GetTown();
 }
 
 bool32_t PrayerSite::CreatureMustAvoid(Creature* creature)
