@@ -929,7 +929,13 @@ void LH3DAtmos::Render3D()
 		WeatherInfo weather1 = GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
 		WeatherInfo weather2 = GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
 		WeatherInfo weather3 = GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-		int         rain = max(max(weather0.Rain, weather1.Rain), max(weather2.Rain, weather3.Rain));
+		int         eastNorthRain = weather3.Rain;
+		int         eastSouthRain = weather2.Rain;
+		int         eastRain = eastSouthRain < eastNorthRain ? eastNorthRain : eastSouthRain;
+		int         westSouthRain = weather0.Rain;
+		int         westNorthRain = weather1.Rain;
+		int         westRain = westSouthRain >= westNorthRain ? westSouthRain : westNorthRain;
+		int         rain = westRain < eastRain ? eastRain : westRain;
 		if (rain > 5)
 		{
 			if (!rainPrepared)
@@ -964,7 +970,13 @@ void LH3DAtmos::Render3D()
 					GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
 				WeatherInfo weather3 =
 					GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-				int snow = max(max(weather0.Snow, weather1.Snow), max(weather2.Snow, weather3.Snow));
+				int eastNorthSnow = weather3.Snow;
+				int eastSouthSnow = weather2.Snow;
+				int eastSnow = eastSouthSnow < eastNorthSnow ? eastNorthSnow : eastSouthSnow;
+				int westSouthSnow = weather0.Snow;
+				int westNorthSnow = weather1.Snow;
+				int westSnow = westSouthSnow >= westNorthSnow ? westSouthSnow : westNorthSnow;
+				int snow = westSnow < eastSnow ? eastSnow : westSnow;
 				if (snow > 5)
 				{
 					if (!snowPrepared)
@@ -1039,10 +1051,10 @@ void LH3DAtmos::DrawWindField()
 
 void LH3DAtmos::UpdateGlow()
 {
-	int stepX = LHSys::TheSystem.screen.width >> 4;
-	int height = LHSys::TheSystem.screen.height;
-	int offsetX = stepX / 2;
-	int offsetY = height / LH3D_ATMOS_GLOW_SIZE / 2;
+	int xStepPixels = LHSys::TheSystem.screen.width / LH3D_ATMOS_GLOW_SIZE;
+	int screenHeightPixels = LHSys::TheSystem.screen.height;
+	int firstColumnPixels = xStepPixels / 2;
+	int firstRowPixels = screenHeightPixels / LH3D_ATMOS_GLOW_SIZE / 2;
 	int shiftR = LHSys::TheSystem.screen.redScale - LHSys::TheSystem.screen.RedShift + 12;
 	int shiftG = LHSys::TheSystem.screen.GreenScale - LHSys::TheSystem.screen.GreenShift + 12;
 	int shiftB = LHSys::TheSystem.screen.BlueScale - LHSys::TheSystem.screen.BlueShift + 12;
@@ -1054,66 +1066,71 @@ void LH3DAtmos::UpdateGlow()
 	tex1->Lock(&desc);
 	if (desc.Surface != NULL)
 	{
-		int           skip = desc.Pitch / 2 - LH3D_ATMOS_GLOW_SIZE;
-		uint16_t*     dest = (uint16_t*)desc.Surface;
+		int           glowRowSkipPixels = desc.Pitch / 2 - LH3D_ATMOS_GLOW_SIZE;
+		uint16_t*     glowPixel = static_cast<uint16_t*>(desc.Surface);
 		unsigned long pitch = LHSys::TheSystem.screen.backPitchBytes;
 		pitch >>= 1;
-		long* glow = glowtab[0];
+		long* glowChannels = glowtab[0];
 		if (LHSys::TheSystem.screen.depth <= 16)
 		{
 			for (int y = 0; y < LH3D_ATMOS_GLOW_SIZE; y++)
 			{
-				uint16_t* src = (uint16_t*)LHSys::TheSystem.screen.backAddress +
-				                (y * height / LH3D_ATMOS_GLOW_SIZE + offsetY) * pitch + offsetX;
+				const uint16_t* screenPixel = reinterpret_cast<const uint16_t*>(LHSys::TheSystem.screen.backAddress) +
+				                              (y * screenHeightPixels / LH3D_ATMOS_GLOW_SIZE + firstRowPixels) * pitch +
+				                              firstColumnPixels;
 				for (int x = 0; x < LH3D_ATMOS_GLOW_SIZE; x++)
 				{
-					long green = (*src << shiftG) & 0xff000;
-					long red = (*src << shiftR) & 0xff000;
-					long blue = (*src << shiftB) & 0xff000;
-					glow[0] += (blue - glow[0]) / 8;
-					glow[1] += (green - glow[1]) / 8;
-					glow[2] += (red - glow[2]) / 8;
-					glow[0] = glow[0] > 0 ? min(glow[0], 0xf7000) : 0;
-					glow[1] = glow[1] > 0 ? min(glow[1], 0xf7000) : 0;
-					glow[2] = glow[2] > 0 ? min(glow[2], 0xf7000) : 0;
-					*dest++ = 0xf000 | (((glow[2] + 0x80) >> 8) & 0xff00) | (((glow[1] + 0x800) >> 12) & 0xf0) |
-					          ((glow[0] + 0x8000) >> 16);
-					src += stepX;
-					glow += 4;
+					long green = (*screenPixel << shiftG) & 0xff000;
+					long red = (*screenPixel << shiftR) & 0xff000;
+					long blue = (*screenPixel << shiftB) & 0xff000;
+					glowChannels[0] += (blue - glowChannels[0]) / 8;
+					glowChannels[1] += (green - glowChannels[1]) / 8;
+					glowChannels[2] += (red - glowChannels[2]) / 8;
+					glowChannels[0] = glowChannels[0] > 0 ? min(glowChannels[0], 0xf7000) : 0;
+					glowChannels[1] = glowChannels[1] > 0 ? min(glowChannels[1], 0xf7000) : 0;
+					glowChannels[2] = glowChannels[2] > 0 ? min(glowChannels[2], 0xf7000) : 0;
+					*glowPixel++ = 0xf000 | (((glowChannels[2] + 0x80) >> 8) & 0xff00) |
+					               (((glowChannels[1] + 0x800) >> 12) & 0xf0) | ((glowChannels[0] + 0x8000) >> 16);
+					screenPixel += xStepPixels;
+					glowChannels += 4;
 				}
-				dest += skip;
+				glowPixel += glowRowSkipPixels;
 			}
 		}
 		else
 		{
-			int bytes = LHSys::TheSystem.screen.depth >> 3;
+			int bytesPerPixel = LHSys::TheSystem.screen.depth / CHAR_BIT;
 			pitch = LHSys::TheSystem.screen.backPitchBytes;
-			int stepBytes = bytes * stepX;
-			int offsetBytes = bytes * offsetX;
+			int xStepBytes = bytesPerPixel * xStepPixels;
+			int firstColumnBytes = bytesPerPixel * firstColumnPixels;
 			for (int y = 0; y < LH3D_ATMOS_GLOW_SIZE; y++)
 			{
-				uint8_t* src = (uint8_t*)LHSys::TheSystem.screen.backAddress +
-				               (y * height / LH3D_ATMOS_GLOW_SIZE + offsetY) * pitch + offsetBytes;
+				const uint8_t* screenPixel = reinterpret_cast<const uint8_t*>(LHSys::TheSystem.screen.backAddress) +
+				                             (y * screenHeightPixels / LH3D_ATMOS_GLOW_SIZE + firstRowPixels) * pitch +
+				                             firstColumnBytes;
 				for (int x = 0; x < LH3D_ATMOS_GLOW_SIZE; x++)
 				{
-					long blue =
-						(shiftB > 0 ? *(unsigned long*)src << shiftB : *(unsigned long*)src >> -shiftB) & 0xff000;
-					long green =
-						(shiftG > 0 ? *(unsigned long*)src << shiftG : *(unsigned long*)src >> -shiftG) & 0xff000;
-					long red =
-						(shiftR > 0 ? *(unsigned long*)src << shiftR : *(unsigned long*)src >> -shiftR) & 0xff000;
-					glow[0] += (blue - glow[0]) / 8;
-					glow[1] += (green - glow[1]) / 8;
-					glow[2] += (red - glow[2]) / 8;
-					glow[0] = glow[0] > 0 ? min(glow[0], 0xf7000) : 0;
-					glow[1] = glow[1] > 0 ? min(glow[1], 0xf7000) : 0;
-					glow[2] = glow[2] > 0 ? min(glow[2], 0xf7000) : 0;
-					*dest++ = 0xf000 | (((glow[2] + 0x80) >> 8) & 0xff00) | (((glow[1] + 0x800) >> 12) & 0xf0) |
-					          ((glow[0] + 0x8000) >> 16);
-					src += stepBytes;
-					glow += 4;
+					long blue = (shiftB > 0 ? *reinterpret_cast<const unsigned long*>(screenPixel) << shiftB
+					                        : *reinterpret_cast<const unsigned long*>(screenPixel) >> -shiftB) &
+					            0xff000;
+					long green = (shiftG > 0 ? *reinterpret_cast<const unsigned long*>(screenPixel) << shiftG
+					                         : *reinterpret_cast<const unsigned long*>(screenPixel) >> -shiftG) &
+					             0xff000;
+					long red = (shiftR > 0 ? *reinterpret_cast<const unsigned long*>(screenPixel) << shiftR
+					                       : *reinterpret_cast<const unsigned long*>(screenPixel) >> -shiftR) &
+					           0xff000;
+					glowChannels[0] += (blue - glowChannels[0]) / 8;
+					glowChannels[1] += (green - glowChannels[1]) / 8;
+					glowChannels[2] += (red - glowChannels[2]) / 8;
+					glowChannels[0] = glowChannels[0] > 0 ? min(glowChannels[0], 0xf7000) : 0;
+					glowChannels[1] = glowChannels[1] > 0 ? min(glowChannels[1], 0xf7000) : 0;
+					glowChannels[2] = glowChannels[2] > 0 ? min(glowChannels[2], 0xf7000) : 0;
+					*glowPixel++ = 0xf000 | (((glowChannels[2] + 0x80) >> 8) & 0xff00) |
+					               (((glowChannels[1] + 0x800) >> 12) & 0xf0) | ((glowChannels[0] + 0x8000) >> 16);
+					screenPixel += xStepBytes;
+					glowChannels += 4;
 				}
-				dest += skip;
+				glowPixel += glowRowSkipPixels;
 			}
 		}
 	}

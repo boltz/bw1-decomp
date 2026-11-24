@@ -2115,6 +2115,9 @@ add_relocations:
     type: x86_abs32
     target: '??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAK@Z'
     addend: 0x177
+  - source: 0x00A3EFB8
+    type: x86_abs32
+    target: '$T60146'
 # adj_fdiv.obj: references the object relocates but dtk leaves unrelocated.
   - source: 0x00CB0FDE
     type: x86_abs32

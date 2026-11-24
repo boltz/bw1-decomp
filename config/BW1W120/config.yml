@@ -1847,6 +1847,9 @@ add_relocations:
     type: x86_abs32
     target: '??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAK@Z'
     addend: 0x177
+  - source: 0x009BED38
+    type: x86_abs32
+    target: '$T60142'
 # adj_fdiv.obj: its dispatch table, the jumps through it and its data references (dtk leaves them unrelocated).
   - source: 0x00C3011E
     type: x86_abs32
