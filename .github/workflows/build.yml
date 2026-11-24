@@ -4,14 +4,24 @@ on:
   push:
     branches:
       - main
+      - fork-check/prayersite-870-ci-20261124
   pull_request:
   merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
   build:
     # This is a *private* build container.
     # See docs/github_actions.md for more information.
-    container: ghcr.io/openblack/bw1-build:main
+    container:
+      image: ${{ vars.BW1_BUILD_IMAGE || 'ghcr.io/openblack/bw1-build:main' }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     runs-on: ubuntu-latest
     strategy:
@@ -23,6 +33,8 @@ jobs:
     # Checkout the repository
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
 
     # Copy the original files to the workspace
     - name: Prepare

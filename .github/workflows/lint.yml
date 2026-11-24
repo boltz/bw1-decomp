@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - fork-check/prayersite-870-ci-20261124
     paths:
       - '**.hpp'
       - '**.cpp'
