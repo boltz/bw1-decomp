@@ -1,0 +1,90 @@
+{
+  "unit": "src/Black/PrayerSite.cpp",
+  "target_sha": "9ccfa52b3e152bf275e2b6ea17b7d92443b5858a",
+  "rubric_sha256": "eb460d391eda86f149361451977793d0b5fab7b201a2f9adae717885f2298ce3",
+  "source_hashes": {
+    "src/Black/PrayerSite.cpp": "44701d8978d1ca1fb0293ec4099af93c06f5b01c148c3eb9f843a6cfdd4044d2",
+    "src/Black/PrayerSite.h": "da922281934ee46e7f02766a67725c33c5005c9964ac228bb794418169e29ade",
+    "src/Black/PrayerSiteInfo.h": "03678e3688bc0427509e6cff6fa486b1da95c4ee2500b239c11a26e7c6f0800f",
+    "src/Black/PrayerIconInfo.h": "a649f5de3dfb32ac240193b060b614adbf3d119df80632115933eefd74cea863",
+    "src/Black/WorshipSpellIcon.h": "be7e80204aa0f8afaad16cb7b64a078a66e7c6df54cda2dabcd54e4f03b971e0",
+    "src/Black/MultiMapFixed.h": "e8015baee0c62e65136be7e9586b5952d0a6083646bcd3d50fbdd15369cb23d3",
+    "src/Black/Fixed.h": "4addd06901fabf5fa608cba4bd118ded04751e8e961333ec29ca948fb91cbea9",
+    "src/Black/GameThing.h": "2648151f663d32387d75dc5693c59a1bcef079eefbb78e5f95f46236507937c0",
+    "src/Black/Object.h": "bfc8bc015fbfd9b6fa3583c93d2e8c4bb2283c028c1b00e2e6ff9fad56ba3d13"
+  },
+  "function_inventory": [
+    {
+      "id": "F000",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 7,
+      "signature": "inline MESH_LIST GPrayerSiteInfo::GetMesh() const"
+    },
+    {
+      "id": "F001",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 12,
+      "signature": "inline GBaseInfo* GPrayerSiteInfo::GetBaseInfo(uint32_t& info_count)"
+    },
+    {
+      "id": "F002",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 20,
+      "signature": "inline GBaseInfo* GPrayerIconInfo::GetBaseInfo(uint32_t& info_count)"
+    },
+    {
+      "id": "F003",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 29,
+      "signature": "MESH_LIST PrayerSite::GetMesh() const"
+    },
+    {
+      "id": "F004",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 35,
+      "signature": "void PrayerSite::ToBeDeleted(bool32_t delete_now)"
+    },
+    {
+      "id": "F005",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 37,
+      "signature": "uint32_t PrayerSite::Process()"
+    },
+    {
+      "id": "F006",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 42,
+      "signature": "GPlayer* PrayerSite::GetPlayer()"
+    },
+    {
+      "id": "F007",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 47,
+      "signature": "Town* PrayerSite::GetTown()"
+    },
+    {
+      "id": "F008",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 52,
+      "signature": "bool32_t PrayerSite::CreatureMustAvoid(Creature* creature)"
+    },
+    {
+      "id": "F009",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 57,
+      "signature": "uint32_t PrayerIcon::GetCreatureBeliefType()"
+    },
+    {
+      "id": "F010",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 63,
+      "signature": "MESH_LIST PrayerIcon::GetMesh() const"
+    },
+    {
+      "id": "F011",
+      "path": "src/Black/PrayerSite.cpp",
+      "line": 69,
+      "signature": "uint32_t PrayerIcon::Process()"
+    }
+  ]
+}
