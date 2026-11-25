@@ -19,8 +19,6 @@ public:
 
 	// Override methods
 
-	// BW1W120 00670770 BW1M119 01127b40
-	virtual ~GPrayerIconInfo();
 	// BW1W120 00670720 BW1M119 01127dc0
 	virtual GBaseInfo* GetBaseInfo(uint32_t& info_count);
 
