@@ -17,7 +17,7 @@ class GPrayerSiteInfo : public GMultiMapFixedInfo
 {
 public:
 	MESH_LIST Mesh;
-	uint8_t   field_0x124[4];
+	float     Radius;
 
 	// Override methods
 
@@ -37,7 +37,7 @@ public:
 	static GPrayerSiteInfo* GetInfo() { return Infos; }
 
 	// TODO(#377): The original declared this class in Prayer.h.
-	INFO_DATA_BLOCK(Mesh, field_0x124)
+	INFO_DATA_BLOCK(Mesh, Radius)
 	INFO_DERIVED_LOADERS(13, "Prayer.h", GMultiMapFixedInfo)
 };
 
