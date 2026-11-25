@@ -33,13 +33,13 @@ MESH_LIST PrayerSite::GetMesh() const
 
 GBaseInfo* GPrayerSiteInfo::GetBaseInfo(uint32_t& info_count)
 {
-	info_count = PRAYER_SITE_INFO_LAST;
+	info_count = ARRAY_SIZE(Infos);
 	return Infos;
 }
 
 GBaseInfo* GPrayerIconInfo::GetBaseInfo(uint32_t& info_count)
 {
-	info_count = PLAYER_INFO_LAST;
+	info_count = ARRAY_SIZE(Infos);
 	return Infos;
 }
 
