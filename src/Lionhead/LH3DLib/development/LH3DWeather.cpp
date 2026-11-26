@@ -925,11 +925,21 @@ void LH3DAtmos::Render3D()
 		}
 		float       x = block->X + 80.0f;
 		float       z = block->Z + 80.0f;
-		WeatherInfo weather0 = GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
-		WeatherInfo weather1 = GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-		WeatherInfo weather2 = GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
-		WeatherInfo weather3 = GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-		int         rain = max(max(weather0.Rain, weather1.Rain), max(weather2.Rain, weather3.Rain));
+		WeatherInfo northWestWeather =
+			GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
+		WeatherInfo northEastWeather =
+			GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
+		WeatherInfo southWestWeather =
+			GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
+		WeatherInfo southEastWeather =
+			GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
+		int southEastRain = southEastWeather.Rain;
+		int southWestRain = southWestWeather.Rain;
+		int southRain = southWestRain < southEastRain ? southEastRain : southWestRain;
+		int northWestRain = northWestWeather.Rain;
+		int northEastRain = northEastWeather.Rain;
+		int northRain = northWestRain >= northEastRain ? northWestRain : northEastRain;
+		int rain = northRain < southRain ? southRain : northRain;
 		if (rain > 5)
 		{
 			if (!rainPrepared)
@@ -956,15 +966,21 @@ void LH3DAtmos::Render3D()
 			{
 				float       x = (i + 0.5f) * 80.0f + block->X;
 				float       z = (j + 0.5f) * 80.0f + block->Z;
-				WeatherInfo weather0 =
+				WeatherInfo northWestWeather =
 					GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
-				WeatherInfo weather1 =
+				WeatherInfo northEastWeather =
 					GetWeather(LHPoint(x - LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-				WeatherInfo weather2 =
+				WeatherInfo southWestWeather =
 					GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z - LH3D_ATMOS_CELL_SIZE), true);
-				WeatherInfo weather3 =
+				WeatherInfo southEastWeather =
 					GetWeather(LHPoint(x + LH3D_ATMOS_CELL_SIZE, 0.0f, z + LH3D_ATMOS_CELL_SIZE), true);
-				int snow = max(max(weather0.Snow, weather1.Snow), max(weather2.Snow, weather3.Snow));
+				int southEastSnow = southEastWeather.Snow;
+				int southWestSnow = southWestWeather.Snow;
+				int southSnow = southWestSnow < southEastSnow ? southEastSnow : southWestSnow;
+				int northWestSnow = northWestWeather.Snow;
+				int northEastSnow = northEastWeather.Snow;
+				int northSnow = northWestSnow >= northEastSnow ? northWestSnow : northEastSnow;
+				int snow = northSnow < southSnow ? southSnow : northSnow;
 				if (snow > 5)
 				{
 					if (!snowPrepared)

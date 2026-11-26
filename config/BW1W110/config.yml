@@ -1754,6 +1754,9 @@ add_relocations:
     type: x86_abs32
     target: '_jinit_color_converter'
     addend: 0x19d
+  - source: 0x009AEA88
+    type: x86_abs32
+    target: '$T60142'
 # adj_fdiv.obj: references the object relocates but dtk leaves unrelocated.
   - source: 0x00C1EF6E
     type: x86_abs32

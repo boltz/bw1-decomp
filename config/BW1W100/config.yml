@@ -2605,6 +2605,9 @@ add_relocations:
   - source: 0x007E98F7
     type: x86_rel32
     target: '??1?$LHLinkedList@PAULHSegmentDesc@@@@QAE@XZ'
+  - source: 0x008EF820
+    type: x86_abs32
+    target: '$T60087'
 # adj_fdiv.obj: references the object relocates but dtk leaves unrelocated.
   - source: 0x00B5261E
     type: x86_abs32
